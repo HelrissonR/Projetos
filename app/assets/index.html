@@ -290,7 +290,7 @@ body.anim-none #mc.enter>div>*{opacity:1!important}
 .perm-matrix-wrap > table{margin:4px}
 
 /* ── Banner informativo ── */
-.home-banner{border-radius:var(--r-lg);border:1px solid transparent;position:relative;overflow:hidden;margin-left:-14px;margin-right:-14px}
+.home-banner{border-radius:var(--r-lg);border:1px solid transparent;position:relative;overflow:hidden;margin-left:0;margin-right:0}
 .home-banner.type-info{background:var(--accent-soft);border-color:var(--accent)}
 .home-banner.type-warn{background:var(--warn-soft);border-color:var(--warn)}
 .home-banner.type-ok{background:var(--ok-soft);border-color:var(--ok)}
@@ -2740,7 +2740,12 @@ async function renderHome() {
 
   const bannerHtml = await renderBanner('home');
   const hoje = new Date().toLocaleDateString('pt-BR', {weekday:'long', day:'numeric', month:'long'});
-  const showAlerts = await IDB.getMeta('designShowAlerts') !== 'hide';
+  // Alertas: desativados por padrão; visíveis por padrão apenas para admin.
+  // O ajuste manual (designShowAlerts = 'show' | 'hide') continua tendo prioridade.
+  const _alertsPref = await IDB.getMeta('designShowAlerts');
+  const showAlerts = (ME.role === 'admin')
+    ? (_alertsPref !== 'hide')
+    : (_alertsPref === 'show');
 
   // ── Lembrete de backup semanal (admin) ───────────────
   let backupBanner = '';
@@ -2845,7 +2850,7 @@ async function renderHome() {
     ${adminPanel}
 
     <!-- ── Destaque: acompanhamentos realizados hoje (todos os perfis) ── -->
-    <div class="card nh mb-today" onclick="nav('acomp')" style="cursor:pointer;padding:16px;display:flex;align-items:center;gap:14px;background:var(--accent);color:#fff;border:none">
+    <div class="card nh mb-today" onclick="nav('acomp')" style="cursor:pointer;padding:16px;display:flex;align-items:center;gap:14px;background:var(--accent);color:var(--accent-text);border:none">
       <div style="font-size:36px;font-weight:800;line-height:1;min-width:52px;text-align:center">${acHoje.toLocaleString('pt-BR')}</div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:700;font-size:15px">Acompanhamentos realizados hoje</div>
@@ -5415,8 +5420,6 @@ async function comprovanteBuscaAtiva(nis) {
   if (!b) { showToast('Beneficiário não encontrado', 'err'); return; }
   showToast('Gerando comprovante…', '');
   const hoje  = new Date().toLocaleDateString('pt-BR');
-  const resp  = await IDB.getMeta('sobreResponsavel') || '';
-  const cargo = await IDB.getMeta('sobreCargo') || '';
   const fmtBRd = d => { const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}/${m[1]}` : '—'; };
 
   // Registros de "não acompanhamento" já lançados servem como evidência documentada
@@ -5460,10 +5463,9 @@ async function comprovanteBuscaAtiva(nis) {
       ${rowsReg}${rowsBlank}
     </table>
 
-    <div class="rpt-sign" style="margin-top:44px">
+    <div class="rpt-sign" style="margin-top:52px">
       <div class="sign-line"></div>
-      <div class="sign-name">${esc(resp || ME.nome || '')}</div>
-      <div class="sign-role">${esc(cargo || 'Responsável')}</div>
+      <div class="sign-role">Assinatura de quem realizou a busca ativa / responsável pelo atendimento</div>
     </div>
     <div class="rpt-foot">Gerado pelo sistema Bolsa Família v3 PRO · Device: ${DEVICE_ID.substring(0, 8)}</div>
   </div>`;
@@ -7791,6 +7793,12 @@ async function gerarRelatorioAcomp(opts) {
 
   // Só acompanhamentos efetivamente realizados (com dados preenchidos)
   let feitos = acomps.filter(a => a && a.acompanhado !== false && a.data);
+  // Origem: 'app' = apenas registrados pelo app (têm device_id / técnico do app);
+  // 'todos' = inclui também os importados (MAPA 2 / e-Gestor).
+  const origem = opts.origem || 'todos';
+  if (origem === 'app') {
+    feitos = feitos.filter(a => !!a.device_id || (a.tecnico && a.tecnico !== 'Importação (MAPA 2)'));
+  }
   // Último por NIS
   const ultimo = new Map();
   feitos.forEach(a => {
@@ -7871,20 +7879,23 @@ async function gerarRelatorioAcomp(opts) {
   const resp  = await IDB.getMeta('sobreResponsavel') || '';
   const cargo = await IDB.getMeta('sobreCargo') || '';
 
+  const isComprovante = !!opts.comprovante;
   const html = `<div class="rpt">
     <style>@media print{@page{size:A4 landscape}}</style>
-    ${await _reportHeader('Relatório de Acompanhamentos Realizados',
+    ${await _reportHeader(isComprovante ? 'Comprovante de Acompanhamento — Programa Bolsa Família' : 'Relatório de Acompanhamentos Realizados',
         `Estabelecimento: <strong>${escopo}</strong> · Emitido em ${hoje} · Responsável pela emissão: ${esc(ME.nome||'—')}`)}
-    <div class="rpt-selo">Dados já preenchidos</div>
-    <div class="rpt-selo-nota">As linhas marcadas com ✓ correspondem a acompanhamentos já realizados e registrados no sistema.</div>
+    ${isComprovante
+      ? `<p style="line-height:1.6;margin:6px 0">Declaramos, para os devidos fins, que os beneficiários do <b>Programa Bolsa Família</b> relacionados abaixo foram <b>atendidos e acompanhados no estabelecimento</b> ${escopo!=='Todos os estabelecimentos'?`<b>${escopo}</b>`:'de saúde'}, com aferição de peso, altura e demais informações de saúde registradas na vigência atual.</p>`
+      : `<div class="rpt-selo">Dados já preenchidos</div>
+    <div class="rpt-selo-nota">As linhas marcadas com ✓ correspondem a acompanhamentos já realizados e registrados no sistema.</div>`}
 
     <div class="rpt-kpis">
-      <div class="rpt-kpi"><div class="k-num">${linhas.length}</div><div class="k-lbl">Total de acompanhamentos</div></div>
+      <div class="rpt-kpi"><div class="k-num">${linhas.length}</div><div class="k-lbl">${isComprovante?'Beneficiários atendidos':'Total de acompanhamentos'}</div></div>
       <div class="rpt-kpi"><div class="k-num">${new Set(linhas.map(r=>r.cod_fam).filter(Boolean)).size}</div><div class="k-lbl">Famílias atendidas</div></div>
       <div class="rpt-kpi"><div class="k-num">${linhas.filter(r=>r.vacina===true).length}</div><div class="k-lbl">Vacinação em dia</div></div>
     </div>
 
-    <h2>Beneficiários acompanhados</h2>
+    <h2>${isComprovante ? 'Beneficiários atendidos no estabelecimento' : 'Beneficiários acompanhados'}</h2>
     ${corpo}
 
     <div class="rpt-sign">
@@ -7897,14 +7908,16 @@ async function gerarRelatorioAcomp(opts) {
 
   $('#printArea').innerHTML = html;
   window.print();
-  showToast('✓ Relatório enviado para impressão', 'ok');
+  showToast(isComprovante ? '✓ Comprovante enviado para impressão' : '✓ Relatório enviado para impressão', 'ok');
 }
 
-async function showRelatorioAcompModal() {
+async function showRelatorioAcompModal(mode) {
+  const isComp = mode === 'comprovante';
+  const tituloSheet = isComp ? 'Comprovante de acompanhamento' : 'Relatório de acompanhamentos';
   const isAdmin = ME.role === 'admin';
   const meuEas = _easDoLogin();
   if (!isAdmin && !meuEas) {
-    openSheet('Relatório de acompanhamentos', `<div class="s3">
+    openSheet(tituloSheet, `<div class="s3">
       <div class="card card-sub nh"><div class="small">Sua conta não tem um <strong>Estabelecimento de Saúde</strong> vinculado.</div>
       <div class="small muted" style="margin-top:6px">Peça ao administrador para vincular o EAS em Config → Usuários.</div></div>
     </div>`);
@@ -7924,16 +7937,26 @@ async function showRelatorioAcompModal() {
       <div style="font-weight:800;margin-top:2px">${esc(meuEas)}</div>
       <div class="small muted" style="margin-top:6px">O relatório inclui apenas os acompanhamentos deste estabelecimento.</div></div>`;
   }
-  openSheet('Relatório de acompanhamentos', `<div class="s3">
-    <div class="card card-sub nh"><div class="small muted">O relatório traz:</div>
+  openSheet(tituloSheet, `<div class="s3">
+    <div class="card card-sub nh"><div class="small muted">${isComp?'O comprovante traz:':'O relatório traz:'}</div>
       <ul class="small" style="margin:8px 0 0 16px;line-height:1.8">
-        <li>Total geral de acompanhamentos realizados</li>
+        ${isComp
+          ? `<li>Declaração de atendimento no estabelecimento</li>
+        <li>Lista nominal dos beneficiários atendidos: NIS, nome</li>
+        <li>Peso, altura, IMC, vacinação e demais informações</li>`
+          : `<li>Total geral de acompanhamentos realizados</li>
         <li>Lista nominal individualizada: NIS, nome, nascimento/idade, EAS</li>
-        <li>Peso, altura, IMC, vacinação, gestante, pré-natal, TRIA e observações</li>
+        <li>Peso, altura, IMC, vacinação, gestante, pré-natal, TRIA e observações</li>`}
       </ul>
     </div>
     ${seletor}
-    <button class="btn btn-p btn-b" onclick="gerarRelatorioAcomp({eas: (document.getElementById('relAcEas')||{}).value || ''})" style="display:inline-flex;align-items:center;gap:6px">${fi('file-text',15)} Gerar e Imprimir</button>
+    <div class="field"><label>Quais beneficiários incluir?</label>
+      <select id="relAcOrigem">
+        <option value="app">Apenas acompanhados pelo app</option>
+        <option value="todos">Todos (inclui importados do MAPA 2 / e-Gestor)</option>
+      </select>
+    </div>
+    <button class="btn btn-p btn-b" onclick="gerarRelatorioAcomp({eas: (document.getElementById('relAcEas')||{}).value || '', origem: (document.getElementById('relAcOrigem')||{}).value || 'todos', comprovante: ${isComp}})" style="display:inline-flex;align-items:center;gap:6px">${fi('file-text',15)} Gerar e Imprimir</button>
   </div>`);
 }
 
@@ -7958,7 +7981,18 @@ function showRelatoriosHub() {
         <div class="mb-quick-icon">${fi('users',20)}</div>
         <div style="flex:1;min-width:0">
           <div style="font-weight:800">Individualizado por beneficiário</div>
-          <div class="small muted" style="margin-top:2px">Lista nominal dos beneficiários acompanhados: NIS, nome, nascimento/idade, EAS, peso, altura, IMC, vacinação, gestante, pré-natal, TRIA e observações.</div>
+          <div class="small muted" style="margin-top:2px">Lista nominal dos beneficiários acompanhados: NIS, nome, nascimento/idade, EAS, peso, altura, IMC, vacinação, gestante, pré-natal, TRIA e observações. Opção de incluir apenas os acompanhados pelo app ou todos.</div>
+        </div>
+        ${fi('chevron-right',18)}
+      </div>
+    </div>
+
+    <div class="card card-sub nh rel-hub-card" onclick="closeSheet(); showRelatorioAcompModal('comprovante')" style="cursor:pointer">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="mb-quick-icon">${fi('file-text',20)}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:800">Comprovante de acompanhamento</div>
+          <div class="small muted" style="margin-top:2px">Declaração de que os beneficiários foram atendidos no estabelecimento, com peso, altura e demais informações, para assinatura do responsável.</div>
         </div>
         ${fi('chevron-right',18)}
       </div>
