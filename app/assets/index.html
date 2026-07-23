@@ -2617,6 +2617,11 @@ async function renderHome() {
   const inicioMes = new Date(); inicioMes.setDate(1); inicioMes.setHours(0,0,0,0);
   const acMes = acomps.filter(a => new Date(a.data) >= inicioMes).length;
 
+  // Acompanhamentos realizados HOJE (para destaque na tela inicial — todos os perfis)
+  const _hd = new Date();
+  const hojeISO = `${_hd.getFullYear()}-${String(_hd.getMonth()+1).padStart(2,'0')}-${String(_hd.getDate()).padStart(2,'0')}`;
+  const acHoje = acomps.filter(a => a && a.acompanhado !== false && String(a.data||'').slice(0,10) === hojeISO).length;
+
   // Famílias sem nenhum acompanhamento
   const nisAcomp = new Set(acomps.map(a => a.nis));
   const _mNis = m => typeof m === 'string' ? m : m.nis;
@@ -2838,6 +2843,16 @@ async function renderHome() {
     ${backupBanner}
 
     ${adminPanel}
+
+    <!-- ── Destaque: acompanhamentos realizados hoje (todos os perfis) ── -->
+    <div class="card nh mb-today" onclick="nav('acomp')" style="cursor:pointer;padding:16px;display:flex;align-items:center;gap:14px;background:var(--accent);color:#fff;border:none">
+      <div style="font-size:36px;font-weight:800;line-height:1;min-width:52px;text-align:center">${acHoje.toLocaleString('pt-BR')}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700;font-size:15px">Acompanhamentos realizados hoje</div>
+        <div style="font-size:12px;opacity:.9;text-transform:capitalize">${hoje}</div>
+      </div>
+      <div style="opacity:.9">${fi('check-circle',28)}</div>
+    </div>
 
     <!-- ── Métricas principais (compactas) ── -->
     <div class="mb-stat-grid">
@@ -5377,6 +5392,7 @@ async function showBenef(nis) {
       ${can('acomp.create')?`<button class="btn btn-p" onclick="showAcompForm('${b.nis}')" style="display:inline-flex;align-items:center;gap:6px;flex:1">${fi('edit',15)} Acompanhar</button>`:''}
       ${can('benef.edit')?`<button class="btn btn-g" onclick="editBenef('${b.nis}')" style="display:inline-flex;align-items:center;gap:6px;flex:1">${fi('user-plus',15)} Editar dados</button>`:''}
     </div>`:''}
+    <button class="btn btn-g btn-b" onclick="comprovanteBuscaAtiva('${b.nis}')" style="display:inline-flex;align-items:center;justify-content:center;gap:6px">${fi('file-text',15)} Comprovante de busca ativa</button>
     ${_evoChart(acomps)}
     ${acomps.length?`<div><div class="small muted" style="margin-bottom:8px">Acompanhamentos (${acomps.length})</div>${acomps.slice(0,15).map(a=>`<div class="card card-sub nh">
       <div class="flex aic jcb" style="margin-bottom:4px"><span class="tag tag-ok">${new Date(a.data).toLocaleDateString()}</span><div style="display:flex;gap:4px">${a.gestante?'<span class="tag tag-w">Gestante</span>':''}${a.synced_at?'':'<span class="tag tag-w">Pendente</span>'}</div></div>
@@ -5391,6 +5407,71 @@ async function showBenef(nis) {
       ${a.tria_risco?`<div class="small" style="margin-top:4px">TRIA: ${_triaLabel(a.tria_risco)}</div>`:''}
       ${a.observacoes?`<div class="small muted" style="font-style:italic;margin-bottom:4px">"${esc(a.observacoes)}"</div>`:''}
       ${(can('acomp.edit')||can('acomp.delete'))?`<div class="flex" style="gap:6px;margin-top:6px">${can('acomp.edit')?`<button class="btn btn-s btn-g" onclick="editAcomp('${a.id}')" style="display:inline-flex;align-items:center;gap:4px">${fi('edit',12)} Editar</button>`:''}${can('acomp.delete')?`<button class="btn btn-s btn-g" onclick="deleteAcomp('${a.id}')" style="display:inline-flex;align-items:center;gap:4px;color:var(--err)">${fi('x-circle',12)} Excluir</button>`:''}</div>`:''}</div>`).join('')}</div>`:'<div class="card card-sub nh muted small">Nenhum acompanhamento</div>'}</div>`);
+}
+
+// Emite um comprovante impresso de busca ativa do beneficiário (padrão PBF na Saúde)
+async function comprovanteBuscaAtiva(nis) {
+  const b = await IDB.get('beneficiarios', nis);
+  if (!b) { showToast('Beneficiário não encontrado', 'err'); return; }
+  showToast('Gerando comprovante…', '');
+  const hoje  = new Date().toLocaleDateString('pt-BR');
+  const resp  = await IDB.getMeta('sobreResponsavel') || '';
+  const cargo = await IDB.getMeta('sobreCargo') || '';
+  const fmtBRd = d => { const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}/${m[1]}` : '—'; };
+
+  // Registros de "não acompanhamento" já lançados servem como evidência documentada
+  const acs = await IDB.getByIndex('acompanhamentos', 'nis', nis);
+  const naos = (acs || []).filter(a => a && a.acompanhado === false)
+    .sort((a, b) => String(a.data).localeCompare(String(b.data)));
+  const rowsReg = naos.map(a => `<tr class="no-break">
+      <td style="text-align:center">${fmtBRd(a.data)}</td>
+      <td>${esc(a.observacoes || 'Registro de não acompanhamento')}</td>
+      <td>${esc(a.motivo_na || '—')}</td>
+    </tr>`).join('');
+  const nBlanks = Math.max(3, 5 - naos.length);
+  const rowsBlank = Array.from({ length: nBlanks }).map(() =>
+    `<tr class="no-break"><td style="height:28px"></td><td></td><td></td></tr>`).join('');
+
+  const eas = b.eas || await IDB.getMeta('instituicao') || '';
+
+  const html = `<div class="rpt">
+    ${await _reportHeader('Comprovante de Busca Ativa — Programa Bolsa Família',
+      `Emitido em ${hoje} · Responsável pela emissão: ${esc(ME?.nome || '—')}`)}
+
+    <h2>Identificação do beneficiário</h2>
+    <table>
+      <tr><th style="width:32%">Nome</th><td>${esc(b.nome || '—')}</td></tr>
+      <tr><th>NIS</th><td>${esc(b.nis || '—')}</td></tr>
+      <tr><th>Data de nascimento</th><td>${fmtBRd(b.dob)}${b.idade ? ` · ${b.idade} anos` : ''}</td></tr>
+      <tr><th>Código Familiar</th><td>${esc((b.cod_fam || '').replace(/^FAM_/, '') || '—')}</td></tr>
+      <tr><th>Endereço</th><td>${esc(b.endereco || '—')}${b.bairro ? ` — ${esc(b.bairro)}` : ''}</td></tr>
+      <tr><th>Estabelecimento de Saúde (EAS)</th><td>${esc(eas || '—')}</td></tr>
+    </table>
+
+    <h2>Declaração</h2>
+    <p style="line-height:1.6;margin:6px 0">Declaramos, para os devidos fins, que a equipe de saúde do estabelecimento
+    acima realizou <b>busca ativa</b> do(a) beneficiário(a) identificado(a) neste comprovante, com o objetivo de
+    efetuar o acompanhamento das condicionalidades de saúde do <b>Programa Bolsa Família</b> na vigência atual,
+    conforme as ações registradas abaixo.</p>
+
+    <h2>Ações de busca ativa realizadas</h2>
+    <table>
+      <tr><th style="width:18%">Data</th><th>Ação / meio (visita domiciliar, telefone, ACS, etc.)</th><th style="width:34%">Resultado / motivo</th></tr>
+      ${rowsReg}${rowsBlank}
+    </table>
+
+    <div class="rpt-sign" style="margin-top:44px">
+      <div class="sign-line"></div>
+      <div class="sign-name">${esc(resp || ME.nome || '')}</div>
+      <div class="sign-role">${esc(cargo || 'Responsável')}</div>
+    </div>
+    <div class="rpt-foot">Gerado pelo sistema Bolsa Família v3 PRO · Device: ${DEVICE_ID.substring(0, 8)}</div>
+  </div>`;
+
+  $('#printArea').innerHTML = html;
+  window.print();
+  _audit('data.export', 'comprovante_busca_ativa', nis);
+  showToast('✓ Comprovante enviado para impressão', 'ok');
 }
 
 async function showAcompForm(nis) {
@@ -6746,6 +6827,29 @@ async function saveEditBenef(nis) {
 // ═══════════════════════════════════════════════════════
 // USERS
 // ═══════════════════════════════════════════════════════
+
+// Opções de EAS conhecidos (a partir da base de beneficiários) para o <datalist>
+async function _easDatalistOptions() {
+  try {
+    const benefs = await getBenefCache();
+    const set = [...new Set(benefs.map(b => (b.eas || '').trim()).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b, 'pt'));
+    return set.map(e => `<option value="${esc(e)}"></option>`).join('');
+  } catch (e) { return ''; }
+}
+
+// Campo para vincular um perfil a um Estabelecimento de Saúde (EAS).
+// Usa datalist: o admin pode escolher um EAS existente ou digitar um novo.
+function _easFieldHtml(id, value, opts) {
+  const listId = id + 'List';
+  return `<div class="field">
+    <label>Estabelecimento de Saúde (EAS) vinculado</label>
+    <input type="text" id="${id}" list="${listId}" value="${esc(value || '')}" placeholder="Selecione ou digite o EAS…">
+    <datalist id="${listId}">${opts || ''}</datalist>
+    <div class="small muted" style="margin-top:4px">Vincula o perfil a um EAS: relatórios e listas do usuário passam a considerar apenas este estabelecimento. Deixe em branco para acesso sem restrição de EAS.</div>
+  </div>`;
+}
+
 async function showAddUser() {
   const easOpts = await _easDatalistOptions();
   openSheet('Novo Usuário',`<div class="s3"><div class="field"><label>Nome</label><input type="text" id="uN"></div><div class="field"><label>Username</label><input type="text" id="uU"></div><div class="field"><label>Email</label><input type="email" id="uE"></div><div class="field"><label>Senha</label><input type="password" id="uP"></div><div class="field"><label>Perfil</label><select id="uR"><option value="visualizador">Visualizador</option><option value="operador">Operador</option><option value="admin">Admin</option></select></div>${_easFieldHtml('uEas','',easOpts)}<button class="btn btn-p btn-b" onclick="saveUser()">Criar</button></div>`);
