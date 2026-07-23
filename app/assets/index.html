@@ -3208,7 +3208,10 @@ async function renderAcomp() {
     return `<div class="card nh">
       <div class="flex aic jcb" style="margin-bottom:6px">
         <div style="font-weight:500;${podeComp?'cursor:pointer;color:var(--accent-2,var(--accent));display:inline-flex;align-items:center;gap:5px':''}" ${podeComp?`onclick="comprovanteAcompBenef('${esc(a.nis)}')" title="Emitir comprovante de acompanhamento"`:''}>${esc(b?.nome||'NIS: '+a.nis)}${podeComp?` ${fi('file-text',12)}`:''}${a.cadastro_avulso?' <span class="tag tag-w">AVULSO</span>':''}</div>
-        <span class="tag tag-ok">${new Date(a.data).toLocaleDateString()}</span>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+          <span class="tag tag-ok">${new Date(a.data).toLocaleDateString()}</span>
+          <button class="btn btn-s btn-g" onclick="event.stopPropagation();comprovanteBuscaAtiva('${esc(a.nis)}')" title="Comprovante de busca ativa" style="display:inline-flex;align-items:center;gap:4px;white-space:nowrap">${fi('search',13)} Busca ativa</button>
+        </div>
       </div>
       <div class="small muted">NIS: ${esc(a.nis)}${a.conta_sync?' · via '+esc(a.conta_sync.split('@')[0]):''} ${a.synced_at?'':'<span class="tag tag-w">Pendente</span>'}</div>
       ${(a.tecnico||a.estabelecimento)?`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:5px">
@@ -3388,7 +3391,10 @@ function filtrarAcomps(q) {
     return `<div class="card nh">
       <div class="flex aic jcb" style="margin-bottom:6px">
         <div style="font-weight:500;${podeComp?'cursor:pointer;color:var(--accent-2,var(--accent));display:inline-flex;align-items:center;gap:5px':''}" ${podeComp?`onclick="comprovanteAcompBenef('${esc(a.nis)}')" title="Emitir comprovante de acompanhamento"`:''}>${esc(b?.nome||'NIS: '+a.nis)}${podeComp?` ${fi('file-text',12)}`:''}${a.cadastro_avulso?' <span class="tag tag-w">AVULSO</span>':''}</div>
-        <span class="tag tag-ok">${new Date(a.data).toLocaleDateString()}</span>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+          <span class="tag tag-ok">${new Date(a.data).toLocaleDateString()}</span>
+          <button class="btn btn-s btn-g" onclick="event.stopPropagation();comprovanteBuscaAtiva('${esc(a.nis)}')" title="Comprovante de busca ativa" style="display:inline-flex;align-items:center;gap:4px;white-space:nowrap">${fi('search',13)} Busca ativa</button>
+        </div>
       </div>
       <div class="small muted">NIS: ${esc(a.nis)}${a.conta_sync?' · via '+esc(a.conta_sync.split('@')[0]):''} ${a.synced_at?'':'<span class="tag tag-w">Pendente</span>'}</div>
       ${(a.tecnico||a.estabelecimento)?`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:5px">
