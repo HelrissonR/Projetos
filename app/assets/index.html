@@ -3204,9 +3204,10 @@ async function renderAcomp() {
 
   const _renderAcompCard = (a, bMap, canEdit) => {
     const b = bMap.get(a.nis);
+    const podeComp = a.acompanhado !== false; // comprovante só p/ acompanhamento realizado
     return `<div class="card nh">
       <div class="flex aic jcb" style="margin-bottom:6px">
-        <div style="font-weight:500">${esc(b?.nome||'NIS: '+a.nis)}${a.cadastro_avulso?' <span class="tag tag-w">AVULSO</span>':''}</div>
+        <div style="font-weight:500;${podeComp?'cursor:pointer;color:var(--accent-2,var(--accent));display:inline-flex;align-items:center;gap:5px':''}" ${podeComp?`onclick="comprovanteAcompBenef('${esc(a.nis)}')" title="Emitir comprovante de acompanhamento"`:''}>${esc(b?.nome||'NIS: '+a.nis)}${podeComp?` ${fi('file-text',12)}`:''}${a.cadastro_avulso?' <span class="tag tag-w">AVULSO</span>':''}</div>
         <span class="tag tag-ok">${new Date(a.data).toLocaleDateString()}</span>
       </div>
       <div class="small muted">NIS: ${esc(a.nis)}${a.conta_sync?' · via '+esc(a.conta_sync.split('@')[0]):''} ${a.synced_at?'':'<span class="tag tag-w">Pendente</span>'}</div>
@@ -3383,9 +3384,10 @@ function filtrarAcomps(q) {
 
   const _card = (a) => {
     const b = bMap.get(a.nis);
+    const podeComp = a.acompanhado !== false; // comprovante só p/ acompanhamento realizado
     return `<div class="card nh">
       <div class="flex aic jcb" style="margin-bottom:6px">
-        <div style="font-weight:500">${esc(b?.nome||'NIS: '+a.nis)}${a.cadastro_avulso?' <span class="tag tag-w">AVULSO</span>':''}</div>
+        <div style="font-weight:500;${podeComp?'cursor:pointer;color:var(--accent-2,var(--accent));display:inline-flex;align-items:center;gap:5px':''}" ${podeComp?`onclick="comprovanteAcompBenef('${esc(a.nis)}')" title="Emitir comprovante de acompanhamento"`:''}>${esc(b?.nome||'NIS: '+a.nis)}${podeComp?` ${fi('file-text',12)}`:''}${a.cadastro_avulso?' <span class="tag tag-w">AVULSO</span>':''}</div>
         <span class="tag tag-ok">${new Date(a.data).toLocaleDateString()}</span>
       </div>
       <div class="small muted">NIS: ${esc(a.nis)}${a.conta_sync?' · via '+esc(a.conta_sync.split('@')[0]):''} ${a.synced_at?'':'<span class="tag tag-w">Pendente</span>'}</div>
@@ -5473,6 +5475,67 @@ async function comprovanteBuscaAtiva(nis) {
   $('#printArea').innerHTML = html;
   window.print();
   _audit('data.export', 'comprovante_busca_ativa', nis);
+  showToast('✓ Comprovante enviado para impressão', 'ok');
+}
+
+// Comprovante de acompanhamento de UM beneficiário (a partir dos REGISTROS)
+async function comprovanteAcompBenef(nis) {
+  const b = await IDB.get('beneficiarios', nis);
+  if (!b) { showToast('Beneficiário não encontrado', 'err'); return; }
+  const acs = (await IDB.getByIndex('acompanhamentos', 'nis', nis))
+    .filter(a => a && a.acompanhado !== false && a.data)
+    .sort((a, b) => String(b.data).localeCompare(String(a.data)));
+  if (!acs.length) { showToast('Este beneficiário não possui acompanhamentos registrados.', 'warn'); return; }
+  showToast('Gerando comprovante…', '');
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const fmtBRd = d => { const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}/${m[1]}` : '—'; };
+  const vac = v => v === true ? 'Sim' : (v === false ? 'Não' : '—');
+  const triaTxt = r => r === 'sem_risco' ? 'Sem risco' : (r === 'risco' ? 'Risco' : (r === 'risco_alto' ? 'Risco alto' : '—'));
+  const eas = b.eas || (acs[0] && acs[0].estabelecimento) || await IDB.getMeta('instituicao') || '';
+
+  const rows = acs.map(a => `<tr class="no-break">
+      <td style="text-align:center">${fmtBRd(a.data)}</td>
+      <td style="text-align:center">${a.peso != null ? esc(String(a.peso)) : '—'}</td>
+      <td style="text-align:center">${a.altura != null ? esc(String(a.altura)) : '—'}</td>
+      <td style="text-align:center">${a.imc != null ? esc(String(a.imc)) : '—'}</td>
+      <td style="text-align:center">${vac(a.vacina_ok)}</td>
+      <td style="text-align:center">${a.gestante ? 'Sim' : '—'}</td>
+      <td style="text-align:center">${triaTxt(a.tria_risco)}</td>
+    </tr>`).join('');
+
+  const html = `<div class="rpt">
+    ${await _reportHeader('Comprovante de Acompanhamento — Programa Bolsa Família',
+      `Estabelecimento: <strong>${esc(eas || '—')}</strong> · Emitido em ${hoje}`)}
+
+    <h2>Identificação do beneficiário</h2>
+    <table>
+      <tr><th style="width:32%">Nome</th><td>${esc(b.nome || '—')}</td></tr>
+      <tr><th>NIS</th><td>${esc(b.nis || '—')}</td></tr>
+      <tr><th>Data de nascimento</th><td>${fmtBRd(b.dob)}${b.idade ? ` · ${b.idade} anos` : ''}</td></tr>
+      <tr><th>Código Familiar</th><td>${esc((b.cod_fam || '').replace(/^FAM_/, '') || '—')}</td></tr>
+    </table>
+
+    <h2>Declaração</h2>
+    <p style="line-height:1.6;margin:6px 0">Declaramos, para os devidos fins, que o(a) beneficiário(a) acima foi
+    <b>acompanhado(a)</b> no âmbito das condicionalidades de saúde do <b>Programa Bolsa Família</b>, com aferição de
+    peso, altura e demais informações de saúde registradas nas datas abaixo.</p>
+
+    <h2>Acompanhamentos registrados (${acs.length})</h2>
+    <table class="mapa2">
+      <tr><th>Data</th><th>Peso (kg)</th><th>Estatura (cm)</th><th>IMC</th><th>Vacina</th><th>Gestante</th><th>TRIA</th></tr>
+      ${rows}
+    </table>
+
+    <div class="rpt-sign" style="margin-top:52px">
+      <div class="sign-line"></div>
+      <div class="sign-role">Assinatura do responsável pelo atendimento</div>
+    </div>
+    <div class="rpt-foot">Gerado pelo sistema Bolsa Família v3 PRO · Device: ${DEVICE_ID.substring(0, 8)}</div>
+  </div>`;
+
+  $('#printArea').innerHTML = html;
+  window.print();
+  _audit('data.export', 'comprovante_acompanhamento', nis);
   showToast('✓ Comprovante enviado para impressão', 'ok');
 }
 
@@ -7793,12 +7856,20 @@ async function gerarRelatorioAcomp(opts) {
 
   // Só acompanhamentos efetivamente realizados (com dados preenchidos)
   let feitos = acomps.filter(a => a && a.acompanhado !== false && a.data);
-  // Origem: 'app' = apenas registrados pelo app (têm device_id / técnico do app);
+  // Origem: 'app' = apenas os REGISTROS feitos pelo app (não importados);
   // 'todos' = inclui também os importados (MAPA 2 / e-Gestor).
+  // Obs.: registros importados recebem device_id, portanto o discriminador
+  // correto é a flag `importado` (e o técnico "Importação…").
   const origem = opts.origem || 'todos';
   if (origem === 'app') {
-    feitos = feitos.filter(a => !!a.device_id || (a.tecnico && a.tecnico !== 'Importação (MAPA 2)'));
+    feitos = feitos.filter(a => a.importado !== true && !String(a.tecnico || '').startsWith('Importação'));
   }
+
+  // Delimitador por intervalo de datas (data inicial / final) — opcional
+  const _di = opts.dataIni || '', _df = opts.dataFim || '';
+  if (_di) feitos = feitos.filter(a => String(a.data).slice(0, 10) >= _di);
+  if (_df) feitos = feitos.filter(a => String(a.data).slice(0, 10) <= _df);
+
   // Último por NIS
   const ultimo = new Map();
   feitos.forEach(a => {
@@ -7876,6 +7947,10 @@ async function gerarRelatorioAcomp(opts) {
 
   const escopo = easFiltro ? esc(easFiltro) : 'Todos os estabelecimentos';
   const hoje = new Date().toLocaleDateString('pt-BR');
+  const _fmtBR = d => { const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}/${m[1]}` : ''; };
+  const periodoTxt = (_di || _df)
+    ? ` · Período: ${_di ? _fmtBR(_di) : 'início'} a ${_df ? _fmtBR(_df) : 'hoje'}`
+    : '';
   const resp  = await IDB.getMeta('sobreResponsavel') || '';
   const cargo = await IDB.getMeta('sobreCargo') || '';
 
@@ -7883,7 +7958,7 @@ async function gerarRelatorioAcomp(opts) {
   const html = `<div class="rpt">
     <style>@media print{@page{size:A4 landscape}}</style>
     ${await _reportHeader(isComprovante ? 'Comprovante de Acompanhamento — Programa Bolsa Família' : 'Relatório de Acompanhamentos Realizados',
-        `Estabelecimento: <strong>${escopo}</strong> · Emitido em ${hoje} · Responsável pela emissão: ${esc(ME.nome||'—')}`)}
+        `Estabelecimento: <strong>${escopo}</strong> · Emitido em ${hoje}${periodoTxt} · Responsável pela emissão: ${esc(ME.nome||'—')}`)}
     ${isComprovante
       ? `<p style="line-height:1.6;margin:6px 0">Declaramos, para os devidos fins, que os beneficiários do <b>Programa Bolsa Família</b> relacionados abaixo foram <b>atendidos e acompanhados no estabelecimento</b> ${escopo!=='Todos os estabelecimentos'?`<b>${escopo}</b>`:'de saúde'}, com aferição de peso, altura e demais informações de saúde registradas na vigência atual.</p>`
       : `<div class="rpt-selo">Dados já preenchidos</div>
@@ -7952,11 +8027,18 @@ async function showRelatorioAcompModal(mode) {
     ${seletor}
     <div class="field"><label>Quais beneficiários incluir?</label>
       <select id="relAcOrigem">
-        <option value="app">Apenas acompanhados pelo app</option>
+        <option value="app">Apenas acompanhados pelo app (Registros)</option>
         <option value="todos">Todos (inclui importados do MAPA 2 / e-Gestor)</option>
       </select>
     </div>
-    <button class="btn btn-p btn-b" onclick="gerarRelatorioAcomp({eas: (document.getElementById('relAcEas')||{}).value || '', origem: (document.getElementById('relAcOrigem')||{}).value || 'todos', comprovante: ${isComp}})" style="display:inline-flex;align-items:center;gap:6px">${fi('file-text',15)} Gerar e Imprimir</button>
+    <div class="field"><label>Período (opcional)</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><label class="small muted">Data inicial</label><input type="date" id="relAcDataIni"></div>
+        <div><label class="small muted">Data final</label><input type="date" id="relAcDataFim"></div>
+      </div>
+      <div class="small muted" style="margin-top:4px">Deixe em branco para incluir todo o período.</div>
+    </div>
+    <button class="btn btn-p btn-b" onclick="gerarRelatorioAcomp({eas: (document.getElementById('relAcEas')||{}).value || '', origem: (document.getElementById('relAcOrigem')||{}).value || 'todos', dataIni: (document.getElementById('relAcDataIni')||{}).value || '', dataFim: (document.getElementById('relAcDataFim')||{}).value || '', comprovante: ${isComp}})" style="display:inline-flex;align-items:center;gap:6px">${fi('file-text',15)} Gerar e Imprimir</button>
   </div>`);
 }
 
