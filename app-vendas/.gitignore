@@ -1,6 +1,7 @@
 node_modules
 dist
 dist-win
+dist-single
 .env
 .env.local
 *.log
