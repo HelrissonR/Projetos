@@ -238,18 +238,15 @@ export const ordersRepo = {
     }
     return lsGet<Order[]>('orders', []).sort((a, b) => b.created_at.localeCompare(a.created_at))
   },
-  // Inserção pública (feita pelo cliente no catálogo)
+  // Inserção pública (feita pelo cliente no catálogo). Não usa .select() porque
+  // o visitante anônimo não tem permissão de LEITURA em orders (apenas insert).
   async create(order: Omit<Order, 'id' | 'created_at' | 'status'>): Promise<Order> {
-    if (useDb()) {
-      const { data, error } = await supabase!
-        .from('orders')
-        .insert({ ...order, status: 'pending' })
-        .select()
-        .single()
-      if (error) throw error
-      return data as Order
-    }
     const rec: Order = { ...order, id: uid(), status: 'pending', created_at: new Date().toISOString() }
+    if (useDb()) {
+      const { error } = await supabase!.from('orders').insert({ ...order, status: 'pending' })
+      if (error) throw error
+      return rec
+    }
     lsSet('orders', [...lsGet<Order[]>('orders', []), rec])
     return rec
   },
