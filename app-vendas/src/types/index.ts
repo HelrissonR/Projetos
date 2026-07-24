@@ -21,6 +21,10 @@ export interface Settings {
   payment_methods: PaymentMethod[]
   product_custom_fields: CustomFieldDef[]
   low_stock_threshold: number
+  // Catálogo / loja online
+  whatsapp_number: string // só dígitos com DDI, ex: 5511999999999
+  catalog_enabled: boolean
+  catalog_message: string // saudação/observação exibida no catálogo
 }
 
 export interface Category {

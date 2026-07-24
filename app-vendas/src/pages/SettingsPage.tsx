@@ -17,6 +17,13 @@ const BRAND_PRESETS: { label: string; rgb: string }[] = [
 
 const CURRENCIES = ['BRL', 'USD', 'EUR', 'GBP', 'ARS']
 
+function catalogUrl() {
+  const hash = import.meta.env.VITE_HASH_ROUTER === '1'
+  return hash
+    ? `${location.origin}${location.pathname}#/catalogo`
+    : `${location.origin}/catalogo`
+}
+
 export default function SettingsPage() {
   const { settings, save } = useSettings()
   const notify = useToast()
@@ -223,6 +230,60 @@ export default function SettingsPage() {
               </button>
             </div>
           ))}
+        </section>
+
+        {/* Catálogo público / WhatsApp */}
+        <section className="card space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold">Catálogo público (loja)</h2>
+              <p className="text-xs text-slate-500">Compartilhe com clientes; pedidos chegam pelo WhatsApp</p>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={form.catalog_enabled}
+                onChange={(e) => set('catalog_enabled', e.target.checked)}
+              />
+              Ativo
+            </label>
+          </div>
+          <div>
+            <label className="label">Número do WhatsApp (com DDI + DDD, só números)</label>
+            <input
+              className="input"
+              placeholder="5511999999999"
+              value={form.whatsapp_number}
+              onChange={(e) => set('whatsapp_number', e.target.value.replace(/\D/g, ''))}
+            />
+          </div>
+          <div>
+            <label className="label">Mensagem do catálogo</label>
+            <input
+              className="input"
+              value={form.catalog_message}
+              onChange={(e) => set('catalog_message', e.target.value)}
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <a href={catalogUrl()} target="_blank" rel="noreferrer" className="btn-primary">
+              Abrir catálogo
+            </a>
+            <button
+              type="button"
+              className="btn-ghost border border-slate-300 dark:border-slate-700"
+              onClick={() => {
+                navigator.clipboard?.writeText(catalogUrl())
+                notify('Link do catálogo copiado!')
+              }}
+            >
+              Copiar link
+            </button>
+          </div>
+          <p className="text-xs text-slate-500">
+            Dica: publique o app (ex.: Vercel) e compartilhe este link. Com o Supabase configurado, os
+            produtos aparecem para qualquer cliente que abrir a página.
+          </p>
         </section>
       </div>
     </div>

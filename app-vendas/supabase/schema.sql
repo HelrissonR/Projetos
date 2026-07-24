@@ -17,6 +17,9 @@ create table if not exists public.settings (
   payment_methods jsonb not null default '[]',
   product_custom_fields jsonb not null default '[]',
   low_stock_threshold int not null default 5,
+  whatsapp_number text not null default '',
+  catalog_enabled boolean not null default true,
+  catalog_message text not null default '',
   updated_at timestamptz not null default now()
 );
 
@@ -82,6 +85,9 @@ create index if not exists idx_sales_created on public.sales(created_at);
 -- Migrações para bancos criados antes destes campos (idempotentes)
 alter table public.products  add column if not exists image text;
 alter table public.customers add column if not exists address text;
+alter table public.settings  add column if not exists whatsapp_number text not null default '';
+alter table public.settings  add column if not exists catalog_enabled boolean not null default true;
+alter table public.settings  add column if not exists catalog_message text not null default '';
 
 -- ==========================================================================
 -- RLS — habilite e ajuste conforme sua estratégia de autenticação.

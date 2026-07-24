@@ -25,6 +25,9 @@ export const DEFAULT_SETTINGS: Settings = {
   ],
   product_custom_fields: [],
   low_stock_threshold: 5,
+  whatsapp_number: '',
+  catalog_enabled: true,
+  catalog_message: 'Escolha seus produtos e finalize o pedido pelo WhatsApp!',
 }
 
 interface Ctx {

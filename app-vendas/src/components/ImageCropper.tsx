@@ -20,6 +20,7 @@ export default function ImageCropper({ src, onCancel, onConfirm, output = 512 }:
   const [pos, setPos] = useState({ x: 0, y: 0 })
   const [natural, setNatural] = useState({ w: 0, h: 0 })
   const [box, setBox] = useState(320)
+  const [fit, setFit] = useState<'cover' | 'contain'>('cover')
   const drag = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null)
 
   // Carrega a imagem e centraliza cobrindo o quadro
@@ -37,21 +38,24 @@ export default function ImageCropper({ src, onCancel, onConfirm, output = 512 }:
     setBox(b)
     setPos({ x: 0, y: 0 })
     setZoom(1)
-  }, [natural])
+  }, [natural, fit])
 
-  // Escala base para "cobrir" o quadro (a menor dimensão preenche)
-  const baseScale = natural.w && natural.h ? Math.max(box / natural.w, box / natural.h) : 1
+  // Escala base: "cover" (preenche o quadro) ou "contain" (imagem inteira cabe)
+  const baseScale =
+    natural.w && natural.h
+      ? fit === 'cover'
+        ? Math.max(box / natural.w, box / natural.h)
+        : Math.min(box / natural.w, box / natural.h)
+      : 1
   const scale = baseScale * zoom
   const dispW = natural.w * scale
   const dispH = natural.h * scale
 
+  // Se a imagem cobre o eixo, permite arrastar; senão, centraliza fixo.
   const clamp = (x: number, y: number) => {
-    const minX = box - dispW
-    const minY = box - dispH
-    return {
-      x: Math.min(0, Math.max(minX, x)),
-      y: Math.min(0, Math.max(minY, y)),
-    }
+    const cx = dispW >= box ? Math.min(0, Math.max(box - dispW, x)) : (box - dispW) / 2
+    const cy = dispH >= box ? Math.min(0, Math.max(box - dispH, y)) : (box - dispH) / 2
+    return { x: cx, y: cy }
   }
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -72,7 +76,7 @@ export default function ImageCropper({ src, onCancel, onConfirm, output = 512 }:
   useEffect(() => {
     setPos((p) => clamp(p.x, p.y))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [zoom, box, natural])
+  }, [zoom, box, natural, fit])
 
   const confirm = () => {
     const img = imgRef.current
@@ -106,7 +110,25 @@ export default function ImageCropper({ src, onCancel, onConfirm, output = 512 }:
       }
     >
       <div className="space-y-4">
-        <p className="text-xs text-slate-500">Arraste para posicionar e use o controle para dar zoom.</p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-slate-500">Arraste para posicionar e ajuste o zoom.</p>
+          <div className="flex overflow-hidden rounded-md border border-slate-300 text-xs dark:border-slate-700">
+            <button
+              type="button"
+              className={`px-3 py-1 ${fit === 'cover' ? 'bg-brand text-white dark:text-black' : 'bg-transparent'}`}
+              onClick={() => setFit('cover')}
+            >
+              Preencher
+            </button>
+            <button
+              type="button"
+              className={`px-3 py-1 ${fit === 'contain' ? 'bg-brand text-white dark:text-black' : 'bg-transparent'}`}
+              onClick={() => setFit('contain')}
+            >
+              Ajustar
+            </button>
+          </div>
+        </div>
         <div
           ref={boxRef}
           className="relative mx-auto aspect-square w-full max-w-xs overflow-hidden rounded-lg border border-slate-300 bg-slate-100 dark:border-slate-700 dark:bg-slate-800"

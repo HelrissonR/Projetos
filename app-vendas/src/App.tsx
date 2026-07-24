@@ -12,6 +12,7 @@ const Products = lazy(() => import('./pages/Products'))
 const Customers = lazy(() => import('./pages/Customers'))
 const SalesHistory = lazy(() => import('./pages/SalesHistory'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const Catalog = lazy(() => import('./pages/Catalog'))
 
 function Loader() {
   return <div className="flex min-h-screen items-center justify-center text-slate-400">Carregando…</div>
@@ -23,21 +24,26 @@ export default function App() {
 
   if (settingsLoading || authLoading) return <Loader />
 
-  // Se a autenticação estiver ativa (Supabase configurado) e não houver
-  // usuário logado, exibe a tela de login.
-  if (authEnabled && !user) return <Login />
+  const needsLogin = authEnabled && !user
 
   return (
     <Suspense fallback={<Loader />}>
       <Routes>
-        <Route element={<Layout />}>
-          <Route index element={<Dashboard />} />
-          <Route path="pdv" element={<Pos />} />
-          <Route path="produtos" element={<Products />} />
-          <Route path="clientes" element={<Customers />} />
-          <Route path="vendas" element={<SalesHistory />} />
-          <Route path="configuracoes" element={<SettingsPage />} />
-        </Route>
+        {/* Catálogo público — acessível sem login (loja para clientes) */}
+        <Route path="/catalogo" element={<Catalog />} />
+
+        {needsLogin ? (
+          <Route path="*" element={<Login />} />
+        ) : (
+          <Route element={<Layout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="pdv" element={<Pos />} />
+            <Route path="produtos" element={<Products />} />
+            <Route path="clientes" element={<Customers />} />
+            <Route path="vendas" element={<SalesHistory />} />
+            <Route path="configuracoes" element={<SettingsPage />} />
+          </Route>
+        )}
       </Routes>
     </Suspense>
   )

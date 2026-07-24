@@ -56,6 +56,18 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
+        <a
+          href={
+            import.meta.env.VITE_HASH_ROUTER === '1'
+              ? `${location.pathname}#/catalogo`
+              : '/catalogo'
+          }
+          target="_blank"
+          rel="noreferrer"
+          className="mx-3 mt-2 flex items-center gap-3 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+        >
+          🛍️ Ver catálogo
+        </a>
         {!isSupabaseConfigured && (
           <div className="mx-3 mt-2 rounded-lg bg-amber-100 p-3 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
             Modo demonstração — dados salvos no navegador. Configure o Supabase para persistir.
