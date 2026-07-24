@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import PageHeader from '../components/PageHeader'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
+import ImageCropper from '../components/ImageCropper'
 import { categoriesRepo, productsRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
@@ -16,6 +17,7 @@ const emptyProduct = (): Product => ({
   cost: 0,
   stock: 0,
   active: true,
+  image: null,
   custom: {},
 })
 
@@ -27,6 +29,8 @@ export default function Products() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [editing, setEditing] = useState<Product | null>(null)
+  const [cropSrc, setCropSrc] = useState<string | null>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
   const [catModal, setCatModal] = useState(false)
   const [newCat, setNewCat] = useState('')
 
@@ -71,6 +75,16 @@ export default function Products() {
     await productsRepo.remove(p.id)
     notify('Produto excluído')
     load()
+  }
+
+  const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // permite re-selecionar o mesmo arquivo
+    if (!file) return
+    if (!file.type.startsWith('image/')) return notify('Selecione um arquivo de imagem', 'error')
+    const reader = new FileReader()
+    reader.onload = () => setCropSrc(reader.result as string)
+    reader.readAsDataURL(file)
   }
 
   const addCategory = async () => {
@@ -128,8 +142,19 @@ export default function Products() {
                 return (
                   <tr key={p.id} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
                     <td className="p-3">
-                      <div className="font-medium">{p.name}</div>
-                      {p.sku && <div className="text-xs text-slate-400">{p.sku}</div>}
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-800 dark:bg-slate-800">
+                          {p.image ? (
+                            <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                          ) : (
+                            '📦'
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-medium">{p.name}</div>
+                          {p.sku && <div className="text-xs text-slate-400">{p.sku}</div>}
+                        </div>
+                      </div>
                     </td>
                     <td className="p-3 text-slate-500">{catName(p.category_id)}</td>
                     <td className="p-3 text-right">{money(p.price)}</td>
@@ -178,6 +203,29 @@ export default function Products() {
       >
         {editing && (
           <div className="grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="label">Imagem</label>
+              <div className="flex items-center gap-4">
+                <div className="flex h-20 w-20 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-300 bg-slate-100 text-2xl text-slate-400 dark:border-slate-700 dark:bg-slate-800">
+                  {editing.image ? (
+                    <img src={editing.image} alt="produto" className="h-full w-full object-cover" />
+                  ) : (
+                    '📦'
+                  )}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
+                  <button type="button" className="btn-ghost border border-slate-300 dark:border-slate-700" onClick={() => fileRef.current?.click()}>
+                    {editing.image ? 'Trocar imagem' : 'Enviar imagem'}
+                  </button>
+                  {editing.image && (
+                    <button type="button" className="btn-ghost text-red-600" onClick={() => setEditing({ ...editing, image: null })}>
+                      Remover
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
             <div className="sm:col-span-2">
               <label className="label">Nome *</label>
               <input className="input" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
@@ -286,6 +334,18 @@ export default function Products() {
           {categories.length === 0 && <li className="text-sm text-slate-400">Nenhuma categoria.</li>}
         </ul>
       </Modal>
+
+      {/* Cropper de imagem */}
+      {cropSrc && editing && (
+        <ImageCropper
+          src={cropSrc}
+          onCancel={() => setCropSrc(null)}
+          onConfirm={(dataUrl) => {
+            setEditing({ ...editing, image: dataUrl })
+            setCropSrc(null)
+          }}
+        />
+      )}
     </div>
   )
 }

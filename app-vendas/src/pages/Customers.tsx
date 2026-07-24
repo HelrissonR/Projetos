@@ -14,6 +14,7 @@ const empty = (): Customer => ({
   email: '',
   phone: '',
   document: '',
+  address: '',
   notes: '',
 })
 
@@ -97,6 +98,7 @@ export default function Customers() {
                     <h3 className="font-semibold">{c.name}</h3>
                     {c.phone && <p className="text-sm text-slate-500">{c.phone}</p>}
                     {c.email && <p className="text-sm text-slate-500">{c.email}</p>}
+                    {c.address && <p className="mt-1 text-xs text-slate-400">📍 {c.address}</p>}
                   </div>
                   <div className="flex gap-1">
                     <button className="btn-ghost px-2 py-1" onClick={() => setViewing(c)}>
@@ -153,6 +155,15 @@ export default function Customers() {
             <div>
               <label className="label">CPF / CNPJ</label>
               <input className="input" value={editing.document ?? ''} onChange={(e) => setEditing({ ...editing, document: e.target.value })} />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="label">Endereço</label>
+              <input
+                className="input"
+                placeholder="Rua, número, bairro, cidade — UF"
+                value={editing.address ?? ''}
+                onChange={(e) => setEditing({ ...editing, address: e.target.value })}
+              />
             </div>
             <div className="sm:col-span-2">
               <label className="label">Observações</label>

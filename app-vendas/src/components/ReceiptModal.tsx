@@ -1,0 +1,68 @@
+import { useEffect, useState } from 'react'
+import Modal from './Modal'
+import { useSettings } from '../context/SettingsContext'
+import {
+  downloadReceiptImage,
+  printReceiptCanvas,
+  renderReceiptCanvas,
+} from '../lib/receipt'
+import type { Sale } from '../types'
+
+/**
+ * Exibe o comprovante da venda no formato BR 3x5 (10x15 cm) com opções de
+ * imprimir ou salvar como imagem.
+ */
+export default function ReceiptModal({ sale, onClose }: { sale: Sale | null; onClose: () => void }) {
+  const { settings } = useSettings()
+  const [preview, setPreview] = useState<string | null>(null)
+  const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null)
+
+  useEffect(() => {
+    if (!sale) {
+      setPreview(null)
+      setCanvas(null)
+      return
+    }
+    const c = renderReceiptCanvas(sale, settings)
+    setCanvas(c)
+    setPreview(c.toDataURL('image/png'))
+  }, [sale, settings])
+
+  return (
+    <Modal
+      open={!!sale}
+      title="Comprovante (BR 3×5)"
+      onClose={onClose}
+      footer={
+        <>
+          <button className="btn-ghost" onClick={onClose}>
+            Fechar
+          </button>
+          <button
+            className="btn-ghost border border-slate-300 dark:border-slate-700"
+            onClick={() => canvas && sale && downloadReceiptImage(canvas, sale)}
+          >
+            🖼️ Salvar imagem
+          </button>
+          <button className="btn-primary" onClick={() => canvas && printReceiptCanvas(canvas, settings)}>
+            🖨️ Imprimir
+          </button>
+        </>
+      }
+    >
+      <div className="flex justify-center">
+        {preview && (
+          <img
+            src={preview}
+            alt="Prévia do comprovante"
+            className="max-h-[60vh] rounded-md border border-slate-200 shadow-sm dark:border-slate-800"
+            style={{ aspectRatio: '2 / 3' }}
+          />
+        )}
+      </div>
+      <p className="mt-3 text-center text-xs text-slate-500">
+        Formato 10×15 cm. Ao imprimir, selecione papel/foto 10×15 (3×5).
+      </p>
+    </Modal>
+  )
+}

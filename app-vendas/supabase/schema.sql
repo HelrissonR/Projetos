@@ -37,6 +37,7 @@ create table if not exists public.products (
   cost numeric(12,2) default 0,
   stock int not null default 0,
   active boolean not null default true,
+  image text,
   custom jsonb not null default '{}',
   created_at timestamptz not null default now()
 );
@@ -48,6 +49,7 @@ create table if not exists public.customers (
   email text,
   phone text,
   document text,
+  address text,
   notes text,
   created_at timestamptz not null default now()
 );
@@ -76,6 +78,10 @@ create table if not exists public.sale_items (
 
 create index if not exists idx_sale_items_sale on public.sale_items(sale_id);
 create index if not exists idx_sales_created on public.sales(created_at);
+
+-- Migrações para bancos criados antes destes campos (idempotentes)
+alter table public.products  add column if not exists image text;
+alter table public.customers add column if not exists address text;
 
 -- ==========================================================================
 -- RLS — habilite e ajuste conforme sua estratégia de autenticação.

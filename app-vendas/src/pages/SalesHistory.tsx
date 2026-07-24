@@ -6,15 +6,16 @@ import { productsRepo, salesRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
 import { dateTime } from '../lib/format'
-import { printReceipt } from '../lib/receipt'
+import ReceiptModal from '../components/ReceiptModal'
 import type { Sale } from '../types'
 
 export default function SalesHistory() {
-  const { money, settings } = useSettings()
+  const { money } = useSettings()
   const notify = useToast()
   const [sales, setSales] = useState<Sale[]>([])
   const [loading, setLoading] = useState(true)
   const [viewing, setViewing] = useState<Sale | null>(null)
+  const [receipt, setReceipt] = useState<Sale | null>(null)
 
   const load = async () => {
     setLoading(true)
@@ -95,8 +96,8 @@ export default function SalesHistory() {
         footer={
           viewing ? (
             <>
-              <button className="btn-ghost border border-slate-300 dark:border-slate-700" onClick={() => printReceipt(viewing, settings)}>
-                🖨️ Imprimir recibo
+              <button className="btn-ghost border border-slate-300 dark:border-slate-700" onClick={() => setReceipt(viewing)}>
+                🧾 Comprovante
               </button>
               {viewing.status === 'completed' && (
                 <button className="btn-danger" onClick={() => cancel(viewing)}>
@@ -139,6 +140,8 @@ export default function SalesHistory() {
           </div>
         )}
       </Modal>
+
+      <ReceiptModal sale={receipt} onClose={() => setReceipt(null)} />
     </div>
   )
 }

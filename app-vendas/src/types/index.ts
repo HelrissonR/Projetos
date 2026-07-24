@@ -38,6 +38,7 @@ export interface Product {
   cost: number | null
   stock: number
   active: boolean
+  image: string | null
   custom: Record<string, unknown>
   created_at?: string
 }
@@ -48,6 +49,7 @@ export interface Customer {
   email: string | null
   phone: string | null
   document: string | null
+  address: string | null
   notes: string | null
   created_at?: string
 }

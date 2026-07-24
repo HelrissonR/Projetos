@@ -4,9 +4,9 @@ import Modal from '../components/Modal'
 import { customersRepo, productsRepo, salesRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
-import { printReceipt } from '../lib/receipt'
+import ReceiptModal from '../components/ReceiptModal'
 import { cartSubtotal, cartTotal, canAddQuantity } from '../lib/cart'
-import type { CartLine, Customer, Product, SaleItem } from '../types'
+import type { CartLine, Customer, Product, SaleItem, Sale } from '../types'
 
 export default function Pos() {
   const { settings, money } = useSettings()
@@ -21,6 +21,7 @@ export default function Pos() {
   const [checkout, setCheckout] = useState(false)
   const [processing, setProcessing] = useState(false)
   const [printOnFinish, setPrintOnFinish] = useState(true)
+  const [receipt, setReceipt] = useState<Sale | null>(null)
 
   const load = async () => {
     const [p, c] = await Promise.all([productsRepo.list(), customersRepo.list()])
@@ -98,7 +99,7 @@ export default function Pos() {
       // Baixa de estoque
       await Promise.all(cart.map((l) => productsRepo.adjustStock(l.product.id, -l.quantity)))
       notify(`Venda finalizada — ${money(total)}`)
-      if (printOnFinish) printReceipt({ ...sale, items }, settings)
+      if (printOnFinish) setReceipt({ ...sale, items })
       setCart([])
       setDiscount(0)
       setCustomerId('')
@@ -133,6 +134,9 @@ export default function Pos() {
                 disabled={p.stock <= 0}
                 className="card flex flex-col items-start text-left transition hover:border-brand disabled:opacity-50"
               >
+                {p.image && (
+                  <img src={p.image} alt={p.name} className="mb-2 h-24 w-full rounded-md object-cover" />
+                )}
                 <span className="font-medium">{p.name}</span>
                 <span className="text-sm text-brand">{money(p.price)}</span>
                 <span className="mt-1 text-xs text-slate-400">{p.stock} em estoque</span>
@@ -244,7 +248,7 @@ export default function Pos() {
           </div>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={printOnFinish} onChange={(e) => setPrintOnFinish(e.target.checked)} />
-            Imprimir recibo ao finalizar
+            Emitir comprovante ao finalizar
           </label>
           <div className="rounded-lg bg-brand-soft p-3 text-center">
             <div className="text-sm text-slate-500">Total a pagar</div>
@@ -252,6 +256,8 @@ export default function Pos() {
           </div>
         </div>
       </Modal>
+
+      <ReceiptModal sale={receipt} onClose={() => setReceipt(null)} />
     </div>
   )
 }
