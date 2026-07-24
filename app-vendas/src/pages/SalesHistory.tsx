@@ -1,0 +1,136 @@
+import { useEffect, useState } from 'react'
+import PageHeader from '../components/PageHeader'
+import Modal from '../components/Modal'
+import EmptyState from '../components/EmptyState'
+import { productsRepo, salesRepo } from '../lib/db'
+import { useSettings } from '../context/SettingsContext'
+import { useToast } from '../context/ToastContext'
+import { dateTime } from '../lib/format'
+import type { Sale } from '../types'
+
+export default function SalesHistory() {
+  const { money } = useSettings()
+  const notify = useToast()
+  const [sales, setSales] = useState<Sale[]>([])
+  const [loading, setLoading] = useState(true)
+  const [viewing, setViewing] = useState<Sale | null>(null)
+
+  const load = async () => {
+    setLoading(true)
+    setSales(await salesRepo.list())
+    setLoading(false)
+  }
+  useEffect(() => {
+    load()
+  }, [])
+
+  const cancel = async (s: Sale) => {
+    if (!confirm('Cancelar esta venda? O estoque será devolvido.')) return
+    await salesRepo.cancel(s.id)
+    // Devolve estoque
+    if (s.items) {
+      await Promise.all(s.items.map((i) => productsRepo.adjustStock(i.product_id, i.quantity)))
+    }
+    notify('Venda cancelada')
+    setViewing(null)
+    load()
+  }
+
+  return (
+    <div>
+      <PageHeader title="Histórico de vendas" subtitle={`${sales.length} venda(s)`} />
+
+      {loading ? (
+        <p className="text-slate-400">Carregando…</p>
+      ) : sales.length === 0 ? (
+        <EmptyState icon="🧾" text="Nenhuma venda registrada ainda." />
+      ) : (
+        <div className="card overflow-x-auto p-0">
+          <table className="w-full text-sm">
+            <thead className="border-b border-slate-200 text-left text-slate-500 dark:border-slate-800">
+              <tr>
+                <th className="p-3">Data</th>
+                <th className="p-3">Cliente</th>
+                <th className="p-3">Pagamento</th>
+                <th className="p-3 text-right">Total</th>
+                <th className="p-3">Status</th>
+                <th className="p-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {sales.map((s) => (
+                <tr key={s.id} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
+                  <td className="p-3">{dateTime(s.created_at)}</td>
+                  <td className="p-3">{s.customer_name ?? 'Consumidor final'}</td>
+                  <td className="p-3 text-slate-500">{s.payment_method}</td>
+                  <td className="p-3 text-right font-medium">{money(s.total)}</td>
+                  <td className="p-3">
+                    <span
+                      className={`badge ${
+                        s.status === 'completed'
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                          : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                      }`}
+                    >
+                      {s.status === 'completed' ? 'Concluída' : 'Cancelada'}
+                    </span>
+                  </td>
+                  <td className="p-3 text-right">
+                    <button className="btn-ghost px-2 py-1" onClick={() => setViewing(s)}>
+                      Ver
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <Modal
+        open={!!viewing}
+        title="Detalhe da venda"
+        onClose={() => setViewing(null)}
+        footer={
+          viewing?.status === 'completed' ? (
+            <button className="btn-danger" onClick={() => cancel(viewing)}>
+              Cancelar venda
+            </button>
+          ) : undefined
+        }
+      >
+        {viewing && (
+          <div className="space-y-3 text-sm">
+            <div className="flex justify-between text-slate-500">
+              <span>{dateTime(viewing.created_at)}</span>
+              <span>{viewing.payment_method}</span>
+            </div>
+            <div>Cliente: {viewing.customer_name ?? 'Consumidor final'}</div>
+            <table className="w-full">
+              <tbody>
+                {viewing.items?.map((i) => (
+                  <tr key={i.id ?? i.product_id} className="border-b border-slate-100 dark:border-slate-800">
+                    <td className="py-2">
+                      {i.quantity}× {i.product_name}
+                    </td>
+                    <td className="py-2 text-right">{money(i.subtotal)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {viewing.discount > 0 && (
+              <div className="flex justify-between text-slate-500">
+                <span>Desconto</span>
+                <span>- {money(viewing.discount)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-lg font-bold">
+              <span>Total</span>
+              <span className="text-brand">{money(viewing.total)}</span>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  )
+}
