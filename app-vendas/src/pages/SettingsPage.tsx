@@ -5,14 +5,14 @@ import { useToast } from '../context/ToastContext'
 import type { CustomFieldDef, PaymentMethod, Settings } from '../types'
 
 const BRAND_PRESETS: { label: string; rgb: string }[] = [
+  { label: 'Preto', rgb: '17 17 17' },
+  { label: 'Grafite', rgb: '51 65 85' },
   { label: 'Índigo', rgb: '79 70 229' },
   { label: 'Esmeralda', rgb: '5 150 105' },
   { label: 'Rosa', rgb: '219 39 119' },
   { label: 'Âmbar', rgb: '217 119 6' },
   { label: 'Azul', rgb: '37 99 235' },
   { label: 'Vermelho', rgb: '220 38 38' },
-  { label: 'Violeta', rgb: '124 58 237' },
-  { label: 'Ciano', rgb: '8 145 178' },
 ]
 
 const CURRENCIES = ['BRL', 'USD', 'EUR', 'GBP', 'ARS']

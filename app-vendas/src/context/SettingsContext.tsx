@@ -15,7 +15,7 @@ export const DEFAULT_SETTINGS: Settings = {
   logo_url: null,
   currency: 'BRL',
   locale: 'pt-BR',
-  brand_color: '79 70 229',
+  brand_color: '17 17 17',
   theme: 'light',
   payment_methods: [
     { id: 'cash', label: 'Dinheiro', enabled: true },
@@ -36,10 +36,22 @@ interface Ctx {
 
 const SettingsContext = createContext<Ctx | null>(null)
 
+function luminance(rgb: string): number {
+  const [r, g, b] = rgb.split(/\s+/).map(Number)
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255
+}
+
 function applyTheme(s: Settings) {
   const root = document.documentElement
-  root.style.setProperty('--brand', s.brand_color)
-  root.classList.toggle('dark', s.theme === 'dark')
+  const isDark = s.theme === 'dark'
+  const lum = luminance(s.brand_color)
+  // Garante contraste do acento contra o fundo: acento escuro no tema escuro
+  // vira claro (e vice-versa), preservando a estética de alto contraste.
+  let brand = s.brand_color
+  if (isDark && lum < 0.3) brand = '245 245 245'
+  else if (!isDark && lum > 0.75) brand = '17 17 17'
+  root.style.setProperty('--brand', brand)
+  root.classList.toggle('dark', isDark)
 }
 
 export function SettingsProvider({ children }: { children: ReactNode }) {

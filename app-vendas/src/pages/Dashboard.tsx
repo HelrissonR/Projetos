@@ -18,7 +18,8 @@ import { useSettings } from '../context/SettingsContext'
 import { dateOnly } from '../lib/format'
 import type { Product, Sale } from '../types'
 
-const PIE_COLORS = ['#4f46e5', '#059669', '#db2777', '#d97706', '#2563eb', '#7c3aed']
+// Escala de cinza para manter a estética monocromática de alto contraste
+const PIE_COLORS = ['#111111', '#404040', '#6b7280', '#9ca3af', '#cbd5e1', '#e2e8f0']
 
 function Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
@@ -43,6 +44,12 @@ export default function Dashboard() {
       setLoading(false)
     })
   }, [])
+
+  // Cor efetiva do acento (já invertida pelo tema via CSS var --brand)
+  const accent = useMemo(() => {
+    const v = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim()
+    return `rgb(${v || settings.brand_color})`
+  }, [settings.theme, settings.brand_color])
 
   const completed = useMemo(() => sales.filter((s) => s.status === 'completed'), [sales])
 
@@ -103,7 +110,7 @@ export default function Dashboard() {
               <XAxis dataKey="dia" fontSize={12} />
               <YAxis fontSize={12} />
               <Tooltip formatter={(v: number) => money(v)} />
-              <Bar dataKey="total" fill={`rgb(${settings.brand_color})`} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="total" fill={accent} radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
