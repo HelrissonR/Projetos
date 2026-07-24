@@ -24,3 +24,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </Router>
   </React.StrictMode>,
 )
+
+// Registro do service worker (PWA). Só em http/https e fora do build single-file.
+if ('serviceWorker' in navigator && location.protocol.startsWith('http') && import.meta.env.VITE_HASH_ROUTER !== '1') {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {})
+  })
+}

@@ -12,6 +12,7 @@ const Products = lazy(() => import('./pages/Products'))
 const Customers = lazy(() => import('./pages/Customers'))
 const SalesHistory = lazy(() => import('./pages/SalesHistory'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const Orders = lazy(() => import('./pages/Orders'))
 const Catalog = lazy(() => import('./pages/Catalog'))
 
 function Loader() {
@@ -38,6 +39,7 @@ export default function App() {
           <Route element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="pdv" element={<Pos />} />
+            <Route path="pedidos" element={<Orders />} />
             <Route path="produtos" element={<Products />} />
             <Route path="clientes" element={<Customers />} />
             <Route path="vendas" element={<SalesHistory />} />

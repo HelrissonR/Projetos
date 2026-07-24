@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { productsRepo } from '../lib/db'
+import { ordersRepo, productsRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
 import { buildOrderMessage, whatsappLink, type OrderContact } from '../lib/whatsapp'
 import { cartSubtotal } from '../lib/cart'
@@ -42,9 +42,38 @@ export default function Catalog() {
   const count = cart.reduce((s, l) => s + l.quantity, 0)
   const subtotal = cartSubtotal(cart)
 
-  const sendOrder = () => {
+  const [sending, setSending] = useState(false)
+
+  const sendOrder = async () => {
+    if (cart.length === 0) return
+    setSending(true)
+    // Abre o WhatsApp imediatamente (evita bloqueio de pop-up por await)
     const msg = buildOrderMessage(cart, settings, contact)
     window.open(whatsappLink(msg, settings.whatsapp_number), '_blank')
+    // Registra o pedido no painel (não bloqueia o envio se falhar)
+    try {
+      await ordersRepo.create({
+        customer_name: contact.name || null,
+        customer_phone: contact.phone || null,
+        customer_address: contact.address || null,
+        note: contact.note || null,
+        items: cart.map((l) => ({
+          product_id: l.product.id,
+          product_name: l.product.name,
+          quantity: l.quantity,
+          unit_price: l.product.price,
+          subtotal: l.product.price * l.quantity,
+        })),
+        total: subtotal,
+        source: 'catalog',
+      })
+    } catch {
+      /* pedido segue pelo WhatsApp mesmo se o registro falhar */
+    }
+    setSending(false)
+    setCart([])
+    setCheckout(false)
+    setContact({})
   }
 
   if (settings.catalog_enabled === false) {
@@ -170,8 +199,8 @@ export default function Catalog() {
             </div>
             <div className="mt-4 flex items-center justify-between">
               <span className="font-bold">Total: {money(subtotal)}</span>
-              <button className="btn-primary" onClick={sendOrder}>
-                Enviar no WhatsApp
+              <button className="btn-primary" onClick={sendOrder} disabled={sending}>
+                {sending ? 'Enviando…' : 'Enviar no WhatsApp'}
               </button>
             </div>
           </div>

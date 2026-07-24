@@ -1,0 +1,55 @@
+name: Build APK (TWA)
+
+# Gera um APK que embrulha a PWA publicada (Trusted Web Activity) usando o
+# Bubblewrap. Rode manualmente (Actions → Build APK → Run workflow) informando
+# a URL onde o app está publicado (ex.: a URL do deploy na Vercel).
+#
+# Requisito: a URL precisa servir /manifest.webmanifest por HTTPS.
+# O APK gerado é de TESTE, assinado com uma chave de debug efêmera.
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'URL pública da PWA (https, sem barra final)'
+        required: true
+        default: 'https://exemplo.vercel.app'
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Instalar Bubblewrap
+        run: npm i -g @bubblewrap/cli
+
+      - name: Gerar keystore de debug
+        run: keytool -genkeypair -alias android -keystore android.keystore -storepass android -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Teste, O=AppVendas, C=BR"
+
+      - name: Inicializar projeto TWA
+        run: |
+          yes "" | bubblewrap init --manifest "${{ github.event.inputs.url }}/manifest.webmanifest" --directory twa || true
+
+      - name: Build do APK
+        working-directory: twa
+        run: |
+          yes "" | bubblewrap build --skipPwaValidation \
+            --signingKeyPath ../android.keystore \
+            --signingKeyAlias android || bubblewrap build --skipPwaValidation
+
+      - name: Publicar APK como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-vendas-apk
+          path: |
+            twa/app-release-signed.apk
+            twa/app-release-unsigned.apk
+            twa/*.apk
+          if-no-files-found: warn

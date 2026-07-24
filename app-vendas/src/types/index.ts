@@ -84,3 +84,24 @@ export interface CartLine {
   product: Product
   quantity: number
 }
+
+export interface OrderItem {
+  product_id: string
+  product_name: string
+  quantity: number
+  unit_price: number
+  subtotal: number
+}
+
+export interface Order {
+  id: string
+  customer_name: string | null
+  customer_phone: string | null
+  customer_address: string | null
+  note: string | null
+  items: OrderItem[]
+  total: number
+  status: 'pending' | 'approved' | 'rejected'
+  source: string // 'catalog'
+  created_at: string
+}

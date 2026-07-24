@@ -82,6 +82,21 @@ create table if not exists public.sale_items (
 create index if not exists idx_sale_items_sale on public.sale_items(sale_id);
 create index if not exists idx_sales_created on public.sales(created_at);
 
+-- Pedidos do catálogo (inseridos por clientes anônimos; itens em jsonb) -------
+create table if not exists public.orders (
+  id uuid primary key default gen_random_uuid(),
+  customer_name text,
+  customer_phone text,
+  customer_address text,
+  note text,
+  items jsonb not null default '[]',
+  total numeric(12,2) not null default 0,
+  status text not null default 'pending',
+  source text not null default 'catalog',
+  created_at timestamptz not null default now()
+);
+create index if not exists idx_orders_status on public.orders(status);
+
 -- Migrações para bancos criados antes destes campos (idempotentes)
 alter table public.products  add column if not exists image text;
 alter table public.customers add column if not exists address text;
@@ -90,26 +105,54 @@ alter table public.settings  add column if not exists catalog_enabled boolean no
 alter table public.settings  add column if not exists catalog_message text not null default '';
 
 -- ==========================================================================
--- RLS — habilite e ajuste conforme sua estratégia de autenticação.
--- As policies abaixo são PERMISSIVAS (acesso público) para uso rápido/demo.
--- Em produção, restrinja por auth.uid() / roles conforme necessário.
+-- RLS — modelo de segurança
+--
+--  • Catálogo público: qualquer visitante (anon) pode LER products,
+--    categories e settings — necessário para o storefront funcionar.
+--  • Pedidos: qualquer visitante pode INSERIR em orders (fazer um pedido),
+--    mas apenas usuários autenticados podem LER/ATUALIZAR.
+--  • Dados sensíveis (customers, sales, sale_items) e toda ESCRITA de
+--    catálogo exigem usuário autenticado (o admin logado).
+--
+--  Ajuste conforme sua necessidade (ex.: multi-loja por auth.uid()).
 -- ==========================================================================
-alter table public.settings       enable row level security;
-alter table public.categories     enable row level security;
-alter table public.products       enable row level security;
-alter table public.customers      enable row level security;
-alter table public.sales          enable row level security;
-alter table public.sale_items     enable row level security;
+alter table public.settings   enable row level security;
+alter table public.categories enable row level security;
+alter table public.products   enable row level security;
+alter table public.customers  enable row level security;
+alter table public.sales      enable row level security;
+alter table public.sale_items enable row level security;
+alter table public.orders     enable row level security;
 
+-- Limpa policies anteriores (idempotente)
 do $$
-declare t text;
+declare t text; p record;
 begin
-  foreach t in array array['settings','categories','products','customers','sales','sale_items']
+  foreach t in array array['settings','categories','products','customers','sales','sale_items','orders']
   loop
-    execute format($f$
-      drop policy if exists "public_all_%1$s" on public.%1$s;
-      create policy "public_all_%1$s" on public.%1$s
-        for all using (true) with check (true);
-    $f$, t);
+    for p in select policyname from pg_policies where schemaname='public' and tablename=t
+    loop
+      execute format('drop policy if exists %I on public.%I', p.policyname, t);
+    end loop;
   end loop;
 end $$;
+
+-- Leitura pública (catálogo)
+create policy "public_read_products"   on public.products   for select using (true);
+create policy "public_read_categories" on public.categories for select using (true);
+create policy "public_read_settings"   on public.settings   for select using (true);
+
+-- Escrita de catálogo/config apenas autenticado
+create policy "auth_write_products"   on public.products   for all to authenticated using (true) with check (true);
+create policy "auth_write_categories" on public.categories for all to authenticated using (true) with check (true);
+create policy "auth_write_settings"   on public.settings   for all to authenticated using (true) with check (true);
+
+-- Dados sensíveis: somente autenticado
+create policy "auth_all_customers"  on public.customers  for all to authenticated using (true) with check (true);
+create policy "auth_all_sales"       on public.sales       for all to authenticated using (true) with check (true);
+create policy "auth_all_sale_items"  on public.sale_items  for all to authenticated using (true) with check (true);
+
+-- Pedidos: insert público (cliente faz pedido); leitura/gestão autenticada
+create policy "public_insert_orders" on public.orders for insert with check (true);
+create policy "auth_read_orders"     on public.orders for select to authenticated using (true);
+create policy "auth_update_orders"   on public.orders for update to authenticated using (true) with check (true);

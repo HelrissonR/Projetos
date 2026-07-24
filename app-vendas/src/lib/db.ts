@@ -2,6 +2,7 @@ import { supabase } from './supabase'
 import type {
   Category,
   Customer,
+  Order,
   Product,
   Sale,
   SaleItem,
@@ -221,6 +222,47 @@ export const salesRepo = {
     if (idx >= 0) {
       list[idx].status = 'canceled'
       lsSet('sales', list)
+    }
+  },
+}
+
+// ---------- Orders (pedidos do catálogo) ----------
+export const ordersRepo = {
+  async list(): Promise<Order[]> {
+    if (useDb()) {
+      const { data } = await supabase!
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false })
+      return (data as Order[]) ?? []
+    }
+    return lsGet<Order[]>('orders', []).sort((a, b) => b.created_at.localeCompare(a.created_at))
+  },
+  // Inserção pública (feita pelo cliente no catálogo)
+  async create(order: Omit<Order, 'id' | 'created_at' | 'status'>): Promise<Order> {
+    if (useDb()) {
+      const { data, error } = await supabase!
+        .from('orders')
+        .insert({ ...order, status: 'pending' })
+        .select()
+        .single()
+      if (error) throw error
+      return data as Order
+    }
+    const rec: Order = { ...order, id: uid(), status: 'pending', created_at: new Date().toISOString() }
+    lsSet('orders', [...lsGet<Order[]>('orders', []), rec])
+    return rec
+  },
+  async setStatus(id: string, status: Order['status']): Promise<void> {
+    if (useDb()) {
+      await supabase!.from('orders').update({ status }).eq('id', id)
+      return
+    }
+    const list = lsGet<Order[]>('orders', [])
+    const idx = list.findIndex((o) => o.id === id)
+    if (idx >= 0) {
+      list[idx].status = status
+      lsSet('orders', list)
     }
   },
 }

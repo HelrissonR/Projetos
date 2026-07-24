@@ -1,12 +1,14 @@
-import { useState } from 'react'
-import { NavLink, Outlet } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useSettings } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
 import { isSupabaseConfigured } from '../lib/supabase'
+import { ordersRepo } from '../lib/db'
 
 const nav = [
   { to: '/', label: 'Dashboard', icon: '📊', end: true },
   { to: '/pdv', label: 'Vendas / PDV', icon: '🛒' },
+  { to: '/pedidos', label: 'Pedidos', icon: '🛎️' },
   { to: '/produtos', label: 'Produtos', icon: '📦' },
   { to: '/clientes', label: 'Clientes', icon: '👥' },
   { to: '/vendas', label: 'Histórico', icon: '🧾' },
@@ -17,6 +19,16 @@ export default function Layout() {
   const { settings } = useSettings()
   const { user, authEnabled, signOut } = useAuth()
   const [open, setOpen] = useState(false)
+  const [pending, setPending] = useState(0)
+  const location = useLocation()
+
+  // Atualiza o contador de pedidos pendentes ao navegar
+  useEffect(() => {
+    ordersRepo
+      .list()
+      .then((os) => setPending(os.filter((o) => o.status === 'pending').length))
+      .catch(() => {})
+  }, [location.pathname])
 
   return (
     <div className="flex min-h-screen">
@@ -52,7 +64,10 @@ export default function Layout() {
               }
             >
               <span>{n.icon}</span>
-              {n.label}
+              <span className="flex-1">{n.label}</span>
+              {n.to === '/pedidos' && pending > 0 && (
+                <span className="badge bg-red-600 text-white">{pending}</span>
+              )}
             </NavLink>
           ))}
         </nav>
