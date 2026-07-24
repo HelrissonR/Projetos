@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useSettings } from '../context/SettingsContext'
+import { useAuth } from '../context/AuthContext'
 import { isSupabaseConfigured } from '../lib/supabase'
 
 const nav = [
@@ -14,6 +15,7 @@ const nav = [
 
 export default function Layout() {
   const { settings } = useSettings()
+  const { user, authEnabled, signOut } = useAuth()
   const [open, setOpen] = useState(false)
 
   return (
@@ -57,6 +59,16 @@ export default function Layout() {
         {!isSupabaseConfigured && (
           <div className="mx-3 mt-2 rounded-lg bg-amber-100 p-3 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
             Modo demonstração — dados salvos no navegador. Configure o Supabase para persistir.
+          </div>
+        )}
+        {authEnabled && user && (
+          <div className="mt-auto border-t border-slate-200 p-3 dark:border-slate-800">
+            <div className="mb-2 truncate px-1 text-xs text-slate-500" title={user.email ?? ''}>
+              {user.email}
+            </div>
+            <button className="btn-ghost w-full justify-start border border-slate-300 dark:border-slate-700" onClick={() => signOut()}>
+              🚪 Sair
+            </button>
           </div>
         )}
       </aside>

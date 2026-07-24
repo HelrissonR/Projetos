@@ -4,6 +4,8 @@ import Modal from '../components/Modal'
 import { customersRepo, productsRepo, salesRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
+import { printReceipt } from '../lib/receipt'
+import { cartSubtotal, cartTotal, canAddQuantity } from '../lib/cart'
 import type { CartLine, Customer, Product, SaleItem } from '../types'
 
 export default function Pos() {
@@ -18,6 +20,7 @@ export default function Pos() {
   const [payment, setPayment] = useState('')
   const [checkout, setCheckout] = useState(false)
   const [processing, setProcessing] = useState(false)
+  const [printOnFinish, setPrintOnFinish] = useState(true)
 
   const load = async () => {
     const [p, c] = await Promise.all([productsRepo.list(), customersRepo.list()])
@@ -40,14 +43,14 @@ export default function Pos() {
     [products, search],
   )
 
-  const subtotal = cart.reduce((s, l) => s + l.product.price * l.quantity, 0)
-  const total = Math.max(0, subtotal - discount)
+  const subtotal = cartSubtotal(cart)
+  const total = cartTotal(cart, discount)
 
   const addToCart = (product: Product) => {
     setCart((c) => {
       const existing = c.find((l) => l.product.id === product.id)
       const inCart = existing?.quantity ?? 0
-      if (inCart + 1 > product.stock) {
+      if (!canAddQuantity(inCart, 1, product.stock)) {
         notify(`Estoque insuficiente de "${product.name}"`, 'error')
         return c
       }
@@ -81,7 +84,7 @@ export default function Pos() {
         unit_price: l.product.price,
         subtotal: l.product.price * l.quantity,
       }))
-      await salesRepo.create(
+      const sale = await salesRepo.create(
         {
           customer_id: customer?.id ?? null,
           customer_name: customer?.name ?? null,
@@ -95,6 +98,7 @@ export default function Pos() {
       // Baixa de estoque
       await Promise.all(cart.map((l) => productsRepo.adjustStock(l.product.id, -l.quantity)))
       notify(`Venda finalizada — ${money(total)}`)
+      if (printOnFinish) printReceipt({ ...sale, items }, settings)
       setCart([])
       setDiscount(0)
       setCustomerId('')
@@ -238,6 +242,10 @@ export default function Pos() {
               ))}
             </div>
           </div>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={printOnFinish} onChange={(e) => setPrintOnFinish(e.target.checked)} />
+            Imprimir recibo ao finalizar
+          </label>
           <div className="rounded-lg bg-brand-soft p-3 text-center">
             <div className="text-sm text-slate-500">Total a pagar</div>
             <div className="text-2xl font-bold text-brand">{money(total)}</div>

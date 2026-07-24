@@ -11,11 +11,28 @@ App web **totalmente personalizável** para vendas e gestão de produtos, constr
 - **Histórico de vendas** — detalhamento e cancelamento com devolução de estoque.
 - **Configurações (personalização)**:
   - Nome e logo da empresa
-  - Cor principal (8 presets) e tema claro/escuro — aplicados em tempo real
+  - Cor principal (presets) e tema claro/escuro — aplicados em tempo real
   - Moeda e locale
   - Formas de pagamento configuráveis
   - Campos personalizados de produto (texto, número, sim/não)
   - Limite de estoque baixo
+- **Autenticação** — login/cadastro por e-mail e senha via Supabase Auth. Quando o Supabase não está configurado, o app roda sem login (modo demo).
+- **Recibo / impressão** — cupom imprimível (estilo 58/80mm) no histórico e opcionalmente ao finalizar a venda.
+
+## 🧪 Testes
+
+```bash
+npm run test        # roda os testes uma vez (Vitest)
+npm run test:watch  # modo watch
+```
+
+Cobrem a formatação monetária e os cálculos do carrinho (`src/lib`).
+
+## ⚡ Performance
+
+O bundle é dividido por rota (React.lazy) e os vendors grandes (`recharts`,
+`@supabase/supabase-js`) ficam em chunks separados — o carregamento inicial
+baixa apenas o essencial e cada página é buscada sob demanda.
 
 ## 🚀 Como rodar
 
