@@ -1,6 +1,8 @@
 node_modules
 dist
 dist-win
+android
+ios
 dist-single
 .env
 .env.local

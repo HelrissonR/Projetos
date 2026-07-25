@@ -1,0 +1,55 @@
+name: Build APK Offline (Capacitor)
+
+# Gera um APK que embute o app (assets locais) e roda 100% OFFLINE, em modo
+# demonstração (dados salvos no proprio aparelho, sem depender de internet).
+#
+# Dispara automaticamente quando o commit na branch de vendas contém "[apk]".
+# O APK fica em Actions → run → Artifacts → "app-vendas-apk-offline".
+
+on:
+  push:
+    branches: ['claude/sales-product-management-app-u2q1tm']
+
+jobs:
+  apk:
+    if: contains(github.event.head_commit.message, '[apk]')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app-vendas
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app-vendas/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build web (modo offline/demo)
+        run: npm run build:offline
+
+      - name: Adicionar plataforma Android
+        run: npx cap add android
+
+      - name: Sincronizar assets
+        run: npx cap sync android
+
+      - name: Compilar APK de debug
+        working-directory: app-vendas/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: Publicar APK como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-vendas-apk-offline
+          path: app-vendas/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
