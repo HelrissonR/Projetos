@@ -31,11 +31,20 @@ function Kpi({ label, value, hint }: { label: string; value: string; hint?: stri
   )
 }
 
+type Period = 'today' | '7d' | '30d' | 'all'
+const PERIODS: { id: Period; label: string; days: number }[] = [
+  { id: 'today', label: 'Hoje', days: 1 },
+  { id: '7d', label: '7 dias', days: 7 },
+  { id: '30d', label: '30 dias', days: 30 },
+  { id: 'all', label: 'Tudo', days: 0 },
+]
+
 export default function Dashboard() {
   const { settings, money } = useSettings()
   const [sales, setSales] = useState<Sale[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [period, setPeriod] = useState<Period>('30d')
 
   useEffect(() => {
     Promise.all([salesRepo.list(), productsRepo.list()]).then(([s, p]) => {
@@ -51,17 +60,52 @@ export default function Dashboard() {
     return `rgb(${v || settings.brand_color})`
   }, [settings.theme, settings.brand_color])
 
-  const completed = useMemo(() => sales.filter((s) => s.status === 'completed'), [sales])
+  // Custo por produto (para estimar o lucro)
+  const costOf = useMemo(() => {
+    const m = new Map<string, number>()
+    products.forEach((p) => m.set(p.id, p.cost ?? 0))
+    return m
+  }, [products])
+
+  // Início do período selecionado
+  const since = useMemo(() => {
+    const days = PERIODS.find((p) => p.id === period)!.days
+    if (days === 0) return 0
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    d.setDate(d.getDate() - (days - 1))
+    return d.getTime()
+  }, [period])
+
+  const completed = useMemo(
+    () =>
+      sales.filter((s) => s.status === 'completed' && new Date(s.created_at).getTime() >= since),
+    [sales, since],
+  )
 
   const revenue = completed.reduce((s, x) => s + x.total, 0)
   const ticket = completed.length ? revenue / completed.length : 0
   const stockValue = products.reduce((s, p) => s + p.price * p.stock, 0)
   const lowStock = products.filter((p) => p.stock <= settings.low_stock_threshold)
 
-  // Faturamento por dia (últimos 7 dias)
+  // Lucro estimado = (preço de venda - custo atual) por item vendido, menos descontos
+  const profit = useMemo(() => {
+    let gross = 0
+    let discount = 0
+    completed.forEach((s) => {
+      discount += s.discount || 0
+      s.items?.forEach((i) => {
+        gross += (i.unit_price - (costOf.get(i.product_id) ?? 0)) * i.quantity
+      })
+    })
+    return gross - discount
+  }, [completed, costOf])
+
+  // Faturamento por dia dentro do período (mín. 7 barras para leitura)
   const daily = useMemo(() => {
+    const n = period === 'all' ? 30 : Math.max(PERIODS.find((p) => p.id === period)!.days, 7)
     const map = new Map<string, number>()
-    for (let i = 6; i >= 0; i--) {
+    for (let i = n - 1; i >= 0; i--) {
       const d = new Date()
       d.setDate(d.getDate() - i)
       map.set(d.toISOString().slice(0, 10), 0)
@@ -74,7 +118,7 @@ export default function Dashboard() {
       dia: dateOnly(date, settings.locale).slice(0, 5),
       total,
     }))
-  }, [completed, settings.locale])
+  }, [completed, settings.locale, period])
 
   // Top produtos
   const topProducts = useMemo(() => {
@@ -92,18 +136,35 @@ export default function Dashboard() {
 
   return (
     <div>
-      <PageHeader title="Dashboard" subtitle="Visão geral do seu negócio" />
+      <PageHeader
+        title="Dashboard"
+        subtitle="Visão geral do seu negócio"
+        action={
+          <div className="flex overflow-hidden rounded-lg border border-slate-300 text-sm dark:border-slate-700">
+            {PERIODS.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => setPeriod(p.id)}
+                className={`px-3 py-1.5 ${period === p.id ? 'bg-brand text-white dark:text-black' : 'bg-transparent text-slate-600 dark:text-slate-300'}`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        }
+      />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Kpi label="Faturamento total" value={money(revenue)} hint={`${completed.length} venda(s)`} />
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <Kpi label="Faturamento" value={money(revenue)} hint={`${completed.length} venda(s)`} />
+        <Kpi label="Lucro estimado" value={money(profit)} hint="preço − custo atual" />
         <Kpi label="Ticket médio" value={money(ticket)} />
         <Kpi label="Valor em estoque" value={money(stockValue)} hint={`${products.length} produto(s)`} />
-        <Kpi label="Estoque baixo" value={String(lowStock.length)} hint="produtos abaixo do limite" />
+        <Kpi label="Estoque baixo" value={String(lowStock.length)} hint="abaixo do limite" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="card">
-          <h2 className="mb-4 font-semibold">Faturamento — últimos 7 dias</h2>
+          <h2 className="mb-4 font-semibold">Faturamento por dia</h2>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={daily}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />

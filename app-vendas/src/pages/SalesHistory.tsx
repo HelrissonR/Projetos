@@ -5,12 +5,13 @@ import EmptyState from '../components/EmptyState'
 import { productsRepo, salesRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
-import { dateTime } from '../lib/format'
+import { dateTime, money as fmtMoney } from '../lib/format'
+import { downloadCsv } from '../lib/csv'
 import ReceiptModal from '../components/ReceiptModal'
 import type { Sale } from '../types'
 
 export default function SalesHistory() {
-  const { money } = useSettings()
+  const { money, settings } = useSettings()
   const notify = useToast()
   const [sales, setSales] = useState<Sale[]>([])
   const [loading, setLoading] = useState(true)
@@ -38,9 +39,31 @@ export default function SalesHistory() {
     load()
   }
 
+  const exportCsv = () => {
+    const rows = sales.map((s) => ({
+      data: dateTime(s.created_at, settings.locale),
+      cliente: s.customer_name ?? 'Consumidor final',
+      pagamento: s.payment_method,
+      itens: (s.items ?? []).map((i) => `${i.quantity}x ${i.product_name}`).join(' | '),
+      desconto: fmtMoney(s.discount, settings.currency, settings.locale),
+      total: fmtMoney(s.total, settings.currency, settings.locale),
+      status: s.status === 'completed' ? 'Concluída' : 'Cancelada',
+    }))
+    if (rows.length === 0) return notify('Nada para exportar', 'error')
+    downloadCsv(`vendas-${new Date().toISOString().slice(0, 10)}.csv`, rows)
+  }
+
   return (
     <div>
-      <PageHeader title="Histórico de vendas" subtitle={`${sales.length} venda(s)`} />
+      <PageHeader
+        title="Histórico de vendas"
+        subtitle={`${sales.length} venda(s)`}
+        action={
+          <button className="btn-ghost border border-slate-300 dark:border-slate-700" onClick={exportCsv}>
+            ⬇️ Exportar CSV
+          </button>
+        }
+      />
 
       {loading ? (
         <p className="text-slate-400">Carregando…</p>
