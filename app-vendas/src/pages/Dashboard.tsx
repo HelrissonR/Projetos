@@ -24,10 +24,10 @@ const PIE_COLORS = ['#111111', '#404040', '#6b7280', '#9ca3af', '#cbd5e1', '#e2e
 
 function Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="card">
-      <div className="text-sm text-slate-500">{label}</div>
-      <div className="mt-1 text-2xl font-bold">{value}</div>
-      {hint && <div className="mt-1 text-xs text-slate-400">{hint}</div>}
+    <div className="card p-4">
+      <div className="truncate text-xs text-slate-500 sm:text-sm">{label}</div>
+      <div className="mt-1 text-xl font-bold sm:text-2xl">{value}</div>
+      {hint && <div className="mt-1 truncate text-[11px] text-slate-400 sm:text-xs">{hint}</div>}
     </div>
   )
 }
@@ -155,7 +155,7 @@ export default function Dashboard() {
         }
       />
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5">
         <Kpi label="Faturamento" value={money(revenue)} hint={`${completed.length} venda(s)`} />
         <Kpi label="Lucro estimado" value={money(profit)} hint="preço − custo atual" />
         <Kpi label="Ticket médio" value={money(ticket)} />

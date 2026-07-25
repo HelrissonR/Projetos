@@ -126,40 +126,25 @@ export default function Products() {
       ) : filtered.length === 0 ? (
         <EmptyState icon={<IconBox />} text="Nenhum produto encontrado. Cadastre o primeiro!" />
       ) : (
-        <div className="card overflow-x-auto p-0">
-          <table className="w-full text-sm">
-            <thead className="border-b border-slate-200 text-left text-slate-500 dark:border-slate-800">
-              <tr>
-                <th className="p-3">Produto</th>
-                <th className="p-3">Categoria</th>
-                <th className="p-3 text-right">Preço</th>
-                <th className="p-3 text-right">Estoque</th>
-                <th className="p-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((p) => {
-                const low = p.stock <= settings.low_stock_threshold
-                return (
-                  <tr key={p.id} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
-                    <td className="p-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-800 dark:bg-slate-800">
-                          {p.image ? (
-                            <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
-                          ) : (
-                            <IconBox />
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-medium">{p.name}</div>
-                          {p.sku && <div className="text-xs text-slate-400">{p.sku}</div>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-3 text-slate-500">{catName(p.category_id)}</td>
-                    <td className="p-3 text-right">{money(p.price)}</td>
-                    <td className="p-3 text-right">
+        <>
+          {/* Mobile: cartões */}
+          <div className="grid gap-3 sm:grid-cols-2 md:hidden">
+            {filtered.map((p) => {
+              const low = p.stock <= settings.low_stock_threshold
+              return (
+                <div key={p.id} className="card flex items-center gap-3 p-3">
+                  <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-800 dark:bg-slate-800">
+                    {p.image ? (
+                      <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <IconBox />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium">{p.name}</div>
+                    <div className="text-xs text-slate-400">{catName(p.category_id)}</div>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="font-semibold">{money(p.price)}</span>
                       <span
                         className={`badge ${
                           low
@@ -169,21 +154,81 @@ export default function Products() {
                       >
                         {p.stock} un
                       </span>
-                    </td>
-                    <td className="p-3 text-right">
-                      <button className="btn-ghost px-2 py-1" onClick={() => setEditing(p)} aria-label="Editar">
-                        <IconEdit />
-                      </button>
-                      <button className="btn-ghost px-2 py-1 text-red-600" onClick={() => remove(p)} aria-label="Excluir">
-                        <IconTrash />
-                      </button>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <button className="btn-ghost px-2 py-1" onClick={() => setEditing(p)} aria-label="Editar">
+                      <IconEdit />
+                    </button>
+                    <button className="btn-ghost px-2 py-1 text-red-600" onClick={() => remove(p)} aria-label="Excluir">
+                      <IconTrash />
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Desktop: tabela */}
+          <div className="card hidden overflow-x-auto p-0 md:block">
+            <table className="w-full text-sm">
+              <thead className="border-b border-slate-200 text-left text-slate-500 dark:border-slate-800">
+                <tr>
+                  <th className="p-3">Produto</th>
+                  <th className="p-3">Categoria</th>
+                  <th className="p-3 text-right">Preço</th>
+                  <th className="p-3 text-right">Estoque</th>
+                  <th className="p-3"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((p) => {
+                  const low = p.stock <= settings.low_stock_threshold
+                  return (
+                    <tr key={p.id} className="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900/50">
+                      <td className="p-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-800 dark:bg-slate-800">
+                            {p.image ? (
+                              <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                            ) : (
+                              <IconBox />
+                            )}
+                          </div>
+                          <div>
+                            <div className="font-medium">{p.name}</div>
+                            {p.sku && <div className="text-xs text-slate-400">{p.sku}</div>}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-3 text-slate-500">{catName(p.category_id)}</td>
+                      <td className="p-3 text-right">{money(p.price)}</td>
+                      <td className="p-3 text-right">
+                        <span
+                          className={`badge ${
+                            low
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                              : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300'
+                          }`}
+                        >
+                          {p.stock} un
+                        </span>
+                      </td>
+                      <td className="p-3 text-right">
+                        <button className="btn-ghost px-2 py-1" onClick={() => setEditing(p)} aria-label="Editar">
+                          <IconEdit />
+                        </button>
+                        <button className="btn-ghost px-2 py-1 text-red-600" onClick={() => remove(p)} aria-label="Excluir">
+                          <IconTrash />
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Modal produto */}

@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react'
 import { Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
+import BackHandler from './components/BackHandler'
 import Login from './pages/Login'
 import { useSettings } from './context/SettingsContext'
 import { useAuth } from './context/AuthContext'
@@ -29,6 +30,7 @@ export default function App() {
 
   return (
     <Suspense fallback={<Loader />}>
+      <BackHandler />
       <Routes>
         {/* Catálogo público — acessível sem login (loja para clientes) */}
         <Route path="/catalogo" element={<Catalog />} />

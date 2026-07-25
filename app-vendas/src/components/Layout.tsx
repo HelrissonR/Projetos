@@ -113,19 +113,22 @@ export default function Layout() {
       </aside>
 
       {open && (
-        <div className="fixed inset-0 z-20 bg-black/40 md:hidden" onClick={() => setOpen(false)} />
+        <div className="anim-fade fixed inset-0 z-20 bg-black/40 md:hidden" onClick={() => setOpen(false)} />
       )}
 
       {/* Main */}
-      <div className="flex flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex items-center gap-3 border-b border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 md:hidden">
-          <button className="btn-ghost px-2 py-1" onClick={() => setOpen(true)}>
+          <button className="btn-ghost px-2 py-1 text-xl" onClick={() => setOpen(true)} aria-label="Menu">
             ☰
           </button>
-          <span className="font-semibold">{settings.company_name}</span>
+          <span className="truncate font-semibold">{settings.company_name}</span>
         </header>
-        <main className="flex-1 p-4 md:p-8">
-          <Outlet />
+        <main className="min-w-0 flex-1 p-4 md:p-8">
+          {/* key por rota re-dispara a animação de entrada da página */}
+          <div key={location.pathname} className="anim-page">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

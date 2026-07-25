@@ -12,9 +12,14 @@ interface Props {
 export default function Modal({ open, title, onClose, children, footer, wide }: Props) {
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+    <div
+      className="anim-fade fixed inset-0 z-40 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4"
+      onClick={onClose}
+    >
       <div
-        className={`card w-full ${wide ? 'max-w-3xl' : 'max-w-lg'} max-h-[90vh] overflow-y-auto`}
+        className={`card anim-sheet w-full rounded-b-none sm:anim-pop sm:rounded-b-lg ${
+          wide ? 'sm:max-w-3xl' : 'sm:max-w-lg'
+        } max-h-[92vh] overflow-y-auto`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -24,7 +29,9 @@ export default function Modal({ open, title, onClose, children, footer, wide }: 
           </button>
         </div>
         <div>{children}</div>
-        {footer && <div className="mt-6 flex justify-end gap-2">{footer}</div>}
+        {footer && (
+          <div className="mt-6 flex flex-wrap justify-end gap-2">{footer}</div>
+        )}
       </div>
     </div>
   )
