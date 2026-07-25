@@ -31,6 +31,16 @@ function uid() {
   return crypto.randomUUID()
 }
 
+// Remove id vazio antes de enviar ao banco (Postgres gera o UUID no insert).
+// Também normaliza strings vazias de chaves estrangeiras opcionais para null.
+function forDb<T extends { id?: string; category_id?: string | null; customer_id?: string | null }>(rec: T) {
+  const out: Record<string, unknown> = { ...rec }
+  if (!out.id) delete out.id
+  if (out.category_id === '') out.category_id = null
+  if (out.customer_id === '') out.customer_id = null
+  return out
+}
+
 const useDb = () => supabase !== null
 
 // ---------- Settings ----------
@@ -103,7 +113,7 @@ export const productsRepo = {
   },
   async save(p: Product): Promise<Product> {
     if (useDb()) {
-      const { data, error } = await supabase!.from('products').upsert(p).select().single()
+      const { data, error } = await supabase!.from('products').upsert(forDb(p)).select().single()
       if (error) throw error
       return data as Product
     }
@@ -149,7 +159,7 @@ export const customersRepo = {
   },
   async save(c: Customer): Promise<Customer> {
     if (useDb()) {
-      const { data, error } = await supabase!.from('customers').upsert(c).select().single()
+      const { data, error } = await supabase!.from('customers').upsert(forDb(c)).select().single()
       if (error) throw error
       return data as Customer
     }
