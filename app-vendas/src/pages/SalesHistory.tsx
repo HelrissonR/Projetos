@@ -8,6 +8,7 @@ import { useToast } from '../context/ToastContext'
 import { dateTime, money as fmtMoney } from '../lib/format'
 import { downloadCsv } from '../lib/csv'
 import ReceiptModal from '../components/ReceiptModal'
+import { IconReceipt, IconDownload } from '../components/icons'
 import type { Sale } from '../types'
 
 export default function SalesHistory() {
@@ -60,7 +61,7 @@ export default function SalesHistory() {
         subtitle={`${sales.length} venda(s)`}
         action={
           <button className="btn-ghost border border-slate-300 dark:border-slate-700" onClick={exportCsv}>
-            ⬇️ Exportar CSV
+            <IconDownload /> Exportar CSV
           </button>
         }
       />
@@ -68,7 +69,7 @@ export default function SalesHistory() {
       {loading ? (
         <p className="text-slate-400">Carregando…</p>
       ) : sales.length === 0 ? (
-        <EmptyState icon="🧾" text="Nenhuma venda registrada ainda." />
+        <EmptyState icon={<IconReceipt />} text="Nenhuma venda registrada ainda." />
       ) : (
         <div className="card overflow-x-auto p-0">
           <table className="w-full text-sm">
@@ -120,7 +121,7 @@ export default function SalesHistory() {
           viewing ? (
             <>
               <button className="btn-ghost border border-slate-300 dark:border-slate-700" onClick={() => setReceipt(viewing)}>
-                🧾 Comprovante
+                <IconReceipt /> Comprovante
               </button>
               {viewing.status === 'completed' && (
                 <button className="btn-danger" onClick={() => cancel(viewing)}>

@@ -16,6 +16,7 @@ import PageHeader from '../components/PageHeader'
 import { productsRepo, salesRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
 import { dateOnly } from '../lib/format'
+import { IconWarning } from '../components/icons'
 import type { Product, Sale } from '../types'
 
 // Escala de cinza para manter a estética monocromática de alto contraste
@@ -198,7 +199,7 @@ export default function Dashboard() {
 
       {lowStock.length > 0 && (
         <div className="card mt-6">
-          <h2 className="mb-3 font-semibold text-red-600">⚠️ Produtos com estoque baixo</h2>
+          <h2 className="mb-3 flex items-center gap-2 font-semibold text-red-600"><IconWarning /> Produtos com estoque baixo</h2>
           <div className="flex flex-wrap gap-2">
             {lowStock.map((p) => (
               <span key={p.id} className="badge bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">

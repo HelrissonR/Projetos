@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import PageHeader from '../components/PageHeader'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
+import { IconUsers, IconEdit, IconTrash, IconReceipt, IconPlus, IconPin } from '../components/icons'
 import { customersRepo, salesRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
@@ -70,7 +71,7 @@ export default function Customers() {
         subtitle={`${customers.length} cliente(s)`}
         action={
           <button className="btn-primary" onClick={() => setEditing(empty())}>
-            + Novo cliente
+            <IconPlus /> Novo cliente
           </button>
         }
       />
@@ -85,7 +86,7 @@ export default function Customers() {
       {loading ? (
         <p className="text-slate-400">Carregando…</p>
       ) : filtered.length === 0 ? (
-        <EmptyState icon="👥" text="Nenhum cliente cadastrado." />
+        <EmptyState icon={<IconUsers />} text="Nenhum cliente cadastrado." />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((c) => {
@@ -98,17 +99,21 @@ export default function Customers() {
                     <h3 className="font-semibold">{c.name}</h3>
                     {c.phone && <p className="text-sm text-slate-500">{c.phone}</p>}
                     {c.email && <p className="text-sm text-slate-500">{c.email}</p>}
-                    {c.address && <p className="mt-1 text-xs text-slate-400">📍 {c.address}</p>}
+                    {c.address && (
+                      <p className="mt-1 flex items-center gap-1 text-xs text-slate-400">
+                        <IconPin className="h-3.5 w-3.5" /> {c.address}
+                      </p>
+                    )}
                   </div>
                   <div className="flex gap-1">
-                    <button className="btn-ghost px-2 py-1" onClick={() => setViewing(c)}>
-                      🧾
+                    <button className="btn-ghost px-2 py-1" onClick={() => setViewing(c)} aria-label="Histórico">
+                      <IconReceipt />
                     </button>
-                    <button className="btn-ghost px-2 py-1" onClick={() => setEditing(c)}>
-                      ✏️
+                    <button className="btn-ghost px-2 py-1" onClick={() => setEditing(c)} aria-label="Editar">
+                      <IconEdit />
                     </button>
-                    <button className="btn-ghost px-2 py-1 text-red-600" onClick={() => remove(c)}>
-                      🗑️
+                    <button className="btn-ghost px-2 py-1 text-red-600" onClick={() => remove(c)} aria-label="Excluir">
+                      <IconTrash />
                     </button>
                   </div>
                 </div>

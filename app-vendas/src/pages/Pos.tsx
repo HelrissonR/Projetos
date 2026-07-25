@@ -5,6 +5,7 @@ import { customersRepo, productsRepo, salesRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
 import ReceiptModal from '../components/ReceiptModal'
+import { IconCart } from '../components/icons'
 import { cartSubtotal, cartTotal, canAddQuantity } from '../lib/cart'
 import type { CartLine, Customer, Product, SaleItem, Sale } from '../types'
 
@@ -148,7 +149,7 @@ export default function Pos() {
 
         {/* Carrinho */}
         <div className="card sticky top-4 h-fit">
-          <h2 className="mb-3 font-semibold">🛒 Carrinho</h2>
+          <h2 className="mb-3 flex items-center gap-2 font-semibold"><IconCart /> Carrinho</h2>
           {cart.length === 0 ? (
             <p className="text-sm text-slate-400">Carrinho vazio.</p>
           ) : (

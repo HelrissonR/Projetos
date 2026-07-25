@@ -3,6 +3,7 @@ import PageHeader from '../components/PageHeader'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
 import ImageCropper from '../components/ImageCropper'
+import { IconBox, IconEdit, IconTrash, IconPlus } from '../components/icons'
 import { categoriesRepo, productsRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
@@ -107,7 +108,7 @@ export default function Products() {
               Categorias
             </button>
             <button className="btn-primary" onClick={() => setEditing(emptyProduct())}>
-              + Novo produto
+              <IconPlus /> Novo produto
             </button>
           </div>
         }
@@ -123,7 +124,7 @@ export default function Products() {
       {loading ? (
         <p className="text-slate-400">Carregando…</p>
       ) : filtered.length === 0 ? (
-        <EmptyState icon="📦" text="Nenhum produto encontrado. Cadastre o primeiro!" />
+        <EmptyState icon={<IconBox />} text="Nenhum produto encontrado. Cadastre o primeiro!" />
       ) : (
         <div className="card overflow-x-auto p-0">
           <table className="w-full text-sm">
@@ -147,7 +148,7 @@ export default function Products() {
                           {p.image ? (
                             <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
                           ) : (
-                            '📦'
+                            <IconBox />
                           )}
                         </div>
                         <div>
@@ -170,11 +171,11 @@ export default function Products() {
                       </span>
                     </td>
                     <td className="p-3 text-right">
-                      <button className="btn-ghost px-2 py-1" onClick={() => setEditing(p)}>
-                        ✏️
+                      <button className="btn-ghost px-2 py-1" onClick={() => setEditing(p)} aria-label="Editar">
+                        <IconEdit />
                       </button>
-                      <button className="btn-ghost px-2 py-1 text-red-600" onClick={() => remove(p)}>
-                        🗑️
+                      <button className="btn-ghost px-2 py-1 text-red-600" onClick={() => remove(p)} aria-label="Excluir">
+                        <IconTrash />
                       </button>
                     </td>
                   </tr>
@@ -210,7 +211,7 @@ export default function Products() {
                   {editing.image ? (
                     <img src={editing.image} alt="produto" className="h-full w-full object-cover" />
                   ) : (
-                    '📦'
+                    <IconBox />
                   )}
                 </div>
                 <div className="flex flex-col gap-2">

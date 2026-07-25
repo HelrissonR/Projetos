@@ -6,6 +6,7 @@ import {
   printReceiptCanvas,
   renderReceiptCanvas,
 } from '../lib/receipt'
+import { IconImage, IconPrinter } from './icons'
 import type { Sale } from '../types'
 
 /**
@@ -42,10 +43,10 @@ export default function ReceiptModal({ sale, onClose }: { sale: Sale | null; onC
             className="btn-ghost border border-slate-300 dark:border-slate-700"
             onClick={() => canvas && sale && downloadReceiptImage(canvas, sale)}
           >
-            🖼️ Salvar imagem
+            <IconImage /> Salvar imagem
           </button>
           <button className="btn-primary" onClick={() => canvas && printReceiptCanvas(canvas, settings)}>
-            🖨️ Imprimir
+            <IconPrinter /> Imprimir
           </button>
         </>
       }

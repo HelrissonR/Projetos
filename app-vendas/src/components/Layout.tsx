@@ -4,15 +4,27 @@ import { useSettings } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { ordersRepo } from '../lib/db'
+import {
+  IconDashboard,
+  IconCart,
+  IconBell,
+  IconBox,
+  IconUsers,
+  IconReceipt,
+  IconSettings,
+  IconStore,
+  IconLogout,
+} from './icons'
+import type { ComponentType, SVGProps } from 'react'
 
-const nav = [
-  { to: '/', label: 'Dashboard', icon: '📊', end: true },
-  { to: '/pdv', label: 'Vendas / PDV', icon: '🛒' },
-  { to: '/pedidos', label: 'Pedidos', icon: '🛎️' },
-  { to: '/produtos', label: 'Produtos', icon: '📦' },
-  { to: '/clientes', label: 'Clientes', icon: '👥' },
-  { to: '/vendas', label: 'Histórico', icon: '🧾' },
-  { to: '/configuracoes', label: 'Configurações', icon: '⚙️' },
+const nav: { to: string; label: string; Icon: ComponentType<SVGProps<SVGSVGElement>>; end?: boolean }[] = [
+  { to: '/', label: 'Dashboard', Icon: IconDashboard, end: true },
+  { to: '/pdv', label: 'Vendas / PDV', Icon: IconCart },
+  { to: '/pedidos', label: 'Pedidos', Icon: IconBell },
+  { to: '/produtos', label: 'Produtos', Icon: IconBox },
+  { to: '/clientes', label: 'Clientes', Icon: IconUsers },
+  { to: '/vendas', label: 'Histórico', Icon: IconReceipt },
+  { to: '/configuracoes', label: 'Configurações', Icon: IconSettings },
 ]
 
 export default function Layout() {
@@ -63,7 +75,7 @@ export default function Layout() {
                 }`
               }
             >
-              <span>{n.icon}</span>
+              <n.Icon />
               <span className="flex-1">{n.label}</span>
               {n.to === '/pedidos' && pending > 0 && (
                 <span className="badge bg-red-600 text-white">{pending}</span>
@@ -81,7 +93,7 @@ export default function Layout() {
           rel="noreferrer"
           className="mx-3 mt-2 flex items-center gap-3 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
         >
-          🛍️ Ver catálogo
+          <IconStore /> Ver catálogo
         </a>
         {!isSupabaseConfigured && (
           <div className="mx-3 mt-2 rounded-lg bg-amber-100 p-3 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
@@ -94,7 +106,7 @@ export default function Layout() {
               {user.email}
             </div>
             <button className="btn-ghost w-full justify-start border border-slate-300 dark:border-slate-700" onClick={() => signOut()}>
-              🚪 Sair
+              <IconLogout /> Sair
             </button>
           </div>
         )}

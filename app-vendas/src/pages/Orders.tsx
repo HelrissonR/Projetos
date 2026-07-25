@@ -5,6 +5,7 @@ import { ordersRepo, productsRepo, salesRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
 import { dateTime } from '../lib/format'
+import { IconBell, IconPhone, IconPin, IconNote } from '../components/icons'
 import type { Order } from '../types'
 
 const STATUS_LABEL: Record<Order['status'], string> = {
@@ -86,7 +87,7 @@ export default function Orders() {
       {loading ? (
         <p className="text-slate-400">Carregando…</p>
       ) : orders.length === 0 ? (
-        <EmptyState icon="🛎️" text="Nenhum pedido recebido pelo catálogo ainda." />
+        <EmptyState icon={<IconBell />} text="Nenhum pedido recebido pelo catálogo ainda." />
       ) : (
         <div className="space-y-3">
           {orders.map((o) => (
@@ -98,9 +99,21 @@ export default function Orders() {
                     <span className={`badge ${STATUS_CLASS[o.status]}`}>{STATUS_LABEL[o.status]}</span>
                   </div>
                   <div className="mt-0.5 text-xs text-slate-400">{dateTime(o.created_at)}</div>
-                  {o.customer_phone && <div className="text-sm text-slate-500">📞 {o.customer_phone}</div>}
-                  {o.customer_address && <div className="text-sm text-slate-500">📍 {o.customer_address}</div>}
-                  {o.note && <div className="text-sm text-slate-500">📝 {o.note}</div>}
+                  {o.customer_phone && (
+                    <div className="flex items-center gap-1.5 text-sm text-slate-500">
+                      <IconPhone className="h-4 w-4" /> {o.customer_phone}
+                    </div>
+                  )}
+                  {o.customer_address && (
+                    <div className="flex items-center gap-1.5 text-sm text-slate-500">
+                      <IconPin className="h-4 w-4" /> {o.customer_address}
+                    </div>
+                  )}
+                  {o.note && (
+                    <div className="flex items-center gap-1.5 text-sm text-slate-500">
+                      <IconNote className="h-4 w-4" /> {o.note}
+                    </div>
+                  )}
                 </div>
                 <div className="text-right">
                   <div className="text-lg font-bold text-brand">{money(o.total)}</div>
