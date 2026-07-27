@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import PageHeader from '../components/PageHeader'
+import ImageCropper from '../components/ImageCropper'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
 import type { CustomFieldDef, PaymentMethod, Settings } from '../types'
@@ -29,9 +30,21 @@ export default function SettingsPage() {
   const notify = useToast()
   const [form, setForm] = useState<Settings>(settings)
   const [saving, setSaving] = useState(false)
+  const [cropSrc, setCropSrc] = useState<string | null>(null)
+  const logoFileRef = useRef<HTMLInputElement>(null)
 
   const set = <K extends keyof Settings>(key: K, value: Settings[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
+
+  const onPickLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (!file.type.startsWith('image/')) return notify('Selecione um arquivo de imagem', 'error')
+    const reader = new FileReader()
+    reader.onload = () => setCropSrc(reader.result as string)
+    reader.readAsDataURL(file)
+  }
 
   const submit = async () => {
     setSaving(true)
@@ -92,13 +105,35 @@ export default function SettingsPage() {
             />
           </div>
           <div>
-            <label className="label">Logo (URL da imagem)</label>
-            <input
-              className="input"
-              placeholder="https://…/logo.png"
-              value={form.logo_url ?? ''}
-              onChange={(e) => set('logo_url', e.target.value || null)}
-            />
+            <label className="label">Logo</label>
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-300 bg-slate-100 text-lg font-bold text-slate-400 dark:border-slate-700 dark:bg-slate-800">
+                {form.logo_url ? (
+                  <img src={form.logo_url} alt="logo" className="h-full w-full object-cover" />
+                ) : (
+                  form.company_name.charAt(0).toUpperCase() || '?'
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <input ref={logoFileRef} type="file" accept="image/*" className="hidden" onChange={onPickLogo} />
+                <button
+                  type="button"
+                  className="btn-ghost border border-slate-300 dark:border-slate-700"
+                  onClick={() => logoFileRef.current?.click()}
+                >
+                  {form.logo_url ? 'Trocar logo' : 'Enviar logo'}
+                </button>
+                {form.logo_url && (
+                  <button type="button" className="btn-ghost text-red-600" onClick={() => set('logo_url', null)}>
+                    Remover
+                  </button>
+                )}
+              </div>
+            </div>
+            <p className="mt-2 text-xs text-slate-500">
+              Aceita qualquer imagem/resolução — você ajusta o enquadramento a seguir. Ela é usada no menu, na
+              tela de login, no catálogo e vira o favicon (ícone da aba) automaticamente.
+            </p>
           </div>
         </section>
 
@@ -286,6 +321,18 @@ export default function SettingsPage() {
           </p>
         </section>
       </div>
+
+      {cropSrc && (
+        <ImageCropper
+          src={cropSrc}
+          output={256}
+          onCancel={() => setCropSrc(null)}
+          onConfirm={(dataUrl) => {
+            set('logo_url', dataUrl)
+            setCropSrc(null)
+          }}
+        />
+      )}
     </div>
   )
 }

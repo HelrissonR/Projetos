@@ -55,6 +55,24 @@ function applyTheme(s: Settings) {
   else if (!isDark && lum > 0.75) brand = '17 17 17'
   root.style.setProperty('--brand', brand)
   root.classList.toggle('dark', isDark)
+
+  document.title = s.company_name
+  applyFavicon(s.logo_url)
+}
+
+/** Atualiza o ícone da aba do navegador com a logo da loja (ou remove, voltando ao padrão do build). */
+function applyFavicon(logoUrl: string | null) {
+  const href = logoUrl || '/icon-192.png'
+  const rels: Array<'icon' | 'apple-touch-icon'> = ['icon', 'apple-touch-icon']
+  for (const rel of rels) {
+    let link = document.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`)
+    if (!link) {
+      link = document.createElement('link')
+      link.rel = rel
+      document.head.appendChild(link)
+    }
+    link.href = href
+  }
 }
 
 export function SettingsProvider({ children }: { children: ReactNode }) {
