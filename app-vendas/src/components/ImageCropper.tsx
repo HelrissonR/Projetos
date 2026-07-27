@@ -110,19 +110,19 @@ export default function ImageCropper({ src, onCancel, onConfirm, output = 512 }:
       }
     >
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-slate-500">Arraste para posicionar e ajuste o zoom.</p>
-          <div className="flex overflow-hidden rounded-md border border-slate-300 text-xs dark:border-slate-700">
+          <div className="flex shrink-0 overflow-hidden rounded-md border border-slate-300 text-xs dark:border-slate-700">
             <button
               type="button"
-              className={`px-3 py-1 ${fit === 'cover' ? 'bg-brand text-white dark:text-black' : 'bg-transparent'}`}
+              className={`flex-1 px-3 py-1.5 sm:flex-none ${fit === 'cover' ? 'bg-brand text-white dark:text-black' : 'bg-transparent'}`}
               onClick={() => setFit('cover')}
             >
               Preencher
             </button>
             <button
               type="button"
-              className={`px-3 py-1 ${fit === 'contain' ? 'bg-brand text-white dark:text-black' : 'bg-transparent'}`}
+              className={`flex-1 px-3 py-1.5 sm:flex-none ${fit === 'contain' ? 'bg-brand text-white dark:text-black' : 'bg-transparent'}`}
               onClick={() => setFit('contain')}
             >
               Ajustar

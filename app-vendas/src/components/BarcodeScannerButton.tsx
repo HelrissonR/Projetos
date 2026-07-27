@@ -10,8 +10,10 @@ interface Props {
 
 /**
  * Botão que abre a câmera e lê QR Code / código de barras (EAN, UPC, Code128
- * etc.) usando ZXing — decodificação local, funciona offline. Se a câmera
- * não estiver disponível, oferece entrada manual do código.
+ * etc.) usando ZXing — decodificação local, funciona offline. Pede a câmera
+ * traseira com foco contínuo (quando suportado) para focar corretamente em
+ * códigos de perto. Se a câmera não estiver disponível, oferece entrada
+ * manual do código.
  */
 export default function BarcodeScannerButton({ onDetect, label }: Props) {
   const [open, setOpen] = useState(false)
@@ -31,8 +33,15 @@ export default function BarcodeScannerButton({ onDetect, label }: Props) {
         if (cancelled) return
         const reader = new BrowserMultiFormatReader()
         try {
-          const controls = await reader.decodeFromVideoDevice(
-            undefined,
+          const controls = await reader.decodeFromConstraints(
+            {
+              audio: false,
+              video: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+              },
+            },
             videoRef.current!,
             (result) => {
               if (result && !cancelled) {
@@ -45,6 +54,18 @@ export default function BarcodeScannerButton({ onDetect, label }: Props) {
             },
           )
           controlsRef.current = controls
+
+          // Força foco contínuo/automático na track, quando o navegador suporta
+          // (essencial para ler códigos de perto — sem isso a câmera trava no
+          // foco inicial e a imagem fica desfocada).
+          const stream = videoRef.current?.srcObject as MediaStream | undefined
+          const track = stream?.getVideoTracks()[0]
+          const caps = track?.getCapabilities?.() as (MediaTrackCapabilities & { focusMode?: string[] }) | undefined
+          if (track && caps?.focusMode?.includes('continuous')) {
+            track
+              .applyConstraints({ advanced: [{ focusMode: 'continuous' } as unknown as MediaTrackConstraintSet] })
+              .catch(() => {})
+          }
         } catch (e) {
           if (!cancelled) setError('Não foi possível acessar a câmera. Digite o código manualmente.')
         }
@@ -68,6 +89,16 @@ export default function BarcodeScannerButton({ onDetect, label }: Props) {
     setOpen(false)
   }
 
+  // Toca de novo no vídeo para forçar o navegador a reavaliar o foco
+  // (alguns Androids só refocam após um toque na área de preview).
+  const tapToFocus = () => {
+    const stream = videoRef.current?.srcObject as MediaStream | undefined
+    const track = stream?.getVideoTracks()[0]
+    track
+      ?.applyConstraints({ advanced: [{ focusMode: 'continuous' } as unknown as MediaTrackConstraintSet] })
+      .catch(() => {})
+  }
+
   return (
     <>
       <button
@@ -83,13 +114,15 @@ export default function BarcodeScannerButton({ onDetect, label }: Props) {
       <Modal open={open} title={label ?? 'Ler código'} onClose={() => setOpen(false)}>
         <div className="space-y-3">
           {!error ? (
-            <div className="overflow-hidden rounded-lg bg-black">
-              <video ref={videoRef} className="aspect-square w-full object-cover" muted playsInline />
+            <div className="overflow-hidden rounded-lg bg-black" onClick={tapToFocus}>
+              <video ref={videoRef} className="aspect-square w-full object-cover" muted playsInline autoPlay />
             </div>
           ) : (
             <p className="text-sm text-amber-600">{error}</p>
           )}
-          <p className="text-center text-xs text-slate-500">Aponte a câmera para o código de barras ou QR Code.</p>
+          <p className="text-center text-xs text-slate-500">
+            Aponte a câmera para o código, a ~10–15 cm de distância. Toque na imagem se não focar.
+          </p>
           <div className="flex gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
             <input
               className="input"
