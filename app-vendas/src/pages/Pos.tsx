@@ -5,6 +5,7 @@ import { customersRepo, productsRepo, salesRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
 import ReceiptModal from '../components/ReceiptModal'
+import BarcodeScannerButton from '../components/BarcodeScannerButton'
 import { IconCart } from '../components/icons'
 import { cartSubtotal, cartTotal, canAddQuantity } from '../lib/cart'
 import type { CartLine, Customer, Product, SaleItem, Sale } from '../types'
@@ -121,12 +122,28 @@ export default function Pos() {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Catálogo */}
         <div className="lg:col-span-2">
-          <input
-            className="input mb-4"
-            placeholder="Buscar produto…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+          <div className="mb-4 flex gap-2">
+            <input
+              className="input"
+              placeholder="Buscar produto…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <BarcodeScannerButton
+              label="Ler código do produto"
+              onDetect={(code) => {
+                const found = products.find((p) => p.sku === code)
+                if (found) {
+                  addToCart(found)
+                  notify(`${found.name} adicionado ao carrinho`)
+                  setSearch('')
+                } else {
+                  setSearch(code)
+                  notify('Nenhum produto com esse código', 'error')
+                }
+              }}
+            />
+          </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {filtered.map((p) => (
               <button

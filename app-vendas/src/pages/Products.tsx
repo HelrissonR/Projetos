@@ -3,7 +3,9 @@ import PageHeader from '../components/PageHeader'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
 import ImageCropper from '../components/ImageCropper'
-import { IconBox, IconEdit, IconTrash, IconPlus } from '../components/icons'
+import ImportProductsModal from '../components/ImportProductsModal'
+import BarcodeScannerButton from '../components/BarcodeScannerButton'
+import { IconBox, IconEdit, IconTrash, IconPlus, IconDownload } from '../components/icons'
 import { categoriesRepo, productsRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
@@ -34,6 +36,7 @@ export default function Products() {
   const fileRef = useRef<HTMLInputElement>(null)
   const [catModal, setCatModal] = useState(false)
   const [newCat, setNewCat] = useState('')
+  const [importOpen, setImportOpen] = useState(false)
 
   const load = async () => {
     setLoading(true)
@@ -103,9 +106,12 @@ export default function Products() {
         title="Produtos & Estoque"
         subtitle={`${products.length} produto(s) cadastrado(s)`}
         action={
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button className="btn-ghost border border-slate-300 dark:border-slate-700" onClick={() => setCatModal(true)}>
               Categorias
+            </button>
+            <button className="btn-ghost border border-slate-300 dark:border-slate-700" onClick={() => setImportOpen(true)}>
+              <IconDownload /> Importar CSV
             </button>
             <button className="btn-primary" onClick={() => setEditing(emptyProduct())}>
               <IconPlus /> Novo produto
@@ -114,12 +120,22 @@ export default function Products() {
         }
       />
 
-      <input
-        className="input mb-4 max-w-sm"
-        placeholder="Buscar por nome ou SKU…"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+      <div className="mb-4 flex max-w-lg gap-2">
+        <input
+          className="input"
+          placeholder="Buscar por nome ou SKU…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <BarcodeScannerButton
+          onDetect={(code) => {
+            setSearch(code)
+            const found = products.find((p) => p.sku === code)
+            if (found) notify(`Encontrado: ${found.name}`)
+            else notify('Nenhum produto com esse código', 'error')
+          }}
+        />
+      </div>
 
       {loading ? (
         <p className="text-slate-400">Carregando…</p>
@@ -278,7 +294,10 @@ export default function Products() {
             </div>
             <div>
               <label className="label">SKU / Código</label>
-              <input className="input" value={editing.sku ?? ''} onChange={(e) => setEditing({ ...editing, sku: e.target.value })} />
+              <div className="flex gap-2">
+                <input className="input" value={editing.sku ?? ''} onChange={(e) => setEditing({ ...editing, sku: e.target.value })} />
+                <BarcodeScannerButton onDetect={(code) => setEditing({ ...editing, sku: code })} />
+              </div>
             </div>
             <div>
               <label className="label">Categoria</label>
@@ -392,6 +411,13 @@ export default function Products() {
           }}
         />
       )}
+
+      <ImportProductsModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={load}
+        categories={categories}
+      />
     </div>
   )
 }

@@ -1,0 +1,109 @@
+import { useEffect, useRef, useState } from 'react'
+import Modal from './Modal'
+import { useToast } from '../context/ToastContext'
+
+interface Props {
+  onDetect: (code: string) => void
+  /** Rótulo do botão. Padrão: ícone de câmera. */
+  label?: string
+}
+
+/**
+ * Botão que abre a câmera e lê QR Code / código de barras (EAN, UPC, Code128
+ * etc.) usando ZXing — decodificação local, funciona offline. Se a câmera
+ * não estiver disponível, oferece entrada manual do código.
+ */
+export default function BarcodeScannerButton({ onDetect, label }: Props) {
+  const [open, setOpen] = useState(false)
+  const [manual, setManual] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const controlsRef = useRef<{ stop: () => void } | null>(null)
+  const notify = useToast()
+
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    setError(null)
+
+    import('@zxing/browser')
+      .then(async ({ BrowserMultiFormatReader }) => {
+        if (cancelled) return
+        const reader = new BrowserMultiFormatReader()
+        try {
+          const controls = await reader.decodeFromVideoDevice(
+            undefined,
+            videoRef.current!,
+            (result) => {
+              if (result && !cancelled) {
+                const text = result.getText()
+                notify(`Código lido: ${text}`)
+                onDetect(text)
+                controls.stop()
+                setOpen(false)
+              }
+            },
+          )
+          controlsRef.current = controls
+        } catch (e) {
+          if (!cancelled) setError('Não foi possível acessar a câmera. Digite o código manualmente.')
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setError('Leitor indisponível neste dispositivo. Digite o código manualmente.')
+      })
+
+    return () => {
+      cancelled = true
+      controlsRef.current?.stop()
+      controlsRef.current = null
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  const submitManual = () => {
+    if (!manual.trim()) return
+    onDetect(manual.trim())
+    setManual('')
+    setOpen(false)
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        className="btn-ghost border border-slate-300 px-3 dark:border-slate-700"
+        onClick={() => setOpen(true)}
+        aria-label="Ler código de barras / QR"
+        title="Ler código de barras / QR"
+      >
+        📷
+      </button>
+
+      <Modal open={open} title={label ?? 'Ler código'} onClose={() => setOpen(false)}>
+        <div className="space-y-3">
+          {!error ? (
+            <div className="overflow-hidden rounded-lg bg-black">
+              <video ref={videoRef} className="aspect-square w-full object-cover" muted playsInline />
+            </div>
+          ) : (
+            <p className="text-sm text-amber-600">{error}</p>
+          )}
+          <p className="text-center text-xs text-slate-500">Aponte a câmera para o código de barras ou QR Code.</p>
+          <div className="flex gap-2 border-t border-slate-200 pt-3 dark:border-slate-800">
+            <input
+              className="input"
+              placeholder="Ou digite o código"
+              value={manual}
+              onChange={(e) => setManual(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && submitManual()}
+            />
+            <button className="btn-primary" onClick={submitManual}>
+              OK
+            </button>
+          </div>
+        </div>
+      </Modal>
+    </>
+  )
+}
