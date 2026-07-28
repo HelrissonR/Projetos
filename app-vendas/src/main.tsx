@@ -5,6 +5,7 @@ import App from './App'
 import { SettingsProvider } from './context/SettingsContext'
 import { ToastProvider } from './context/ToastContext'
 import { AuthProvider } from './context/AuthContext'
+import ErrorBoundary from './components/ErrorBoundary'
 import './index.css'
 
 // HashRouter permite rodar via file:// (duplo clique no index.html), útil para
@@ -13,15 +14,17 @@ const Router = import.meta.env.VITE_HASH_ROUTER === '1' ? HashRouter : BrowserRo
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <Router>
-      <AuthProvider>
-        <SettingsProvider>
-          <ToastProvider>
-            <App />
-          </ToastProvider>
-        </SettingsProvider>
-      </AuthProvider>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <AuthProvider>
+          <SettingsProvider>
+            <ToastProvider>
+              <App />
+            </ToastProvider>
+          </SettingsProvider>
+        </AuthProvider>
+      </Router>
+    </ErrorBoundary>
   </React.StrictMode>,
 )
 

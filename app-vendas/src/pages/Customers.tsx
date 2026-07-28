@@ -59,9 +59,13 @@ export default function Customers() {
 
   const remove = async (c: Customer) => {
     if (!confirm(`Excluir "${c.name}"?`)) return
-    await customersRepo.remove(c.id)
-    notify('Cliente excluído')
-    load()
+    try {
+      await customersRepo.remove(c.id)
+      notify('Cliente excluído')
+      load()
+    } catch (e) {
+      notify('Erro ao excluir: ' + (e as Error).message, 'error')
+    }
   }
 
   return (

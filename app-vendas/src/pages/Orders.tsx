@@ -70,9 +70,13 @@ export default function Orders() {
 
   const reject = async (o: Order) => {
     if (!confirm('Rejeitar este pedido?')) return
-    await ordersRepo.setStatus(o.id, 'rejected')
-    notify('Pedido rejeitado')
-    load()
+    try {
+      await ordersRepo.setStatus(o.id, 'rejected')
+      notify('Pedido rejeitado')
+      load()
+    } catch (e) {
+      notify('Erro ao rejeitar: ' + (e as Error).message, 'error')
+    }
   }
 
   const pending = orders.filter((o) => o.status === 'pending')

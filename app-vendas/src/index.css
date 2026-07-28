@@ -48,10 +48,25 @@ h1, h2, h3 {
   to { transform: translateY(0); }
 }
 
-.anim-page { animation: slideUp 0.28s cubic-bezier(0.22, 1, 0.36, 1) both; }
-.anim-fade { animation: fadeIn 0.2s ease both; }
-.anim-pop { animation: popIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both; }
-.anim-sheet { animation: sheetUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) both; }
+/*
+ * IMPORTANTE: usamos "backwards" (não "both"/"forwards"). Um elemento com
+ * fill-mode "forwards"/"both" retém o `transform` do último keyframe mesmo
+ * após a animação terminar — e QUALQUER transform (mesmo translateY(0),
+ * identidade) vira containing block para descendentes `position: fixed`.
+ * Isso quebrava TODOS os modais renderizados dentro de uma página com
+ * ".anim-page": o overlay `fixed inset-0` do Modal passava a ser posicionado
+ * relativo ao container da página (que rola) em vez da viewport, jogando o
+ * conteúdo do modal para fora da tela em páginas mais altas que a tela —
+ * o usuário via só a sombra escura de fundo, sem o card do modal.
+ * "backwards" aplica o keyframe inicial durante o delay e, ao terminar,
+ * simplesmente devolve o elemento ao estilo normal da cascata — que já é
+ * idêntico ao keyframe final (opacity:1, transform:none), então o visual
+ * não muda, mas o containing-block indevido desaparece.
+ */
+.anim-page { animation: slideUp 0.28s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.anim-fade { animation: fadeIn 0.2s ease backwards; }
+.anim-pop { animation: popIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+.anim-sheet { animation: sheetUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
 
 /* Acessibilidade: desliga animações se o usuário preferir menos movimento */
 @media (prefers-reduced-motion: reduce) {

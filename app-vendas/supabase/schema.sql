@@ -97,6 +97,19 @@ create table if not exists public.orders (
 );
 create index if not exists idx_orders_status on public.orders(status);
 
+-- Ajuste atômico de estoque: evita "lost update" quando duas vendas baixam o
+-- estoque do mesmo produto ao mesmo tempo (ler-depois-escrever no cliente
+-- não é atômico e pode perder uma das baixas sob concorrência).
+create or replace function public.adjust_product_stock(p_id uuid, p_delta int)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update public.products set stock = stock + p_delta where id = p_id;
+$$;
+grant execute on function public.adjust_product_stock(uuid, int) to authenticated;
+
 -- Migrações para bancos criados antes destes campos (idempotentes)
 alter table public.products  add column if not exists image text;
 alter table public.customers add column if not exists address text;

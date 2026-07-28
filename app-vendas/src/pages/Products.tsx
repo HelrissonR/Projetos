@@ -76,9 +76,13 @@ export default function Products() {
 
   const remove = async (p: Product) => {
     if (!confirm(`Excluir "${p.name}"?`)) return
-    await productsRepo.remove(p.id)
-    notify('Produto excluído')
-    load()
+    try {
+      await productsRepo.remove(p.id)
+      notify('Produto excluído')
+      load()
+    } catch (e) {
+      notify('Erro ao excluir: ' + (e as Error).message, 'error')
+    }
   }
 
   const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -388,8 +392,12 @@ export default function Products() {
               <button
                 className="btn-ghost text-red-600"
                 onClick={async () => {
-                  await categoriesRepo.remove(c.id)
-                  setCategories(await categoriesRepo.list())
+                  try {
+                    await categoriesRepo.remove(c.id)
+                    setCategories(await categoriesRepo.list())
+                  } catch (e) {
+                    notify('Erro ao excluir categoria: ' + (e as Error).message, 'error')
+                  }
                 }}
               >
                 ✕

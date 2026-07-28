@@ -47,7 +47,8 @@ const useDb = () => supabase !== null
 export const settingsRepo = {
   async get(): Promise<Settings | null> {
     if (useDb()) {
-      const { data } = await supabase!.from('settings').select('*').limit(1).maybeSingle()
+      const { data, error } = await supabase!.from('settings').select('*').limit(1).maybeSingle()
+      if (error) console.error('Erro ao buscar settings:', error)
       return (data as Settings) ?? null
     }
     return lsGet<Settings | null>('settings', null)
@@ -73,7 +74,8 @@ export const settingsRepo = {
 export const categoriesRepo = {
   async list(): Promise<Category[]> {
     if (useDb()) {
-      const { data } = await supabase!.from('categories').select('*').order('name')
+      const { data, error } = await supabase!.from('categories').select('*').order('name')
+      if (error) console.error('Erro ao listar categories:', error)
       return (data as Category[]) ?? []
     }
     return lsGet<Category[]>('categories', [])
@@ -95,7 +97,8 @@ export const categoriesRepo = {
   },
   async remove(id: string): Promise<void> {
     if (useDb()) {
-      await supabase!.from('categories').delete().eq('id', id)
+      const { error } = await supabase!.from('categories').delete().eq('id', id)
+      if (error) throw error
       return
     }
     lsSet('categories', lsGet<Category[]>('categories', []).filter((c) => c.id !== id))
@@ -106,7 +109,8 @@ export const categoriesRepo = {
 export const productsRepo = {
   async list(): Promise<Product[]> {
     if (useDb()) {
-      const { data } = await supabase!.from('products').select('*').order('name')
+      const { data, error } = await supabase!.from('products').select('*').order('name')
+      if (error) console.error('Erro ao listar products:', error)
       return (data as Product[]) ?? []
     }
     return lsGet<Product[]>('products', [])
@@ -127,16 +131,19 @@ export const productsRepo = {
   },
   async remove(id: string): Promise<void> {
     if (useDb()) {
-      await supabase!.from('products').delete().eq('id', id)
+      const { error } = await supabase!.from('products').delete().eq('id', id)
+      if (error) throw error
       return
     }
     lsSet('products', lsGet<Product[]>('products', []).filter((p) => p.id !== id))
   },
+  // Ajuste atômico via função no banco (RPC) — evita "lost update" quando duas
+  // vendas baixam o estoque do mesmo produto ao mesmo tempo (leitura-depois-
+  // escrita não atômica perderia uma das baixas).
   async adjustStock(id: string, delta: number): Promise<void> {
     if (useDb()) {
-      const { data } = await supabase!.from('products').select('stock').eq('id', id).single()
-      const current = (data?.stock as number) ?? 0
-      await supabase!.from('products').update({ stock: current + delta }).eq('id', id)
+      const { error } = await supabase!.rpc('adjust_product_stock', { p_id: id, p_delta: delta })
+      if (error) throw error
       return
     }
     const list = lsGet<Product[]>('products', [])
@@ -152,7 +159,8 @@ export const productsRepo = {
 export const customersRepo = {
   async list(): Promise<Customer[]> {
     if (useDb()) {
-      const { data } = await supabase!.from('customers').select('*').order('name')
+      const { data, error } = await supabase!.from('customers').select('*').order('name')
+      if (error) console.error('Erro ao listar customers:', error)
       return (data as Customer[]) ?? []
     }
     return lsGet<Customer[]>('customers', [])
@@ -173,7 +181,8 @@ export const customersRepo = {
   },
   async remove(id: string): Promise<void> {
     if (useDb()) {
-      await supabase!.from('customers').delete().eq('id', id)
+      const { error } = await supabase!.from('customers').delete().eq('id', id)
+      if (error) throw error
       return
     }
     lsSet('customers', lsGet<Customer[]>('customers', []).filter((c) => c.id !== id))
@@ -184,10 +193,11 @@ export const customersRepo = {
 export const salesRepo = {
   async list(): Promise<Sale[]> {
     if (useDb()) {
-      const { data } = await supabase!
+      const { data, error } = await supabase!
         .from('sales')
         .select('*, items:sale_items(*)')
         .order('created_at', { ascending: false })
+      if (error) console.error('Erro ao listar sales:', error)
       return (data as Sale[]) ?? []
     }
     return lsGet<Sale[]>('sales', []).sort((a, b) => b.created_at.localeCompare(a.created_at))
@@ -209,7 +219,13 @@ export const salesRepo = {
       if (error) throw error
       const saleId = (data as Sale).id
       const rows = items.map((i) => ({ ...i, sale_id: saleId, id: undefined }))
-      await supabase!.from('sale_items').insert(rows)
+      const { error: itemsError } = await supabase!.from('sale_items').insert(rows)
+      if (itemsError) {
+        // A venda já foi criada mas os itens falharam — desfaz a venda para não
+        // deixar um registro "fantasma" sem itens, e propaga o erro real.
+        await supabase!.from('sales').delete().eq('id', saleId)
+        throw itemsError
+      }
       return { ...(data as Sale), items }
     }
     const rec: Sale = {
@@ -224,7 +240,8 @@ export const salesRepo = {
   },
   async cancel(id: string): Promise<void> {
     if (useDb()) {
-      await supabase!.from('sales').update({ status: 'canceled' }).eq('id', id)
+      const { error } = await supabase!.from('sales').update({ status: 'canceled' }).eq('id', id)
+      if (error) throw error
       return
     }
     const list = lsGet<Sale[]>('sales', [])
@@ -240,10 +257,11 @@ export const salesRepo = {
 export const ordersRepo = {
   async list(): Promise<Order[]> {
     if (useDb()) {
-      const { data } = await supabase!
+      const { data, error } = await supabase!
         .from('orders')
         .select('*')
         .order('created_at', { ascending: false })
+      if (error) console.error('Erro ao listar orders:', error)
       return (data as Order[]) ?? []
     }
     return lsGet<Order[]>('orders', []).sort((a, b) => b.created_at.localeCompare(a.created_at))
@@ -262,7 +280,8 @@ export const ordersRepo = {
   },
   async setStatus(id: string, status: Order['status']): Promise<void> {
     if (useDb()) {
-      await supabase!.from('orders').update({ status }).eq('id', id)
+      const { error } = await supabase!.from('orders').update({ status }).eq('id', id)
+      if (error) throw error
       return
     }
     const list = lsGet<Order[]>('orders', [])

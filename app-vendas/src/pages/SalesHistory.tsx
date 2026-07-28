@@ -30,14 +30,18 @@ export default function SalesHistory() {
 
   const cancel = async (s: Sale) => {
     if (!confirm('Cancelar esta venda? O estoque será devolvido.')) return
-    await salesRepo.cancel(s.id)
-    // Devolve estoque
-    if (s.items) {
-      await Promise.all(s.items.map((i) => productsRepo.adjustStock(i.product_id, i.quantity)))
+    try {
+      await salesRepo.cancel(s.id)
+      // Devolve estoque
+      if (s.items) {
+        await Promise.all(s.items.map((i) => productsRepo.adjustStock(i.product_id, i.quantity)))
+      }
+      notify('Venda cancelada')
+      setViewing(null)
+      load()
+    } catch (e) {
+      notify('Erro ao cancelar: ' + (e as Error).message, 'error')
     }
-    notify('Venda cancelada')
-    setViewing(null)
-    load()
   }
 
   const exportCsv = () => {
