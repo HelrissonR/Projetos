@@ -108,6 +108,11 @@ set search_path = public
 as $$
   update public.products set stock = stock + p_delta where id = p_id;
 $$;
+-- Postgres concede EXECUTE a PUBLIC por padrão ao criar a função — sem estes
+-- revokes, um visitante anônimo poderia chamar a RPC e alterar o estoque de
+-- qualquer produto livremente. Restringe explicitamente a autenticados.
+revoke all on function public.adjust_product_stock(uuid, int) from public;
+revoke all on function public.adjust_product_stock(uuid, int) from anon;
 grant execute on function public.adjust_product_stock(uuid, int) to authenticated;
 
 -- Migrações para bancos criados antes destes campos (idempotentes)
