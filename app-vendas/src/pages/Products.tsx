@@ -6,6 +6,7 @@ import EmptyState from '../components/EmptyState'
 import ImageCropper from '../components/ImageCropper'
 import ImportProductsModal from '../components/ImportProductsModal'
 import BarcodeScannerButton from '../components/BarcodeScannerButton'
+import { SkeletonCards } from '../components/Skeleton'
 import { IconBox, IconEdit, IconTrash, IconPlus, IconDownload } from '../components/icons'
 import { categoriesRepo, productsRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
@@ -167,13 +168,13 @@ export default function Products() {
       )}
 
       {loading ? (
-        <p className="text-slate-400">Carregando…</p>
+        <SkeletonCards count={6} />
       ) : filtered.length === 0 ? (
         <EmptyState icon={<IconBox />} text="Nenhum produto encontrado. Cadastre o primeiro!" />
       ) : (
         <>
           {/* Mobile: cartões */}
-          <div className="grid gap-3 sm:grid-cols-2 md:hidden">
+          <div className="stagger grid gap-3 sm:grid-cols-2 md:hidden">
             {filtered.map((p) => {
               const low = p.stock <= settings.low_stock_threshold
               return (

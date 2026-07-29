@@ -144,13 +144,13 @@ export default function Pos() {
               }}
             />
           </div>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="stagger grid grid-cols-2 gap-3 sm:grid-cols-3">
             {filtered.map((p) => (
               <button
                 key={p.id}
                 onClick={() => addToCart(p)}
                 disabled={p.stock <= 0}
-                className="card flex flex-col items-start text-left transition hover:border-brand disabled:opacity-50"
+                className="card card-interactive flex flex-col items-start text-left disabled:opacity-50"
               >
                 {p.image && (
                   <img src={p.image} alt={p.name} className="mb-2 h-24 w-full rounded-md object-cover" />

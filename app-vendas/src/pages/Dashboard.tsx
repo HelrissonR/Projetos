@@ -14,9 +14,11 @@ import {
   YAxis,
 } from 'recharts'
 import PageHeader from '../components/PageHeader'
+import { SkeletonKpis } from '../components/Skeleton'
 import { productsRepo, salesRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
 import { dateOnly } from '../lib/format'
+import { useCountUp } from '../lib/useCountUp'
 import { IconWarning } from '../components/icons'
 import type { Product, Sale } from '../types'
 
@@ -26,18 +28,21 @@ const PIE_COLORS = ['#111111', '#404040', '#6b7280', '#9ca3af', '#cbd5e1', '#e2e
 function Kpi({
   label,
   value,
+  format,
   hint,
   onClick,
 }: {
   label: string
-  value: string
+  value: number
+  format: (n: number) => string
   hint?: string
   onClick?: () => void
 }) {
+  const shown = useCountUp(value)
   const content = (
     <>
       <div className="truncate text-xs text-slate-500 sm:text-sm">{label}</div>
-      <div className="mt-1 text-xl font-bold sm:text-2xl">{value}</div>
+      <div className="mt-1 text-xl font-bold tabular-nums sm:text-2xl">{format(shown)}</div>
       {hint && <div className="mt-1 truncate text-[11px] text-slate-400 sm:text-xs">{hint}</div>}
     </>
   )
@@ -45,7 +50,7 @@ function Kpi({
     return (
       <button
         onClick={onClick}
-        className="card p-4 text-left transition hover:border-brand hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-brand/30"
+        className="card card-interactive p-4 text-left focus:outline-none focus:ring-2 focus:ring-brand/30"
       >
         {content}
       </button>
@@ -156,7 +161,17 @@ export default function Dashboard() {
       .slice(0, 5)
   }, [completed])
 
-  if (loading) return <p className="text-slate-400">Carregando…</p>
+  if (loading)
+    return (
+      <div>
+        <PageHeader title="Dashboard" subtitle="Visão geral do seu negócio" />
+        <SkeletonKpis />
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="card"><div className="skeleton h-64 w-full" /></div>
+          <div className="card"><div className="skeleton h-64 w-full" /></div>
+        </div>
+      </div>
+    )
 
   return (
     <div>
@@ -178,14 +193,15 @@ export default function Dashboard() {
         }
       />
 
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5">
-        <Kpi label="Faturamento" value={money(revenue)} hint={`${completed.length} venda(s)`} />
-        <Kpi label="Lucro estimado" value={money(profit)} hint="preço − custo atual" />
-        <Kpi label="Ticket médio" value={money(ticket)} />
-        <Kpi label="Valor em estoque" value={money(stockValue)} hint={`${products.length} produto(s)`} />
+      <div className="stagger mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-5">
+        <Kpi label="Faturamento" value={revenue} format={money} hint={`${completed.length} venda(s)`} />
+        <Kpi label="Lucro estimado" value={profit} format={money} hint="preço − custo atual" />
+        <Kpi label="Ticket médio" value={ticket} format={money} />
+        <Kpi label="Valor em estoque" value={stockValue} format={money} hint={`${products.length} produto(s)`} />
         <Kpi
           label="Estoque baixo"
-          value={String(lowStock.length)}
+          value={lowStock.length}
+          format={(n) => String(Math.round(n))}
           hint={lowStock.length > 0 ? 'toque para ver' : 'abaixo do limite'}
           onClick={lowStock.length > 0 ? () => navigate('/produtos?estoque=baixo') : undefined}
         />

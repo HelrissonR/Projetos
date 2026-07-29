@@ -198,11 +198,11 @@ export default function Catalog() {
         ) : filtered.length === 0 ? (
           <p className="text-slate-400">Nenhum produto disponível.</p>
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <div className="stagger grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {filtered.map((p) => {
               const q = qtyOf(p.id)
               return (
-                <div key={p.id} className="card flex flex-col p-3">
+                <div key={p.id} className="card flex flex-col p-3 transition-shadow hover:shadow-md">
                   <div className="mb-2 flex aspect-square items-center justify-center overflow-hidden rounded-md bg-slate-100 text-3xl text-slate-300 dark:bg-slate-900">
                     {p.image ? (
                       <img src={p.image} alt={p.name} className="h-full w-full object-cover" />

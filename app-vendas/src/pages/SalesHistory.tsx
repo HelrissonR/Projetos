@@ -9,6 +9,7 @@ import { dateTime, money as fmtMoney } from '../lib/format'
 import { downloadCsv } from '../lib/csv'
 import ReceiptModal from '../components/ReceiptModal'
 import { IconReceipt, IconDownload, IconTrash } from '../components/icons'
+import { SkeletonCards } from '../components/Skeleton'
 import type { Sale } from '../types'
 
 export default function SalesHistory() {
@@ -98,18 +99,18 @@ export default function SalesHistory() {
       />
 
       {loading ? (
-        <p className="text-slate-400">Carregando…</p>
+        <SkeletonCards count={5} />
       ) : sales.length === 0 ? (
         <EmptyState icon={<IconReceipt />} text="Nenhuma venda registrada ainda." />
       ) : (
         <>
           {/* Mobile: cartões (evita corte de conteúdo em telas estreitas) */}
-          <div className="grid gap-3 md:hidden">
+          <div className="stagger grid gap-3 md:hidden">
             {sales.map((s) => (
               <button
                 key={s.id}
                 onClick={() => setViewing(s)}
-                className="card flex min-w-0 items-center gap-3 p-3 text-left"
+                className="card card-interactive flex min-w-0 items-center gap-3 p-3 text-left"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
