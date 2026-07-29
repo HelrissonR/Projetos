@@ -1,5 +1,6 @@
 import type { Sale, Settings } from '../types'
 import { money, dateTime } from './format'
+import { saveOrShareBlob, canvasToPngBlob } from './fileSave'
 
 // BR 3x5 = 10x15 cm (proporção 2:3). 1200x1800 px ≈ 300 dpi.
 export const RECEIPT_W = 1200
@@ -85,8 +86,28 @@ export function renderReceiptCanvas(sale: Sale, settings: Settings): HTMLCanvasE
   return c
 }
 
-/** Abre a janela de impressão com o comprovante ajustado para 10x15 cm. */
-export function printReceiptCanvas(canvas: HTMLCanvasElement, settings: Settings) {
+async function isNativePlatform(): Promise<boolean> {
+  try {
+    const { Capacitor } = await import('@capacitor/core')
+    return Capacitor.isNativePlatform()
+  } catch {
+    return false
+  }
+}
+
+function receiptFileName(sale: Sale): string {
+  return `comprovante-${sale.created_at.slice(0, 10)}-${sale.id.slice(0, 6)}.png`
+}
+
+/** Impressão/compartilhamento do comprovante (10x15 cm). */
+export async function printReceiptCanvas(canvas: HTMLCanvasElement, settings: Settings): Promise<void> {
+  if (await isNativePlatform()) {
+    // No Android, a impressão é feita pela folha de compartilhamento do sistema
+    // (a opção "Imprimir" aparece lá). window.print() não funciona na WebView.
+    const blob = await canvasToPngBlob(canvas)
+    await saveOrShareBlob(blob, `comprovante-${Date.now()}.png`, 'Imprimir ou salvar comprovante')
+    return
+  }
   const url = canvas.toDataURL('image/png')
   const w = window.open('', '_blank', 'width=420,height=600')
   if (!w) {
@@ -106,10 +127,8 @@ export function printReceiptCanvas(canvas: HTMLCanvasElement, settings: Settings
   w.document.close()
 }
 
-/** Baixa o comprovante como imagem PNG (10x15). */
-export function downloadReceiptImage(canvas: HTMLCanvasElement, sale: Sale) {
-  const a = document.createElement('a')
-  a.href = canvas.toDataURL('image/png')
-  a.download = `comprovante-${sale.created_at.slice(0, 10)}-${sale.id.slice(0, 6)}.png`
-  a.click()
+/** Salva o comprovante como imagem PNG (10x15). */
+export async function downloadReceiptImage(canvas: HTMLCanvasElement, sale: Sale): Promise<void> {
+  const blob = await canvasToPngBlob(canvas)
+  await saveOrShareBlob(blob, receiptFileName(sale), 'Salvar ou compartilhar comprovante')
 }

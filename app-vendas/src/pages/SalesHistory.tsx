@@ -44,7 +44,7 @@ export default function SalesHistory() {
     }
   }
 
-  const exportCsv = () => {
+  const exportCsv = async () => {
     const rows = sales.map((s) => ({
       data: dateTime(s.created_at, settings.locale),
       cliente: s.customer_name ?? 'Consumidor final',
@@ -55,7 +55,11 @@ export default function SalesHistory() {
       status: s.status === 'completed' ? 'Concluída' : 'Cancelada',
     }))
     if (rows.length === 0) return notify('Nada para exportar', 'error')
-    downloadCsv(`vendas-${new Date().toISOString().slice(0, 10)}.csv`, rows)
+    try {
+      await downloadCsv(`vendas-${new Date().toISOString().slice(0, 10)}.csv`, rows)
+    } catch (e) {
+      notify('Não foi possível exportar: ' + (e as Error).message, 'error')
+    }
   }
 
   return (

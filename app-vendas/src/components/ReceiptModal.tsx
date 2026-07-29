@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Modal from './Modal'
 import { useSettings } from '../context/SettingsContext'
+import { useToast } from '../context/ToastContext'
 import {
   downloadReceiptImage,
   printReceiptCanvas,
@@ -15,8 +16,34 @@ import type { Sale } from '../types'
  */
 export default function ReceiptModal({ sale, onClose }: { sale: Sale | null; onClose: () => void }) {
   const { settings } = useSettings()
+  const notify = useToast()
   const [preview, setPreview] = useState<string | null>(null)
   const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  const handleSave = async () => {
+    if (!canvas || !sale) return
+    setBusy(true)
+    try {
+      await downloadReceiptImage(canvas, sale)
+    } catch (e) {
+      notify('Não foi possível salvar a imagem: ' + (e as Error).message, 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handlePrint = async () => {
+    if (!canvas) return
+    setBusy(true)
+    try {
+      await printReceiptCanvas(canvas, settings)
+    } catch (e) {
+      notify('Não foi possível imprimir: ' + (e as Error).message, 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
 
   useEffect(() => {
     if (!sale) {
@@ -41,11 +68,12 @@ export default function ReceiptModal({ sale, onClose }: { sale: Sale | null; onC
           </button>
           <button
             className="btn-ghost border border-slate-300 dark:border-slate-700"
-            onClick={() => canvas && sale && downloadReceiptImage(canvas, sale)}
+            onClick={handleSave}
+            disabled={busy || !canvas}
           >
             <IconImage /> Salvar imagem
           </button>
-          <button className="btn-primary" onClick={() => canvas && printReceiptCanvas(canvas, settings)}>
+          <button className="btn-primary" onClick={handlePrint} disabled={busy || !canvas}>
             <IconPrinter /> Imprimir
           </button>
         </>

@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import Modal from './Modal'
 import { parseProductsCsv, productsCsvTemplate, type ImportedProductRow } from '../lib/csvImport'
+import { saveOrShareBlob } from '../lib/fileSave'
 import { categoriesRepo, productsRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
@@ -46,14 +47,9 @@ export default function ImportProductsModal({ open, onClose, onImported, categor
 
   const preview = () => setRows(parseProductsCsv(text))
 
-  const downloadTemplate = () => {
+  const downloadTemplate = async () => {
     const blob = new Blob(['﻿' + productsCsvTemplate()], { type: 'text/csv;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'modelo-produtos.csv'
-    a.click()
-    URL.revokeObjectURL(url)
+    await saveOrShareBlob(blob, 'modelo-produtos.csv', 'Salvar modelo CSV')
   }
 
   const validRows = (rows ?? []).filter((r) => !r.error)

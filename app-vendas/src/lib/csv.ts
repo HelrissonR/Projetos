@@ -1,5 +1,7 @@
-/** Converte linhas (objetos) em CSV e dispara o download. */
-export function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
+import { saveOrShareBlob } from './fileSave'
+
+/** Converte linhas (objetos) em CSV e salva/compartilha (funciona no APK). */
+export async function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
   if (rows.length === 0) return
   const headers = Object.keys(rows[0])
   const escape = (v: unknown) => {
@@ -12,10 +14,5 @@ export function downloadCsv(filename: string, rows: Record<string, unknown>[]) {
   ].join('\n')
   // BOM para o Excel reconhecer acentuação UTF-8
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
+  await saveOrShareBlob(blob, filename, 'Salvar ou compartilhar CSV')
 }
