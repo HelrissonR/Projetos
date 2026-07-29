@@ -43,6 +43,7 @@ export interface Product {
   stock: number
   active: boolean
   image: string | null
+  description: string | null
   custom: Record<string, unknown>
   created_at?: string
 }

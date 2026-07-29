@@ -118,6 +118,7 @@ grant execute on function public.adjust_product_stock(uuid, int) to authenticate
 
 -- Migrações para bancos criados antes destes campos (idempotentes)
 alter table public.products  add column if not exists image text;
+alter table public.products  add column if not exists description text;
 alter table public.customers add column if not exists address text;
 alter table public.settings  add column if not exists whatsapp_number text not null default '';
 alter table public.settings  add column if not exists catalog_enabled boolean not null default true;

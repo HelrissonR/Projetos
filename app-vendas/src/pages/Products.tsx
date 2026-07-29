@@ -24,6 +24,7 @@ const emptyProduct = (): Product => ({
   stock: 0,
   active: true,
   image: null,
+  description: null,
   custom: {},
 })
 
@@ -330,6 +331,15 @@ export default function Products() {
             <div className="sm:col-span-2">
               <label className="label">Nome *</label>
               <input className="input" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="label">Descrição (aparece no catálogo)</label>
+              <textarea
+                className="input min-h-[70px] resize-y"
+                placeholder="Ex.: fragrância suave, 250ml, ideal para pele sensível…"
+                value={editing.description ?? ''}
+                onChange={(e) => setEditing({ ...editing, description: e.target.value })}
+              />
             </div>
             <div>
               <label className="label">SKU / Código</label>

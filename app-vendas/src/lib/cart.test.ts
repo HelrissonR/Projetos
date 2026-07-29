@@ -3,7 +3,7 @@ import { cartSubtotal, cartTotal, canAddQuantity } from './cart'
 import type { CartLine, Product } from '../types'
 
 const prod = (price: number, stock = 100): Product => ({
-  id: 'p', name: 'x', sku: null, category_id: null, price, cost: 0, stock, active: true, image: null, custom: {},
+  id: 'p', name: 'x', sku: null, category_id: null, price, cost: 0, stock, active: true, image: null, description: null, custom: {},
 })
 const line = (price: number, quantity: number): CartLine => ({ product: prod(price), quantity })
 
