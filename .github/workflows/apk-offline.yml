@@ -1,7 +1,9 @@
 name: Build APK Offline (Capacitor)
 
-# Gera um APK que embute o app (assets locais) e roda 100% OFFLINE, em modo
-# demonstração (dados salvos no proprio aparelho, sem depender de internet).
+# Gera um APK CONECTADO ao Supabase (mesmos dados do site: login, catálogo,
+# produtos e categorias reais) com suporte OFFLINE-FIRST: os assets do app são
+# embutidos no APK (a interface abre sem internet) e a camada offline (cache +
+# outbox) mantém o app usável sem rede, sincronizando ao reconectar.
 #
 # Dispara automaticamente quando o commit na branch de vendas contém "[apk]".
 # O APK fica em Actions → run → Artifacts → "app-vendas-apk-offline".
@@ -32,8 +34,8 @@ jobs:
       - name: Instalar dependências
         run: npm ci
 
-      - name: Build web (modo offline/demo)
-        run: npm run build:offline
+      - name: Build web (conectado ao Supabase + offline-first)
+        run: npm run build
 
       - name: Adicionar plataforma Android
         run: npx cap add android

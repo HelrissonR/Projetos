@@ -152,7 +152,7 @@ export default function Products() {
             {filtered.map((p) => {
               const low = p.stock <= settings.low_stock_threshold
               return (
-                <div key={p.id} className="card flex items-center gap-3 p-3">
+                <div key={p.id} className="card flex min-w-0 items-center gap-3 p-3">
                   <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-800 dark:bg-slate-800">
                     {p.image ? (
                       <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
@@ -176,7 +176,7 @@ export default function Products() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-1">
+                  <div className="flex flex-shrink-0 flex-col gap-1">
                     <button className="btn-ghost px-2 py-1" onClick={() => setEditing(p)} aria-label="Editar">
                       <IconEdit />
                     </button>

@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { cachedRead, writeThrough, cacheGet, cacheSet } from './offline'
 import type {
   Category,
   Customer,
@@ -10,8 +11,11 @@ import type {
 } from '../types'
 
 /**
- * Camada de acesso a dados. Se o Supabase estiver configurado usa o banco real;
- * caso contrário cai num fallback em localStorage para permitir uso em modo demo.
+ * Camada de acesso a dados.
+ *  • Supabase configurado → modo conectado com suporte offline (ver offline.ts):
+ *    lê do servidor com cache local de fallback e enfileira escritas quando sem
+ *    internet, sincronizando ao reconectar.
+ *  • Sem Supabase → fallback simples em localStorage (modo demonstração).
  */
 
 const LS_PREFIX = 'appvendas:'
@@ -31,15 +35,10 @@ function uid() {
   return crypto.randomUUID()
 }
 
-// Remove id vazio antes de enviar ao banco (Postgres gera o UUID no insert).
-// Também normaliza strings vazias de chaves estrangeiras opcionais para null.
-function forDb<T extends { id?: string; category_id?: string | null; customer_id?: string | null }>(rec: T) {
-  const out: Record<string, unknown> = { ...rec }
-  if (!out.id) delete out.id
-  if (out.category_id === '') out.category_id = null
-  if (out.customer_id === '') out.customer_id = null
-  return out
-}
+// String vazia de chave estrangeira opcional → null (Postgres rejeita '' em uuid).
+const emptyToNull = (v: string | null | undefined): string | null => (v === '' || v == null ? null : v)
+// Converte um registro tipado num row genérico para o outbox/Supabase.
+const asRow = (rec: object): Record<string, unknown> => rec as Record<string, unknown>
 
 const useDb = () => supabase !== null
 
@@ -47,22 +46,21 @@ const useDb = () => supabase !== null
 export const settingsRepo = {
   async get(): Promise<Settings | null> {
     if (useDb()) {
-      const { data, error } = await supabase!.from('settings').select('*').limit(1).maybeSingle()
-      if (error) console.error('Erro ao buscar settings:', error)
-      return (data as Settings) ?? null
+      return cachedRead<Settings | null>(
+        'settings',
+        () => supabase!.from('settings').select('*').limit(1).maybeSingle(),
+        null,
+      )
     }
     return lsGet<Settings | null>('settings', null)
   },
   async save(s: Settings): Promise<Settings> {
     if (useDb()) {
-      const payload = { ...s, id: s.id ?? undefined }
-      const { data, error } = await supabase!
-        .from('settings')
-        .upsert(payload)
-        .select()
-        .single()
-      if (error) throw error
-      return data as Settings
+      const rec: Settings = { ...s, id: s.id ?? uid() }
+      await writeThrough(supabase!, { id: uid(), kind: 'upsert', table: 'settings', record: asRow(rec) }, () => {
+        cacheSet('settings', rec)
+      })
+      return rec
     }
     const withId = { ...s, id: s.id ?? uid() }
     lsSet('settings', withId)
@@ -74,21 +72,22 @@ export const settingsRepo = {
 export const categoriesRepo = {
   async list(): Promise<Category[]> {
     if (useDb()) {
-      const { data, error } = await supabase!.from('categories').select('*').order('name')
-      if (error) console.error('Erro ao listar categories:', error)
-      return (data as Category[]) ?? []
+      return cachedRead<Category[]>(
+        'categories',
+        () => supabase!.from('categories').select('*').order('name'),
+        [],
+      )
     }
     return lsGet<Category[]>('categories', [])
   },
   async create(name: string): Promise<Category> {
     if (useDb()) {
-      const { data, error } = await supabase!
-        .from('categories')
-        .insert({ name })
-        .select()
-        .single()
-      if (error) throw error
-      return data as Category
+      const rec: Category = { id: uid(), name }
+      await writeThrough(supabase!, { id: uid(), kind: 'upsert', table: 'categories', record: asRow(rec) }, () => {
+        const list = cacheGet<Category[]>('categories', [])
+        cacheSet('categories', [...list, rec].sort((a, b) => a.name.localeCompare(b.name)))
+      })
+      return rec
     }
     const list = lsGet<Category[]>('categories', [])
     const cat = { id: uid(), name }
@@ -97,8 +96,9 @@ export const categoriesRepo = {
   },
   async remove(id: string): Promise<void> {
     if (useDb()) {
-      const { error } = await supabase!.from('categories').delete().eq('id', id)
-      if (error) throw error
+      await writeThrough(supabase!, { id: uid(), kind: 'delete', table: 'categories', rowId: id }, () => {
+        cacheSet('categories', cacheGet<Category[]>('categories', []).filter((c) => c.id !== id))
+      })
       return
     }
     lsSet('categories', lsGet<Category[]>('categories', []).filter((c) => c.id !== id))
@@ -109,17 +109,21 @@ export const categoriesRepo = {
 export const productsRepo = {
   async list(): Promise<Product[]> {
     if (useDb()) {
-      const { data, error } = await supabase!.from('products').select('*').order('name')
-      if (error) console.error('Erro ao listar products:', error)
-      return (data as Product[]) ?? []
+      return cachedRead<Product[]>('products', () => supabase!.from('products').select('*').order('name'), [])
     }
     return lsGet<Product[]>('products', [])
   },
   async save(p: Product): Promise<Product> {
     if (useDb()) {
-      const { data, error } = await supabase!.from('products').upsert(forDb(p)).select().single()
-      if (error) throw error
-      return data as Product
+      const rec: Product = { ...p, id: p.id || uid(), category_id: emptyToNull(p.category_id) }
+      await writeThrough(supabase!, { id: uid(), kind: 'upsert', table: 'products', record: asRow(rec) }, () => {
+        const list = cacheGet<Product[]>('products', [])
+        const idx = list.findIndex((x) => x.id === rec.id)
+        if (idx >= 0) list[idx] = rec
+        else list.push(rec)
+        cacheSet('products', list)
+      })
+      return rec
     }
     const list = lsGet<Product[]>('products', [])
     const rec = { ...p, id: p.id || uid() }
@@ -131,19 +135,29 @@ export const productsRepo = {
   },
   async remove(id: string): Promise<void> {
     if (useDb()) {
-      const { error } = await supabase!.from('products').delete().eq('id', id)
-      if (error) throw error
+      await writeThrough(supabase!, { id: uid(), kind: 'delete', table: 'products', rowId: id }, () => {
+        cacheSet('products', cacheGet<Product[]>('products', []).filter((p) => p.id !== id))
+      })
       return
     }
     lsSet('products', lsGet<Product[]>('products', []).filter((p) => p.id !== id))
   },
-  // Ajuste atômico via função no banco (RPC) — evita "lost update" quando duas
-  // vendas baixam o estoque do mesmo produto ao mesmo tempo (leitura-depois-
-  // escrita não atômica perderia uma das baixas).
+  // Ajuste de estoque como DELTA (preserva concorrência). Online usa a função
+  // atômica no banco; offline, aplica no cache e enfileira o mesmo delta.
   async adjustStock(id: string, delta: number): Promise<void> {
     if (useDb()) {
-      const { error } = await supabase!.rpc('adjust_product_stock', { p_id: id, p_delta: delta })
-      if (error) throw error
+      await writeThrough(
+        supabase!,
+        { id: uid(), kind: 'rpc', fn: 'adjust_product_stock', args: { p_id: id, p_delta: delta } },
+        () => {
+          const list = cacheGet<Product[]>('products', [])
+          const idx = list.findIndex((p) => p.id === id)
+          if (idx >= 0) {
+            list[idx] = { ...list[idx], stock: list[idx].stock + delta }
+            cacheSet('products', list)
+          }
+        },
+      )
       return
     }
     const list = lsGet<Product[]>('products', [])
@@ -159,17 +173,21 @@ export const productsRepo = {
 export const customersRepo = {
   async list(): Promise<Customer[]> {
     if (useDb()) {
-      const { data, error } = await supabase!.from('customers').select('*').order('name')
-      if (error) console.error('Erro ao listar customers:', error)
-      return (data as Customer[]) ?? []
+      return cachedRead<Customer[]>('customers', () => supabase!.from('customers').select('*').order('name'), [])
     }
     return lsGet<Customer[]>('customers', [])
   },
   async save(c: Customer): Promise<Customer> {
     if (useDb()) {
-      const { data, error } = await supabase!.from('customers').upsert(forDb(c)).select().single()
-      if (error) throw error
-      return data as Customer
+      const rec: Customer = { ...c, id: c.id || uid() }
+      await writeThrough(supabase!, { id: uid(), kind: 'upsert', table: 'customers', record: asRow(rec) }, () => {
+        const list = cacheGet<Customer[]>('customers', [])
+        const idx = list.findIndex((x) => x.id === rec.id)
+        if (idx >= 0) list[idx] = rec
+        else list.push(rec)
+        cacheSet('customers', list)
+      })
+      return rec
     }
     const list = lsGet<Customer[]>('customers', [])
     const rec = { ...c, id: c.id || uid() }
@@ -181,8 +199,9 @@ export const customersRepo = {
   },
   async remove(id: string): Promise<void> {
     if (useDb()) {
-      const { error } = await supabase!.from('customers').delete().eq('id', id)
-      if (error) throw error
+      await writeThrough(supabase!, { id: uid(), kind: 'delete', table: 'customers', rowId: id }, () => {
+        cacheSet('customers', cacheGet<Customer[]>('customers', []).filter((c) => c.id !== id))
+      })
       return
     }
     lsSet('customers', lsGet<Customer[]>('customers', []).filter((c) => c.id !== id))
@@ -193,40 +212,39 @@ export const customersRepo = {
 export const salesRepo = {
   async list(): Promise<Sale[]> {
     if (useDb()) {
-      const { data, error } = await supabase!
-        .from('sales')
-        .select('*, items:sale_items(*)')
-        .order('created_at', { ascending: false })
-      if (error) console.error('Erro ao listar sales:', error)
-      return (data as Sale[]) ?? []
+      const data = await cachedRead<Sale[]>(
+        'sales',
+        () => supabase!.from('sales').select('*, items:sale_items(*)').order('created_at', { ascending: false }),
+        [],
+      )
+      return data
     }
     return lsGet<Sale[]>('sales', []).sort((a, b) => b.created_at.localeCompare(a.created_at))
   },
   async create(sale: Omit<Sale, 'id' | 'created_at'>, items: SaleItem[]): Promise<Sale> {
     if (useDb()) {
-      const { data, error } = await supabase!
-        .from('sales')
-        .insert({
-          customer_id: sale.customer_id,
-          customer_name: sale.customer_name,
-          total: sale.total,
-          discount: sale.discount,
-          payment_method: sale.payment_method,
-          status: sale.status,
-        })
-        .select()
-        .single()
-      if (error) throw error
-      const saleId = (data as Sale).id
-      const rows = items.map((i) => ({ ...i, sale_id: saleId, id: undefined }))
-      const { error: itemsError } = await supabase!.from('sale_items').insert(rows)
-      if (itemsError) {
-        // A venda já foi criada mas os itens falharam — desfaz a venda para não
-        // deixar um registro "fantasma" sem itens, e propaga o erro real.
-        await supabase!.from('sales').delete().eq('id', saleId)
-        throw itemsError
+      // IDs no cliente → upsert idempotente no sync.
+      const saleId = uid()
+      const created_at = new Date().toISOString()
+      const rec: Sale = { ...sale, id: saleId, created_at, items: items.map((i) => ({ ...i, id: uid(), sale_id: saleId })) }
+      const saleRow: Record<string, unknown> = {
+        id: saleId,
+        customer_id: emptyToNull(sale.customer_id),
+        customer_name: sale.customer_name,
+        total: sale.total,
+        discount: sale.discount,
+        payment_method: sale.payment_method,
+        status: sale.status,
+        created_at,
       }
-      return { ...(data as Sale), items }
+      const itemRows = rec.items!.map((i) => asRow(i))
+      // Otimista: adiciona a venda ao cache no topo.
+      await writeThrough(supabase!, { id: uid(), kind: 'upsert', table: 'sales', record: saleRow }, () => {
+        cacheSet('sales', [rec, ...cacheGet<Sale[]>('sales', [])])
+      })
+      // Itens (idempotente por id). Sem mutação de cache extra — já em `rec`.
+      await writeThrough(supabase!, { id: uid(), kind: 'upsertMany', table: 'sale_items', rows: itemRows }, () => {})
+      return rec
     }
     const rec: Sale = {
       ...sale,
@@ -240,8 +258,18 @@ export const salesRepo = {
   },
   async cancel(id: string): Promise<void> {
     if (useDb()) {
-      const { error } = await supabase!.from('sales').update({ status: 'canceled' }).eq('id', id)
-      if (error) throw error
+      await writeThrough(
+        supabase!,
+        { id: uid(), kind: 'update', table: 'sales', rowId: id, patch: { status: 'canceled' } },
+        () => {
+          const list = cacheGet<Sale[]>('sales', [])
+          const idx = list.findIndex((s) => s.id === id)
+          if (idx >= 0) {
+            list[idx] = { ...list[idx], status: 'canceled' }
+            cacheSet('sales', list)
+          }
+        },
+      )
       return
     }
     const list = lsGet<Sale[]>('sales', [])
@@ -257,17 +285,16 @@ export const salesRepo = {
 export const ordersRepo = {
   async list(): Promise<Order[]> {
     if (useDb()) {
-      const { data, error } = await supabase!
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false })
-      if (error) console.error('Erro ao listar orders:', error)
-      return (data as Order[]) ?? []
+      return cachedRead<Order[]>(
+        'orders',
+        () => supabase!.from('orders').select('*').order('created_at', { ascending: false }),
+        [],
+      )
     }
     return lsGet<Order[]>('orders', []).sort((a, b) => b.created_at.localeCompare(a.created_at))
   },
-  // Inserção pública (feita pelo cliente no catálogo). Não usa .select() porque
-  // o visitante anônimo não tem permissão de LEITURA em orders (apenas insert).
+  // Inserção pública (feita pelo cliente no catálogo, sempre online). Não usa
+  // .select() porque o visitante anônimo só tem permissão de INSERT em orders.
   async create(order: Omit<Order, 'id' | 'created_at' | 'status'>): Promise<Order> {
     const rec: Order = { ...order, id: uid(), status: 'pending', created_at: new Date().toISOString() }
     if (useDb()) {
@@ -278,10 +305,21 @@ export const ordersRepo = {
     lsSet('orders', [...lsGet<Order[]>('orders', []), rec])
     return rec
   },
+  // Gestão do pedido pelo admin (pode ocorrer offline → enfileira).
   async setStatus(id: string, status: Order['status']): Promise<void> {
     if (useDb()) {
-      const { error } = await supabase!.from('orders').update({ status }).eq('id', id)
-      if (error) throw error
+      await writeThrough(
+        supabase!,
+        { id: uid(), kind: 'update', table: 'orders', rowId: id, patch: { status } },
+        () => {
+          const list = cacheGet<Order[]>('orders', [])
+          const idx = list.findIndex((o) => o.id === id)
+          if (idx >= 0) {
+            list[idx] = { ...list[idx], status }
+            cacheSet('orders', list)
+          }
+        },
+      )
       return
     }
     const list = lsGet<Order[]>('orders', [])

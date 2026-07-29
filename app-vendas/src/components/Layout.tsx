@@ -4,6 +4,7 @@ import { useSettings } from '../context/SettingsContext'
 import { useAuth } from '../context/AuthContext'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { ordersRepo } from '../lib/db'
+import SyncIndicator from './SyncIndicator'
 import {
   IconDashboard,
   IconCart,
@@ -125,6 +126,9 @@ export default function Layout() {
           <span className="truncate font-semibold">{settings.company_name}</span>
         </header>
         <main className="min-w-0 flex-1 p-4 md:p-8">
+          <div className="mb-3">
+            <SyncIndicator />
+          </div>
           {/* key por rota re-dispara a animação de entrada da página */}
           <div key={location.pathname} className="anim-page">
             <Outlet />

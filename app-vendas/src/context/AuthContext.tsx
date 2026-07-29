@@ -22,14 +22,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false)
       return
     }
-    supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
-      setUser(data.session?.user ?? null)
-      setLoading(false)
-    })
+    // Rede de segurança: se getSession travar (rede lenta/instável), o app não
+    // pode ficar preso na tela "Carregando…". Libera após um tempo máximo.
+    const safety = setTimeout(() => setLoading(false), 8000)
+    supabase.auth
+      .getSession()
+      .then(({ data }: { data: { session: Session | null } }) => {
+        setUser(data.session?.user ?? null)
+      })
+      .catch(() => {})
+      .finally(() => {
+        clearTimeout(safety)
+        setLoading(false)
+      })
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setUser(session?.user ?? null)
     })
-    return () => sub.subscription.unsubscribe()
+    return () => {
+      clearTimeout(safety)
+      sub.subscription.unsubscribe()
+    }
   }, [])
 
   const signIn = async (email: string, password: string) => {

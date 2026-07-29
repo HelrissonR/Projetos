@@ -6,6 +6,7 @@ import { SettingsProvider } from './context/SettingsContext'
 import { ToastProvider } from './context/ToastContext'
 import { AuthProvider } from './context/AuthContext'
 import ErrorBoundary from './components/ErrorBoundary'
+import { initSync } from './lib/syncManager'
 import './index.css'
 
 // HashRouter permite rodar via file:// (duplo clique no index.html), útil para
@@ -27,6 +28,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     </ErrorBoundary>
   </React.StrictMode>,
 )
+
+// Inicia a sincronização offline (drena o outbox ao reconectar/retomar).
+initSync()
 
 // Registro do service worker (PWA). Só em http/https e fora do build single-file.
 if ('serviceWorker' in navigator && location.protocol.startsWith('http') && import.meta.env.VITE_HASH_ROUTER !== '1') {
