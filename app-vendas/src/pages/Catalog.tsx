@@ -43,14 +43,39 @@ export default function Catalog() {
   const subtotal = cartSubtotal(cart)
 
   const [sending, setSending] = useState(false)
+  // Imagens dos itens do carrinho já convertidas em arquivos, PRÉ-carregadas
+  // para poder compartilhá-las no WhatsApp sem quebrar a exigência de "gesto do
+  // usuário" do navigator.share (que não permite await antes da chamada).
+  const [imageFiles, setImageFiles] = useState<File[]>([])
 
-  const sendOrder = async () => {
-    if (cart.length === 0) return
-    setSending(true)
-    // Abre o WhatsApp imediatamente (evita bloqueio de pop-up por await)
-    const msg = buildOrderMessage(cart, settings, contact)
-    window.open(whatsappLink(msg, settings.whatsapp_number), '_blank')
-    // Registra o pedido no painel (não bloqueia o envio se falhar)
+  useEffect(() => {
+    let cancelled = false
+    const withImg = cart.filter((l) => l.product.image)
+    if (withImg.length === 0) {
+      setImageFiles([])
+      return
+    }
+    Promise.all(
+      withImg.map(async (l) => {
+        try {
+          const res = await fetch(l.product.image!)
+          const blob = await res.blob()
+          const ext = (blob.type.split('/')[1] || 'jpg').split('+')[0]
+          const safe = l.product.name.replace(/[^\w-]+/g, '_').slice(0, 40) || 'produto'
+          return new File([blob], `${safe}.${ext}`, { type: blob.type || 'image/jpeg' })
+        } catch {
+          return null
+        }
+      }),
+    ).then((files) => {
+      if (!cancelled) setImageFiles(files.filter((f): f is File => f !== null))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [cart])
+
+  const registerOrder = async () => {
     try {
       await ordersRepo.create({
         customer_name: contact.name || null,
@@ -68,12 +93,53 @@ export default function Catalog() {
         source: 'catalog',
       })
     } catch {
-      /* pedido segue pelo WhatsApp mesmo se o registro falhar */
+      /* o pedido segue pelo WhatsApp mesmo se o registro falhar */
     }
+  }
+
+  const finish = () => {
     setSending(false)
     setCart([])
     setCheckout(false)
     setContact({})
+    setImageFiles([])
+  }
+
+  const sendOrder = () => {
+    if (cart.length === 0) return
+    setSending(true)
+    const msg = buildOrderMessage(cart, settings, contact)
+    const number = settings.whatsapp_number
+
+    // Caminho ideal (celular): compartilha as FOTOS dos produtos + o texto do
+    // pedido direto para o WhatsApp. O wa.me só carrega texto, não imagens.
+    const canShareFiles =
+      imageFiles.length > 0 &&
+      typeof navigator !== 'undefined' &&
+      typeof navigator.canShare === 'function' &&
+      navigator.canShare({ files: imageFiles })
+
+    if (canShareFiles) {
+      navigator
+        .share({ files: imageFiles, text: msg, title: `Pedido — ${settings.company_name}` })
+        .catch((e: unknown) => {
+          // Se o cliente cancelar, não faz nada; se falhar de fato, cai para o texto.
+          if ((e as Error)?.name !== 'AbortError') {
+            window.open(whatsappLink(msg, number), '_blank')
+          }
+        })
+        .finally(() => {
+          registerOrder()
+          finish()
+        })
+      return
+    }
+
+    // Fallback (desktop / navegador sem suporte a compartilhar arquivos):
+    // abre o WhatsApp só com o texto do pedido.
+    window.open(whatsappLink(msg, number), '_blank')
+    registerOrder()
+    finish()
   }
 
   if (settings.catalog_enabled === false) {
@@ -197,6 +263,12 @@ export default function Catalog() {
                 <input className="input" value={contact.note ?? ''} onChange={(e) => setContact({ ...contact, note: e.target.value })} />
               </div>
             </div>
+            {imageFiles.length > 0 && (
+              <p className="mt-4 text-xs text-slate-500">
+                📷 As fotos dos produtos serão anexadas ao pedido no WhatsApp (no celular). Basta escolher a
+                conversa da loja ao compartilhar.
+              </p>
+            )}
             <div className="mt-4 flex items-center justify-between">
               <span className="font-bold">Total: {money(subtotal)}</span>
               <button className="btn-primary" onClick={sendOrder} disabled={sending}>
