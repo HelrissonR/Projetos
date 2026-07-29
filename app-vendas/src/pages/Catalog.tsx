@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { ordersRepo, productsRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
 import { buildOrderMessage, whatsappLink, type OrderContact } from '../lib/whatsapp'
+import { isNativeSync, shareFilesNative } from '../lib/fileSave'
 import { cartSubtotal } from '../lib/cart'
 import type { CartLine, Product } from '../types'
 
@@ -110,23 +111,16 @@ export default function Catalog() {
     setSending(true)
     const msg = buildOrderMessage(cart, settings, contact)
     const number = settings.whatsapp_number
+    const title = `Pedido — ${settings.company_name}`
+    const fallbackText = () => window.open(whatsappLink(msg, number), '_blank')
 
-    // Caminho ideal (celular): compartilha as FOTOS dos produtos + o texto do
-    // pedido direto para o WhatsApp. O wa.me só carrega texto, não imagens.
-    const canShareFiles =
-      imageFiles.length > 0 &&
-      typeof navigator !== 'undefined' &&
-      typeof navigator.canShare === 'function' &&
-      navigator.canShare({ files: imageFiles })
-
-    if (canShareFiles) {
-      navigator
-        .share({ files: imageFiles, text: msg, title: `Pedido — ${settings.company_name}` })
-        .catch((e: unknown) => {
-          // Se o cliente cancelar, não faz nada; se falhar de fato, cai para o texto.
-          if ((e as Error)?.name !== 'AbortError') {
-            window.open(whatsappLink(msg, number), '_blank')
-          }
+    // 1) App nativo (APK): o navigator.share do WebView do Android NÃO anexa
+    //    arquivos — por isso antes ia só texto. Usa o plugin do Capacitor, que
+    //    suporta anexos, para enviar as FOTOS + o texto.
+    if (isNativeSync() && imageFiles.length > 0) {
+      shareFilesNative(imageFiles, msg, title)
+        .then((ok) => {
+          if (!ok) fallbackText()
         })
         .finally(() => {
           registerOrder()
@@ -135,9 +129,29 @@ export default function Catalog() {
       return
     }
 
-    // Fallback (desktop / navegador sem suporte a compartilhar arquivos):
-    // abre o WhatsApp só com o texto do pedido.
-    window.open(whatsappLink(msg, number), '_blank')
+    // 2) Navegador do cliente (celular): Web Share API com arquivos. Chamada
+    //    SÍNCRONA (sem await antes) para preservar o gesto do usuário.
+    const canShareFiles =
+      imageFiles.length > 0 &&
+      typeof navigator !== 'undefined' &&
+      typeof navigator.canShare === 'function' &&
+      navigator.canShare({ files: imageFiles })
+
+    if (canShareFiles) {
+      navigator
+        .share({ files: imageFiles, text: msg, title })
+        .catch((e: unknown) => {
+          if ((e as Error)?.name !== 'AbortError') fallbackText()
+        })
+        .finally(() => {
+          registerOrder()
+          finish()
+        })
+      return
+    }
+
+    // 3) Fallback (desktop / sem suporte a arquivos): WhatsApp só com o texto.
+    fallbackText()
     registerOrder()
     finish()
   }

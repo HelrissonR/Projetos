@@ -4,6 +4,7 @@ import ImageCropper from '../components/ImageCropper'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
 import { salesRepo, ordersRepo } from '../lib/db'
+import { shareTextOrLink } from '../lib/fileSave'
 import type { CustomFieldDef, PaymentMethod, Settings } from '../types'
 
 const BRAND_PRESETS: { label: string; rgb: string }[] = [
@@ -57,6 +58,14 @@ export default function SettingsPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const shareCatalog = async () => {
+    const url = catalogUrl()
+    const text = `Confira o catálogo da ${form.company_name} e faça seu pedido! ${url}`
+    const result = await shareTextOrLink({ title: `${form.company_name} — Catálogo`, text, url })
+    if (result === 'copied') notify('Link do catálogo copiado! Cole no WhatsApp e envie ao cliente.')
+    else if (result === 'unsupported') notify('Não foi possível compartilhar. Copie o link manualmente.', 'error')
   }
 
   const [resetting, setResetting] = useState(false)
@@ -323,7 +332,10 @@ export default function SettingsPage() {
             />
           </div>
           <div className="flex flex-wrap gap-2">
-            <a href={catalogUrl()} target="_blank" rel="noreferrer" className="btn-primary">
+            <button type="button" className="btn-primary" onClick={shareCatalog}>
+              Compartilhar catálogo
+            </button>
+            <a href={catalogUrl()} target="_blank" rel="noreferrer" className="btn-ghost border border-slate-300 dark:border-slate-700">
               Abrir catálogo
             </a>
             <button

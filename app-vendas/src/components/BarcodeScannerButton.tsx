@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Modal from './Modal'
 import { useToast } from '../context/ToastContext'
+import { isNativeSync } from '../lib/fileSave'
 
 interface Props {
   onDetect: (code: string) => void
@@ -82,6 +83,44 @@ export default function BarcodeScannerButton({ onDetect, label }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
+  /**
+   * Leitura NATIVA (APK) via ML Kit: usa a câmera nativa com autofoco real —
+   * bem mais confiável que ZXing no WebView do Android (onde a câmera não
+   * focava). Se falhar, cai para o leitor web (modal com ZXing).
+   */
+  const scanNative = async () => {
+    try {
+      const { BarcodeScanner } = await import('@capacitor-mlkit/barcode-scanning')
+      const perm = await BarcodeScanner.requestPermissions()
+      if (perm.camera !== 'granted' && perm.camera !== 'limited') {
+        notify('Permissão de câmera negada. Digite o código manualmente.', 'error')
+        setOpen(true)
+        return
+      }
+      // Em alguns aparelhos o módulo de leitura do Google é baixado sob demanda.
+      try {
+        const { available } = await BarcodeScanner.isGoogleBarcodeScannerModuleAvailable()
+        if (!available) await BarcodeScanner.installGoogleBarcodeScannerModule()
+      } catch {
+        /* nem todo dispositivo expõe esse módulo — segue para o scan */
+      }
+      const { barcodes } = await BarcodeScanner.scan()
+      if (barcodes && barcodes.length > 0) {
+        const text = barcodes[0].rawValue
+        notify(`Código lido: ${text}`)
+        onDetect(text)
+      }
+    } catch {
+      // Falhou o scanner nativo → abre o leitor web como alternativa.
+      setOpen(true)
+    }
+  }
+
+  const handleClick = () => {
+    if (isNativeSync()) scanNative()
+    else setOpen(true)
+  }
+
   const submitManual = () => {
     if (!manual.trim()) return
     onDetect(manual.trim())
@@ -104,7 +143,7 @@ export default function BarcodeScannerButton({ onDetect, label }: Props) {
       <button
         type="button"
         className="btn-ghost border border-slate-300 px-3 dark:border-slate-700"
-        onClick={() => setOpen(true)}
+        onClick={handleClick}
         aria-label="Ler código de barras / QR"
         title="Ler código de barras / QR"
       >
