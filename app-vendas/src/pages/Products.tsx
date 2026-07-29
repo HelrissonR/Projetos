@@ -9,6 +9,7 @@ import BarcodeScannerButton from '../components/BarcodeScannerButton'
 import { SkeletonCards } from '../components/Skeleton'
 import { IconBox, IconEdit, IconTrash, IconPlus, IconDownload } from '../components/icons'
 import { categoriesRepo, productsRepo } from '../lib/db'
+import { uploadImageIfNeeded } from '../lib/storage'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
 import type { Category, Product } from '../types'
@@ -74,16 +75,24 @@ export default function Products() {
 
   const catName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? '—'
 
+  const [savingProduct, setSavingProduct] = useState(false)
   const saveProduct = async () => {
     if (!editing) return
     if (!editing.name.trim()) return notify('Informe o nome do produto', 'error')
+    if (editing.price < 0) return notify('O preço não pode ser negativo', 'error')
+    if (editing.stock < 0) return notify('O estoque não pode ser negativo', 'error')
+    setSavingProduct(true)
     try {
-      await productsRepo.save(editing)
+      // Sobe a imagem para o Storage (URL leve) em vez de gravar base64 no banco.
+      const image = await uploadImageIfNeeded(editing.image)
+      await productsRepo.save({ ...editing, image })
       notify(editing.id ? 'Produto atualizado' : 'Produto criado')
       setEditing(null)
       load()
     } catch (e) {
       notify('Erro: ' + (e as Error).message, 'error')
+    } finally {
+      setSavingProduct(false)
     }
   }
 
@@ -287,8 +296,8 @@ export default function Products() {
             <button className="btn-ghost" onClick={() => setEditing(null)}>
               Cancelar
             </button>
-            <button className="btn-primary" onClick={saveProduct}>
-              Salvar
+            <button className="btn-primary" onClick={saveProduct} disabled={savingProduct}>
+              {savingProduct ? 'Salvando…' : 'Salvar'}
             </button>
           </>
         }

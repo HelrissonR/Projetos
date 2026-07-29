@@ -5,6 +5,7 @@ import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
 import { salesRepo, ordersRepo } from '../lib/db'
 import { shareTextOrLink } from '../lib/fileSave'
+import { uploadImageIfNeeded } from '../lib/storage'
 import type { CustomFieldDef, PaymentMethod, Settings } from '../types'
 
 const BRAND_PRESETS: { label: string; rgb: string }[] = [
@@ -51,7 +52,9 @@ export default function SettingsPage() {
   const submit = async () => {
     setSaving(true)
     try {
-      await save(form)
+      // Sobe a logo para o Storage (URL leve) em vez de gravar base64.
+      const logo_url = await uploadImageIfNeeded(form.logo_url, 'logo')
+      await save({ ...form, logo_url })
       notify('Configurações salvas!')
     } catch (e) {
       notify('Erro ao salvar: ' + (e as Error).message, 'error')

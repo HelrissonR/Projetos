@@ -106,7 +106,8 @@ language sql
 security definer
 set search_path = public
 as $$
-  update public.products set stock = stock + p_delta where id = p_id;
+  -- greatest(0, ...) impede estoque negativo mesmo sob concorrência/offline.
+  update public.products set stock = greatest(0, stock + p_delta) where id = p_id;
 $$;
 -- Postgres concede EXECUTE a PUBLIC por padrão ao criar a função — sem estes
 -- revokes, um visitante anônimo poderia chamar a RPC e alterar o estoque de
@@ -121,6 +122,42 @@ alter table public.customers add column if not exists address text;
 alter table public.settings  add column if not exists whatsapp_number text not null default '';
 alter table public.settings  add column if not exists catalog_enabled boolean not null default true;
 alter table public.settings  add column if not exists catalog_message text not null default '';
+
+-- Integridade de dados (rede de segurança; o app já valida no cliente).
+alter table public.products drop constraint if exists products_price_nonneg;
+alter table public.products add constraint products_price_nonneg check (price >= 0);
+alter table public.products drop constraint if exists products_stock_nonneg;
+alter table public.products add constraint products_stock_nonneg check (stock >= 0);
+alter table public.orders drop constraint if exists orders_total_nonneg;
+alter table public.orders add constraint orders_total_nonneg check (total >= 0);
+alter table public.orders drop constraint if exists orders_status_valid;
+alter table public.orders add constraint orders_status_valid check (status in ('pending','approved','rejected'));
+
+create index if not exists idx_products_sku on public.products(sku);
+
+-- ==========================================================================
+-- Storage — imagens de produtos/logo (evita base64 gigante dentro do banco)
+--  • Bucket público "product-images": leitura por qualquer visitante (catálogo);
+--    escrita/edição/remoção apenas pelo admin autenticado.
+--  • O app grava a URL pública em products.image / settings.logo_url.
+-- ==========================================================================
+insert into storage.buckets (id, name, public)
+values ('product-images', 'product-images', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "public_read_product_images" on storage.objects;
+drop policy if exists "auth_insert_product_images" on storage.objects;
+drop policy if exists "auth_update_product_images" on storage.objects;
+drop policy if exists "auth_delete_product_images" on storage.objects;
+
+-- Obs.: bucket público serve as URLs diretas SEM policy de SELECT; não criamos
+-- policy de leitura para não permitir LISTAR todos os arquivos do bucket.
+create policy "auth_insert_product_images"
+  on storage.objects for insert to authenticated with check (bucket_id = 'product-images');
+create policy "auth_update_product_images"
+  on storage.objects for update to authenticated using (bucket_id = 'product-images');
+create policy "auth_delete_product_images"
+  on storage.objects for delete to authenticated using (bucket_id = 'product-images');
 
 -- ==========================================================================
 -- RLS — modelo de segurança
