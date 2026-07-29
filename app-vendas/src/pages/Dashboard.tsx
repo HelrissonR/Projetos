@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Bar,
   BarChart,
@@ -22,14 +23,35 @@ import type { Product, Sale } from '../types'
 // Escala de cinza para manter a estética monocromática de alto contraste
 const PIE_COLORS = ['#111111', '#404040', '#6b7280', '#9ca3af', '#cbd5e1', '#e2e8f0']
 
-function Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
-  return (
-    <div className="card p-4">
+function Kpi({
+  label,
+  value,
+  hint,
+  onClick,
+}: {
+  label: string
+  value: string
+  hint?: string
+  onClick?: () => void
+}) {
+  const content = (
+    <>
       <div className="truncate text-xs text-slate-500 sm:text-sm">{label}</div>
       <div className="mt-1 text-xl font-bold sm:text-2xl">{value}</div>
       {hint && <div className="mt-1 truncate text-[11px] text-slate-400 sm:text-xs">{hint}</div>}
-    </div>
+    </>
   )
+  if (onClick) {
+    return (
+      <button
+        onClick={onClick}
+        className="card p-4 text-left transition hover:border-brand hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-brand/30"
+      >
+        {content}
+      </button>
+    )
+  }
+  return <div className="card p-4">{content}</div>
 }
 
 type Period = 'today' | '7d' | '30d' | 'all'
@@ -42,6 +64,7 @@ const PERIODS: { id: Period; label: string; days: number }[] = [
 
 export default function Dashboard() {
   const { settings, money } = useSettings()
+  const navigate = useNavigate()
   const [sales, setSales] = useState<Sale[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
@@ -160,7 +183,12 @@ export default function Dashboard() {
         <Kpi label="Lucro estimado" value={money(profit)} hint="preço − custo atual" />
         <Kpi label="Ticket médio" value={money(ticket)} />
         <Kpi label="Valor em estoque" value={money(stockValue)} hint={`${products.length} produto(s)`} />
-        <Kpi label="Estoque baixo" value={String(lowStock.length)} hint="abaixo do limite" />
+        <Kpi
+          label="Estoque baixo"
+          value={String(lowStock.length)}
+          hint={lowStock.length > 0 ? 'toque para ver' : 'abaixo do limite'}
+          onClick={lowStock.length > 0 ? () => navigate('/produtos?estoque=baixo') : undefined}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -199,12 +227,17 @@ export default function Dashboard() {
 
       {lowStock.length > 0 && (
         <div className="card mt-6">
-          <h2 className="mb-3 flex items-center gap-2 font-semibold text-red-600"><IconWarning /> Produtos com estoque baixo</h2>
+          <h2 className="mb-1 flex items-center gap-2 font-semibold text-red-600"><IconWarning /> Produtos com estoque baixo</h2>
+          <p className="mb-3 text-xs text-slate-500">Toque em um produto para abri-lo e repor o estoque.</p>
           <div className="flex flex-wrap gap-2">
             {lowStock.map((p) => (
-              <span key={p.id} className="badge bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300">
+              <button
+                key={p.id}
+                onClick={() => navigate('/produtos?busca=' + encodeURIComponent(p.name))}
+                className="badge bg-red-100 text-red-700 transition hover:bg-red-200 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-900/70"
+              >
                 {p.name} — {p.stock} un
-              </span>
+              </button>
             ))}
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import PageHeader from '../components/PageHeader'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
@@ -30,7 +31,10 @@ export default function Products() {
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
+  // Prefiltro vindo dos avisos do Dashboard: ?busca=<nome> ou ?estoque=baixo
+  const [search, setSearch] = useState(searchParams.get('busca') ?? '')
+  const lowOnly = searchParams.get('estoque') === 'baixo'
   const [editing, setEditing] = useState<Product | null>(null)
   const [cropSrc, setCropSrc] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -51,13 +55,21 @@ export default function Products() {
 
   const filtered = useMemo(
     () =>
-      products.filter(
-        (p) =>
+      products.filter((p) => {
+        const matchesSearch =
           p.name.toLowerCase().includes(search.toLowerCase()) ||
-          (p.sku ?? '').toLowerCase().includes(search.toLowerCase()),
-      ),
-    [products, search],
+          (p.sku ?? '').toLowerCase().includes(search.toLowerCase())
+        const matchesLow = !lowOnly || p.stock <= settings.low_stock_threshold
+        return matchesSearch && matchesLow
+      }),
+    [products, search, lowOnly, settings.low_stock_threshold],
   )
+
+  // Limpa o prefiltro (mostra todos os produtos de novo)
+  const clearFilter = () => {
+    setSearch('')
+    setSearchParams({}, { replace: true })
+  }
 
   const catName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? '—'
 
@@ -140,6 +152,19 @@ export default function Products() {
           }}
         />
       </div>
+
+      {(lowOnly || searchParams.get('busca')) && (
+        <div className="mb-4 flex items-center justify-between gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
+          <span>
+            {lowOnly
+              ? `Mostrando apenas produtos com estoque baixo (≤ ${settings.low_stock_threshold}).`
+              : `Filtrando por “${searchParams.get('busca')}”.`}
+          </span>
+          <button className="font-semibold underline" onClick={clearFilter}>
+            Limpar filtro
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <p className="text-slate-400">Carregando…</p>

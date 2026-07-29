@@ -3,6 +3,7 @@ import PageHeader from '../components/PageHeader'
 import ImageCropper from '../components/ImageCropper'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
+import { salesRepo, ordersRepo } from '../lib/db'
 import type { CustomFieldDef, PaymentMethod, Settings } from '../types'
 
 const BRAND_PRESETS: { label: string; rgb: string }[] = [
@@ -55,6 +56,27 @@ export default function SettingsPage() {
       notify('Erro ao salvar: ' + (e as Error).message, 'error')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const [resetting, setResetting] = useState(false)
+  const resetForRealUse = async () => {
+    if (
+      !confirm(
+        'RECOMEÇAR DO ZERO\n\nIsto vai apagar permanentemente TODAS as vendas e TODOS os pedidos do catálogo — ideal para começar a usar de verdade após os testes.\n\nSeus produtos, categorias, clientes e configurações NÃO são afetados.\n\nDeseja continuar?',
+      )
+    )
+      return
+    if (!confirm('Tem certeza? Esta ação não pode ser desfeita.')) return
+    setResetting(true)
+    try {
+      await salesRepo.clearAll()
+      await ordersRepo.clearAll()
+      notify('Pronto! Vendas e pedidos zerados. Bom começo! 🎉')
+    } catch (e) {
+      notify('Não foi possível zerar (verifique a conexão): ' + (e as Error).message, 'error')
+    } finally {
+      setResetting(false)
     }
   }
 
@@ -319,6 +341,25 @@ export default function SettingsPage() {
             Dica: publique o app (ex.: Vercel) e compartilhe este link. Com o Supabase configurado, os
             produtos aparecem para qualquer cliente que abrir a página.
           </p>
+        </section>
+
+        {/* Zona de perigo — recomeçar para uso real */}
+        <section className="card space-y-3 border-red-300 dark:border-red-900/60">
+          <div>
+            <h2 className="font-semibold text-red-600">Recomeçar (uso real)</h2>
+            <p className="text-xs text-slate-500">
+              Terminou os testes? Zere as vendas e os pedidos para começar a operar de verdade. Seus
+              produtos, categorias, clientes e configurações são mantidos.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="btn-ghost border border-red-300 text-red-600 dark:border-red-900/60"
+            onClick={resetForRealUse}
+            disabled={resetting}
+          >
+            {resetting ? 'Zerando…' : 'Zerar vendas e pedidos'}
+          </button>
         </section>
       </div>
 

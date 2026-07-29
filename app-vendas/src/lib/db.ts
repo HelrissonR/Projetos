@@ -279,6 +279,18 @@ export const salesRepo = {
       lsSet('sales', list)
     }
   },
+  // Apaga TODO o histórico de vendas (e itens, via cascade no banco). Ação
+  // destrutiva e rara → exige conexão (não vai para o outbox) para evitar
+  // ambiguidade de sincronização. Lança em caso de erro.
+  async clearAll(): Promise<void> {
+    if (useDb()) {
+      const { error } = await supabase!.from('sales').delete().not('id', 'is', null)
+      if (error) throw error
+      cacheSet('sales', [])
+      return
+    }
+    lsSet('sales', [])
+  },
 }
 
 // ---------- Orders (pedidos do catálogo) ----------
@@ -328,5 +340,15 @@ export const ordersRepo = {
       list[idx].status = status
       lsSet('orders', list)
     }
+  },
+  // Apaga TODOS os pedidos do catálogo. Ação destrutiva → exige conexão.
+  async clearAll(): Promise<void> {
+    if (useDb()) {
+      const { error } = await supabase!.from('orders').delete().not('id', 'is', null)
+      if (error) throw error
+      cacheSet('orders', [])
+      return
+    }
+    lsSet('orders', [])
   },
 }
