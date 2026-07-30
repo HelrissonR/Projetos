@@ -6901,9 +6901,7 @@ function _doLoginSafe() {
 function _showLoginErr(msg, canReset) {
   const el = document.getElementById('loginErr');
   if (!el) return;
-  el.innerHTML = msg + (canReset
-    ? '<br><span class="lerr-reset" onclick="_loginResetUsers()">Redefinir usuários padrão</span>'
-    : '');
+  el.innerHTML = msg;
   el.classList.add('show');
   // Treme o card para chamar atenção ao erro
   const card = document.querySelector('.lcard');
@@ -6912,16 +6910,9 @@ function _showLoginErr(msg, canReset) {
 }
 
 async function _loginResetUsers() {
-  if (!await uiConfirm('Redefinir usuários para os padrões?\n(admin/123, operador/123, visualizador/123)', {title:'Redefinir usuários', okText:'Redefinir', danger:true})) return;
-  const defaults = [
-    {id:1, user:'admin',       pass_hash: await SecureAuth.hashPassword('123'), nome:'Administrador', role:'admin',         ativo:true},
-    {id:2, user:'operador',    pass_hash: await SecureAuth.hashPassword('123'), nome:'Operador',       role:'operador',      ativo:true},
-    {id:3, user:'visualizador',pass_hash: await SecureAuth.hashPassword('123'), nome:'Visualizador',   role:'visualizador',  ativo:true}
-  ];
-  await IDB.setMeta('users', JSON.stringify(defaults));
-  const el = document.getElementById('loginErr');
-  if (el) { el.classList.remove('show'); el.innerHTML = ''; }
-  showToast('Usuários redefinidos. Tente: admin / 123', 'ok');
+  // Removido o "redefinir para admin/123" por segurança. O acesso é feito com
+  // e-mail e senha do Supabase (com internet no primeiro acesso).
+  _showLoginErr('Para acessar, use seu e-mail e senha. No primeiro acesso é preciso estar com internet.');
 }
 
 async function doLogin() {
@@ -6943,18 +6934,9 @@ async function doLogin() {
     console.log('📋 Buscando usuários...');
     const users = JSON.parse(await IDB.getMeta('users') || '[]');
 
-    // Criar defaults se não existirem
-    if (!users.length) {
-      console.log('👥 Criando usuários padrão...');
-      const defaults = [
-        {id:1, user:'admin',       pass_hash: await SecureAuth.hashPassword('123'), nome:'Administrador', role:'admin',        ativo:true},
-        {id:2, user:'operador',    pass_hash: await SecureAuth.hashPassword('123'), nome:'Operador',      role:'operador',     ativo:true},
-        {id:3, user:'visualizador',pass_hash: await SecureAuth.hashPassword('123'), nome:'Visualizador',  role:'visualizador', ativo:true}
-      ];
-      await IDB.setMeta('users', JSON.stringify(defaults));
-      users.push(...defaults);
-      console.log('✅ Usuários criados:', defaults.map(u => u.user));
-    }
+    // Segurança: sem usuários-padrão (nada de admin/123). O primeiro acesso é
+    // ONLINE (e-mail + senha do Supabase); os perfis reais são baixados da nuvem
+    // no login autenticado e a credencial offline fica em cache para uso posterior.
 
     // Localiza o perfil local por username OU email (perfil/role + cache offline)
     const idLower = user.toLowerCase();
