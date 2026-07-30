@@ -7,7 +7,7 @@ usa a largura da tela). Usa o mesmo backend Supabase do aplicativo.
 
 Arquivos:
 - `index.html` — o app completo (HTML + CSS + JS).
-- `xlsx.full.min.js` — biblioteca de import/export de planilhas.
+- O `xlsx` é carregado via CDN (jsdelivr) — sem arquivo local nesta pasta.
 - `app-icon.png` — ícone do app (login/PWA).
 - `vercel.json` — configuração de hospedagem estática.
 
