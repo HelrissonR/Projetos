@@ -3605,11 +3605,9 @@ async function renderConfig() {
         <div class="form-sep">${fi('settings',12)} Conexão</div>
         <div class="field" style="margin-bottom:0"><label>URL do projeto</label><input type="url" value="${esc(sUrl)}" onchange="saveMeta('supabaseUrl',this.value)" placeholder="https://xxx.supabase.co"></div>
         <div class="field" style="margin-bottom:0"><label>Anon Key</label><input type="text" value="${esc(sKey)}" onchange="saveMeta('supabaseKey',this.value)" placeholder="eyJ..."></div>
-        <div class="g2">
-          <div class="field" style="margin-bottom:0"><label>E-mail de sincronização</label><input type="email" value="${esc(await IDB.getMeta('syncEmail')||'')}" onchange="saveMeta('syncEmail',this.value)" placeholder="sync@..." autocomplete="off"></div>
-          <div class="field" style="margin-bottom:0"><label>Senha de sincronização</label><input type="password" value="${esc(await IDB.getMeta('syncPass')||'')}" onchange="saveMeta('syncPass',this.value)" placeholder="••••••" autocomplete="new-password"></div>
-        </div>
-        <div class="small muted">Conta do Supabase Auth usada por este aparelho. Com o RLS ativo, sem ela a nuvem não aceita leitura nem escrita.</div>
+        <div class="field" style="margin-bottom:0"><label>Conta autenticada neste aparelho</label>
+          <input type="text" value="${esc(await IDB.getMeta('syncEmail')||'— faça login para autenticar —')}" disabled style="opacity:.75"></div>
+        <div class="small muted">Por segurança (LGPD), a senha <b>não é armazenada</b> no aparelho. A sessão do Supabase é renovada automaticamente; se expirar, basta fazer login novamente. Com o RLS ativo, sem sessão a nuvem não aceita leitura nem escrita.</div>
         <button class="btn btn-g btn-b" onclick="reconnectSB()" style="display:inline-flex;align-items:center;gap:5px">${fi('refresh-cw',13)} Reconectar e autenticar</button>
         <details class="small muted"><summary style="cursor:pointer;font-weight:600">SQL para habilitar o sync de configurações</summary>
           <pre style="background:var(--panel-2);padding:10px;border-radius:8px;margin-top:8px;overflow-x:auto;font-size:11px">create table if not exists app_settings (
@@ -6978,7 +6976,10 @@ async function doLogin() {
 
           // Auto-configuração: guarda as credenciais de sync deste aparelho
           await IDB.setMeta('syncEmail', loginEmail);
-          await IDB.setMeta('syncPass', pass);
+          // Segurança/LGPD: NÃO persistimos a senha. A sessão do Supabase (refresh
+          // token) é salva e renovada automaticamente; se expirar, faz-se novo login.
+          // Remove qualquer senha guardada por versões anteriores deste app.
+          try { await IDB.delete('meta', 'syncPass'); } catch(e){}
 
           // Aparelho novo (sem perfil local): baixa usuários/permissões/config da nuvem
           if (!u) {
@@ -7486,25 +7487,14 @@ async function _sbSignIn() {
   try {
     const { data: { session } } = await SB.auth.getSession();
     if (session) { window._sbAuthed = true; window._sbAccount = session.user?.email || ''; return true; }
-    const email = await IDB.getMeta('syncEmail');
-    const pass  = await IDB.getMeta('syncPass');
-    if (!email || !pass) {
-      window._sbAuthed = false;
-      console.warn('⚠️ Sem credenciais de sincronização — RLS bloqueará leitura/escrita');
-      return false;
-    }
-    const { error } = await SB.auth.signInWithPassword({ email, password: pass });
-    if (error) {
-      window._sbAuthed = false;
-      window._sbAuthErr = error.message;
-      console.warn('⚠️ Auth Supabase falhou:', error.message);
-      return false;
-    }
-    window._sbAuthErr = null;
-    window._sbAuthed = true;
-    window._sbAccount = email;
-    console.log('✅ Autenticado no Supabase como', email);
-    return true;
+    // Sem sessão ativa: NÃO reautenticamos com senha salva (por segurança, não
+    // guardamos a senha). A sessão persistida é renovada pelo refresh token;
+    // se expirou, o usuário precisa fazer login novamente.
+    try { await IDB.delete('meta', 'syncPass'); } catch(e){}
+    window._sbAuthed = false;
+    window._sbAuthErr = 'Sessão expirada — faça login novamente para sincronizar.';
+    console.warn('⚠️ Sem sessão do Supabase — faça login novamente para sincronizar.');
+    return false;
   } catch(e) { console.warn('⚠️ Auth Supabase:', e); window._sbAuthed = false; return false; }
 }
 
@@ -7513,7 +7503,7 @@ async function reconnectSB(){
   const key = await IDB.getMeta('supabaseKey');
   if(!url||!key){showToast('Configure URL e Key','err');return;}
   try{
-    SB=supabase.createClient(url,key);
+    SB=supabase.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true}});
     const authed = await _sbSignIn();
     Sync.setStatus(authed?'on':'off', authed?'Autenticado':'Sem auth');
     Sync.startRealtime();
@@ -7905,7 +7895,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const sKey = await IDB.getMeta('supabaseKey') || SUPABASE_KEY;
   if(sUrl && sKey){
     try{
-      SB=supabase.createClient(sUrl,sKey);
+      SB=supabase.createClient(sUrl,sKey,{auth:{persistSession:true,autoRefreshToken:true}});
       const authed = await _sbSignIn();
       Sync.setStatus(authed?'on':'off', authed?'Autenticado':'Sem auth');
       Sync.startRealtime();
