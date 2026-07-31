@@ -23,42 +23,66 @@ jobs:
         working-directory: app-vendas
     steps:
       - uses: actions/checkout@v4
+
+      # Sem os secrets de assinatura, NÃO tenta compilar (evita um X vermelho
+      # confuso e não gasta minutos/rede). O job fica verde como "no-op" até os
+      # secrets serem configurados.
+      - name: Verificar secrets de assinatura
+        id: check
+        run: |
+          if [ -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "has=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Secrets de assinatura ausentes — pulando build do AAB. Configure ANDROID_KEYSTORE_BASE64/PASSWORD/KEY_ALIAS/KEY_PASSWORD."
+          else
+            echo "has=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/setup-node@v4
+        if: steps.check.outputs.has == 'true'
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: app-vendas/package-lock.json
       - uses: actions/setup-java@v4
+        if: steps.check.outputs.has == 'true'
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Instalar dependências
+        if: steps.check.outputs.has == 'true'
         run: npm ci
 
       - name: Build web (conectado ao Supabase)
+        if: steps.check.outputs.has == 'true'
         run: npm run build
 
       - name: Adicionar plataforma Android
+        if: steps.check.outputs.has == 'true'
         run: npx cap add android
 
       - name: Adicionar permissão de câmera (leitor de código)
+        if: steps.check.outputs.has == 'true'
         run: |
           sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />#' android/app/src/main/AndroidManifest.xml
 
       - name: Sincronizar assets
+        if: steps.check.outputs.has == 'true'
         run: npx cap sync android
 
       - name: Definir versão (única e crescente por build)
+        if: steps.check.outputs.has == 'true'
         run: |
           sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
           sed -i "s/versionName \"1.0\"/versionName \"1.0.${{ github.run_number }}\"/" android/app/build.gradle
           grep -E "versionCode|versionName" android/app/build.gradle
 
       - name: Restaurar keystore de assinatura
+        if: steps.check.outputs.has == 'true'
         run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/upload-keystore.jks
 
       - name: Compilar AAB assinado
+        if: steps.check.outputs.has == 'true'
         working-directory: app-vendas/android
         env:
           KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
@@ -73,6 +97,7 @@ jobs:
             -Pandroid.injected.signing.key.password="$KEY_PASS"
 
       - name: Publicar AAB como artefato
+        if: steps.check.outputs.has == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: app-vendas-aab
