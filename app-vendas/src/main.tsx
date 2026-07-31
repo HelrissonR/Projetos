@@ -7,6 +7,8 @@ import { ToastProvider } from './context/ToastContext'
 import { AuthProvider } from './context/AuthContext'
 import ErrorBoundary from './components/ErrorBoundary'
 import { initSync } from './lib/syncManager'
+// Fonte display (variável, empacotada → funciona offline no APK) para os títulos.
+import '@fontsource-variable/fraunces'
 import './index.css'
 
 // HashRouter permite rodar via file:// (duplo clique no index.html), útil para

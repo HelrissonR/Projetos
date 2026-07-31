@@ -22,8 +22,12 @@ import { useCountUp } from '../lib/useCountUp'
 import { IconWarning } from '../components/icons'
 import type { Product, Sale } from '../types'
 
-// Escala de cinza para manter a estética monocromática de alto contraste
-const PIE_COLORS = ['#111111', '#404040', '#6b7280', '#9ca3af', '#cbd5e1', '#e2e8f0']
+// Paleta categórica acessível (validada para daltonismo/contraste em claro e
+// escuro). Os produtos são identidades distintas → cores categóricas, não uma
+// escala de cinza (que era difícil de distinguir na pizza). A pizza traz rótulo
+// direto + legenda, o que satisfaz a regra de contraste no tema claro.
+const PIE_LIGHT = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4']
+const PIE_DARK = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181']
 
 function Kpi({
   label,
@@ -88,6 +92,11 @@ export default function Dashboard() {
     const v = getComputedStyle(document.documentElement).getPropertyValue('--brand').trim()
     return `rgb(${v || settings.brand_color})`
   }, [settings.theme, settings.brand_color])
+
+  const isDark = settings.theme === 'dark'
+  const pieColors = isDark ? PIE_DARK : PIE_LIGHT
+  // Fresta de 2px na cor da superfície entre as fatias (separação premium).
+  const pieStroke = isDark ? '#1a1a19' : '#ffffff'
 
   // Custo por produto (para estimar o lucro)
   const costOf = useMemo(() => {
@@ -212,7 +221,7 @@ export default function Dashboard() {
           <h2 className="mb-4 font-semibold">Faturamento por dia</h2>
           <ResponsiveContainer width="100%" height={260}>
             <BarChart data={daily}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke={isDark ? '#2c2c2a' : '#e1e0d9'} />
               <XAxis dataKey="dia" fontSize={12} />
               <YAxis fontSize={12} />
               <Tooltip formatter={(v: number) => money(v)} />
@@ -228,9 +237,17 @@ export default function Dashboard() {
           ) : (
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
-                <Pie data={topProducts} dataKey="qty" nameKey="name" outerRadius={90} label>
+                <Pie
+                  data={topProducts}
+                  dataKey="qty"
+                  nameKey="name"
+                  outerRadius={90}
+                  label
+                  stroke={pieStroke}
+                  strokeWidth={2}
+                >
                   {topProducts.map((_, i) => (
-                    <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                    <Cell key={i} fill={pieColors[i % pieColors.length]} />
                   ))}
                 </Pie>
                 <Tooltip />
