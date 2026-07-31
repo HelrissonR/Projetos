@@ -1,0 +1,80 @@
+name: Build AAB assinado (Play Store)
+
+# Gera o Android App Bundle (.aab) ASSINADO para publicar na Google Play.
+# Requer 4 secrets no repositório (Settings → Secrets and variables → Actions):
+#   ANDROID_KEYSTORE_BASE64   – conteúdo do upload-keystore.jks em base64
+#   ANDROID_KEYSTORE_PASSWORD – senha do keystore
+#   ANDROID_KEY_ALIAS         – alias da chave (upload)
+#   ANDROID_KEY_PASSWORD      – senha da chave (igual à do keystore)
+#
+# Dispara quando o commit na branch de vendas contém "[aab]".
+# O bundle fica em Actions → run → Artifacts → "app-vendas-aab".
+
+on:
+  push:
+    branches: ['claude/sales-product-management-app-u2q1tm']
+
+jobs:
+  aab:
+    if: contains(github.event.head_commit.message, '[aab]')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app-vendas
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app-vendas/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Build web (conectado ao Supabase)
+        run: npm run build
+
+      - name: Adicionar plataforma Android
+        run: npx cap add android
+
+      - name: Adicionar permissão de câmera (leitor de código)
+        run: |
+          sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />#' android/app/src/main/AndroidManifest.xml
+
+      - name: Sincronizar assets
+        run: npx cap sync android
+
+      - name: Definir versão (única e crescente por build)
+        run: |
+          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
+          sed -i "s/versionName \"1.0\"/versionName \"1.0.${{ github.run_number }}\"/" android/app/build.gradle
+          grep -E "versionCode|versionName" android/app/build.gradle
+
+      - name: Restaurar keystore de assinatura
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/upload-keystore.jks
+
+      - name: Compilar AAB assinado
+        working-directory: app-vendas/android
+        env:
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew bundleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file="$PWD/upload-keystore.jks" \
+            -Pandroid.injected.signing.store.password="$KS_PASS" \
+            -Pandroid.injected.signing.key.alias="$KS_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEY_PASS"
+
+      - name: Publicar AAB como artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-vendas-aab
+          path: app-vendas/android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
