@@ -296,7 +296,11 @@ export default function Catalog() {
                       <img
                         src={p.image}
                         alt={p.name}
+                        loading="lazy"
                         className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                        }}
                       />
                     ) : (
                       <span className="flex h-full w-full items-center justify-center text-4xl text-slate-300">🧴</span>
@@ -366,7 +370,14 @@ export default function Catalog() {
             >
               <div className="relative aspect-square w-full overflow-hidden rounded-t-lg bg-slate-100 dark:bg-slate-900">
                 {detail.image ? (
-                  <img src={detail.image} alt={detail.name} className="h-full w-full object-cover" />
+                  <img
+                    src={detail.image}
+                    alt={detail.name}
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                    }}
+                  />
                 ) : (
                   <span className="flex h-full w-full items-center justify-center text-6xl text-slate-300">🧴</span>
                 )}

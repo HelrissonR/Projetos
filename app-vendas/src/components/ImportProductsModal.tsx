@@ -83,6 +83,8 @@ export default function ImportProductsModal({ open, onClose, onImported, categor
           active: r.active,
           image: null,
           description: null,
+          min_stock: null,
+          max_stock: null,
           custom: {},
         })
       }

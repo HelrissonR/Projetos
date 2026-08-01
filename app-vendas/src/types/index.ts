@@ -44,6 +44,10 @@ export interface Product {
   active: boolean
   image: string | null
   description: string | null
+  /** Estoque mínimo (dispara alerta de estoque baixo). Se null, usa o limite global. */
+  min_stock: number | null
+  /** Estoque máximo/alvo (capacidade sugerida para reposição). */
+  max_stock: number | null
   custom: Record<string, unknown>
   created_at?: string
 }

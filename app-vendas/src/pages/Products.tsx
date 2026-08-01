@@ -25,6 +25,8 @@ const emptyProduct = (): Product => ({
   active: true,
   image: null,
   description: null,
+  min_stock: null,
+  max_stock: null,
   custom: {},
 })
 
@@ -56,13 +58,18 @@ export default function Products() {
     load()
   }, [])
 
+  // Limite de estoque baixo: usa o mínimo do produto quando definido; senão o
+  // limite global das Configurações.
+  const minOf = (p: Product) => p.min_stock ?? settings.low_stock_threshold
+  const isLow = (p: Product) => p.stock <= minOf(p)
+
   const filtered = useMemo(
     () =>
       products.filter((p) => {
         const matchesSearch =
           p.name.toLowerCase().includes(search.toLowerCase()) ||
           (p.sku ?? '').toLowerCase().includes(search.toLowerCase())
-        const matchesLow = !lowOnly || p.stock <= settings.low_stock_threshold
+        const matchesLow = !lowOnly || p.stock <= (p.min_stock ?? settings.low_stock_threshold)
         return matchesSearch && matchesLow
       }),
     [products, search, lowOnly, settings.low_stock_threshold],
@@ -76,12 +83,38 @@ export default function Products() {
 
   const catName = (id: string | null) => categories.find((c) => c.id === id)?.name ?? '—'
 
+  // Detecta produto já cadastrado (mesmo SKU ou mesmo nome), ignorando o próprio
+  // registro em edição. SKU é tratado como identificador único; nome como aviso.
+  const findDuplicate = (p: Product) => {
+    const sku = (p.sku ?? '').trim().toLowerCase()
+    const name = p.name.trim().toLowerCase()
+    return products.find(
+      (x) =>
+        x.id !== p.id &&
+        ((sku && (x.sku ?? '').trim().toLowerCase() === sku) ||
+          x.name.trim().toLowerCase() === name),
+    )
+  }
+
   const [savingProduct, setSavingProduct] = useState(false)
   const saveProduct = async () => {
     if (!editing) return
     if (!editing.name.trim()) return notify('Informe o nome do produto', 'error')
     if (editing.price < 0) return notify('O preço não pode ser negativo', 'error')
     if (editing.stock < 0) return notify('O estoque não pode ser negativo', 'error')
+    if (editing.min_stock != null && editing.max_stock != null && editing.min_stock > editing.max_stock)
+      return notify('O estoque mínimo não pode ser maior que o máximo', 'error')
+
+    // Já existe cadastrado? Bloqueia SKU duplicado; para nome igual, confirma.
+    const dup = findDuplicate(editing)
+    if (dup) {
+      const sameSku = (editing.sku ?? '').trim() && (dup.sku ?? '').trim().toLowerCase() === (editing.sku ?? '').trim().toLowerCase()
+      if (sameSku) {
+        return notify(`Já existe um produto com este SKU: "${dup.name}". Edite o existente.`, 'error')
+      }
+      if (!confirm(`Já existe um produto chamado "${dup.name}". Cadastrar mesmo assim?`)) return
+    }
+
     setSavingProduct(true)
     try {
       // Sobe a imagem para o Storage (URL leve) em vez de gravar base64 no banco.
@@ -186,14 +219,21 @@ export default function Products() {
           {/* Mobile: cartões */}
           <div className="stagger grid gap-3 sm:grid-cols-2 md:hidden">
             {filtered.map((p) => {
-              const low = p.stock <= settings.low_stock_threshold
+              const low = isLow(p)
               return (
                 <div key={p.id} className="card flex min-w-0 items-center gap-3 p-3">
-                  <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-800 dark:bg-slate-800">
-                    {p.image ? (
-                      <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
-                    ) : (
-                      <IconBox />
+                  <div className="relative flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-800 dark:bg-slate-800">
+                    <IconBox />
+                    {p.image && (
+                      <img
+                        src={p.image}
+                        alt={p.name}
+                        loading="lazy"
+                        className="absolute inset-0 h-full w-full object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none'
+                        }}
+                      />
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -239,16 +279,23 @@ export default function Products() {
               </thead>
               <tbody>
                 {filtered.map((p) => {
-                  const low = p.stock <= settings.low_stock_threshold
+                  const low = isLow(p)
                   return (
                     <tr key={p.id} className="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50 dark:border-slate-800 dark:hover:bg-slate-900/50">
                       <td className="p-3">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-800 dark:bg-slate-800">
-                            {p.image ? (
-                              <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
-                            ) : (
-                              <IconBox />
+                          <div className="relative flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-200 bg-slate-100 text-slate-400 dark:border-slate-800 dark:bg-slate-800">
+                            <IconBox />
+                            {p.image && (
+                              <img
+                                src={p.image}
+                                alt={p.name}
+                                loading="lazy"
+                                className="absolute inset-0 h-full w-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none'
+                                }}
+                              />
                             )}
                           </div>
                           <div>
@@ -372,7 +419,7 @@ export default function Products() {
               <input type="number" step="0.01" className="input" value={editing.cost ?? 0} onChange={(e) => setEditing({ ...editing, cost: Number(e.target.value) })} />
             </div>
             <div>
-              <label className="label">Estoque</label>
+              <label className="label">Estoque atual</label>
               <input type="number" className="input" value={editing.stock} onChange={(e) => setEditing({ ...editing, stock: Number(e.target.value) })} />
             </div>
             <div className="flex items-end gap-2">
@@ -384,6 +431,32 @@ export default function Products() {
                 />
                 Ativo
               </label>
+            </div>
+            <div>
+              <label className="label">Estoque mínimo</label>
+              <input
+                type="number"
+                className="input"
+                placeholder={`padrão: ${settings.low_stock_threshold}`}
+                value={editing.min_stock ?? ''}
+                onChange={(e) =>
+                  setEditing({ ...editing, min_stock: e.target.value === '' ? null : Number(e.target.value) })
+                }
+              />
+              <p className="mt-1 text-[11px] text-slate-400">Abaixo disso vira “estoque baixo”.</p>
+            </div>
+            <div>
+              <label className="label">Estoque máximo</label>
+              <input
+                type="number"
+                className="input"
+                placeholder="opcional"
+                value={editing.max_stock ?? ''}
+                onChange={(e) =>
+                  setEditing({ ...editing, max_stock: e.target.value === '' ? null : Number(e.target.value) })
+                }
+              />
+              <p className="mt-1 text-[11px] text-slate-400">Alvo/capacidade para reposição.</p>
             </div>
 
             {/* Campos personalizados */}

@@ -124,7 +124,8 @@ export default function Dashboard() {
   const revenue = completed.reduce((s, x) => s + x.total, 0)
   const ticket = completed.length ? revenue / completed.length : 0
   const stockValue = products.reduce((s, p) => s + p.price * p.stock, 0)
-  const lowStock = products.filter((p) => p.stock <= settings.low_stock_threshold)
+  // Estoque baixo usa o mínimo do produto quando definido; senão o limite global.
+  const lowStock = products.filter((p) => p.stock <= (p.min_stock ?? settings.low_stock_threshold))
 
   // Lucro estimado = (preço de venda - custo atual) por item vendido, menos descontos
   const profit = useMemo(() => {
