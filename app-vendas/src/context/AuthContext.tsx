@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
+import { prefetchAll } from '../lib/prefetch'
 
 interface Ctx {
   user: User | null
@@ -37,6 +38,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
       setUser(session?.user ?? null)
+      // Ao logar, já baixa todos os dados para o cache offline (não espera um
+      // evento de reconexão). prefetchAll se auto-protege.
+      if (session) void prefetchAll()
     })
     return () => {
       clearTimeout(safety)
