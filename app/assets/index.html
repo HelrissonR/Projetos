@@ -171,6 +171,23 @@ body:has(#pageLogin.active) nav.bottom{display:none!important}
 .lc-btn:hover{opacity:.92}.lc-btn:active{transform:scale(.98)}
 .lc-trust{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);font-size:11px;color:var(--muted);font-weight:600}
 .lc-dev{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:14px;font-size:11px;color:var(--muted);font-weight:500}
+/* ── Aura + ilustração + entrada (efeitos sutis) ── */
+.login-brand .aura{position:absolute;border-radius:50%;filter:blur(40px);pointer-events:none;z-index:0}
+.login-brand .aura.a1{width:280px;height:280px;background:rgba(255,255,255,.10);right:-70px;bottom:-80px;animation:lgAura 16s ease-in-out infinite}
+.login-brand .aura.a2{width:200px;height:200px;background:rgba(120,160,255,.12);left:-60px;top:-50px;animation:lgAura 16s ease-in-out infinite;animation-delay:-6s}
+.lb-top,.lb-lock,.lb-mid,.lb-foot{position:relative;z-index:2}
+.lb-illus{position:absolute;right:1%;bottom:2%;width:54%;max-width:430px;z-index:1;pointer-events:none;animation:lgFloat 7s ease-in-out infinite}
+.lb-illus img{width:100%;height:auto;display:block;filter:drop-shadow(0 10px 26px rgba(0,0,0,.35))}
+.lb-credit{position:absolute;right:16px;bottom:12px;z-index:3;font-size:9.5px;letter-spacing:.02em;color:rgba(255,255,255,.4);text-decoration:none}
+.lb-credit:hover{color:rgba(255,255,255,.72)}
+.login-brand{animation:lgPanel .7s cubic-bezier(.2,.7,.2,1) both}
+.login-card>*{animation:lgUp .5s ease both}
+.login-card>*:nth-child(2){animation-delay:.06s}.login-card>*:nth-child(3){animation-delay:.11s}.login-card>*:nth-child(4){animation-delay:.17s}.login-card>*:nth-child(5){animation-delay:.23s}.login-card>*:nth-child(6){animation-delay:.29s}
+@keyframes lgPanel{from{opacity:0;transform:translateY(16px) scale(.99)}to{opacity:1;transform:none}}
+@keyframes lgUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes lgAura{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(14px,-12px) scale(1.12)}}
+@keyframes lgFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@media(prefers-reduced-motion:reduce){.login-brand,.login-card>*,.lb-illus,.login-brand .aura{animation:none!important}}
 @media(max-width:860px){
   .login-shell{grid-template-columns:1fr}
   .login-brand{display:none}
@@ -655,6 +672,9 @@ header.top{padding:12px 16px}
 
   <!-- Painel de marca (desktop) -->
   <aside class="login-brand">
+    <span class="aura a1" aria-hidden="true"></span>
+    <span class="aura a2" aria-hidden="true"></span>
+    <div class="lb-illus" aria-hidden="true"><img src="login-illustration.png" alt=""></div>
     <div class="lb-top">
       <div class="lb-mono">BF</div>
       <div class="lb-name">Bolsa Fam&iacute;lia</div>
@@ -667,6 +687,7 @@ header.top{padding:12px 16px}
       <p class="lb-sub" id="loginSubtitle">Registre o acompanhamento dos benef&iacute;cios de forma r&aacute;pida e pr&aacute;tica.</p>
     </div>
     <div class="lb-foot">Prefeitura &middot; PBF na Sa&uacute;de</div>
+    <a class="lb-credit" href="https://storyset.com/health" target="_blank" rel="noopener">Ilustra&ccedil;&atilde;o por Storyset</a>
   </aside>
 
   <!-- Formul&aacute;rio -->
