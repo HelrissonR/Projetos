@@ -1362,7 +1362,7 @@ const Audit = {
 
     // Sync para Supabase se disponível (fire-and-forget — não bloqueia a ação)
     if (SB) {
-      SB.from('audit_logs').insert([entry]).catch(e => console.warn('Audit sync failed:', e));
+      Promise.resolve(SB.from('audit_logs').insert([entry])).then(r => { if (r && r.error) console.warn('Audit sync failed:', r.error.message); }, e => console.warn('Audit sync failed:', e));
     }
   },
 
@@ -1964,29 +1964,44 @@ function decodeMHTML(raw) {
   if (!bMatch) return raw;
   const boundary = bMatch[1];
   const parts = raw.split('--' + boundary);
-  
-  // Encontrar a Part com mais dados (sheet001.htm = dados reais)
+
+  // Uma exportação do e-Gestor ("Página da Web de Arquivo Único") divide os
+  // beneficiários em VÁRIAS planilhas (sheet001.htm, sheet002.htm, ... — uma por
+  // EAS/profissional). Precisamos concatenar TODAS as planilhas de dados, não só
+  // a maior — senão perdemos milhares de beneficiários.
+  const sheetBodies = [];   // corpos das partes sheetNNN.htm (dados reais)
   let bestPart = null, bestTRs = 0;
+
   for (const part of parts) {
-    // Pular headers MIME da parte
     const bodyStart = part.indexOf('\r\n\r\n');
     if (bodyStart === -1) continue;
+    const head = part.substring(0, bodyStart);
     let body = part.substring(bodyStart + 4);
-    
+
     // Decodificar quoted-printable
     body = body.replace(/=\r?\n/g, '');
     body = body.replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
-    
-    // Contar <tr> para achar a parte com dados
+
     const trCount = (body.match(/<tr/gi) || []).length;
-    if (trCount > bestTRs) {
-      bestTRs = trCount;
-      bestPart = body;
+    if (trCount > bestTRs) { bestTRs = trCount; bestPart = body; }
+
+    // É uma planilha de dados? (Content-Location .../sheetNNN.htm)
+    const loc = (head.match(/Content-Location:\s*([^\r\n]+)/i) || [])[1] || '';
+    if (/sheet\d+\.html?/i.test(loc) && trCount >= 1) {
+      sheetBodies.push(body);
     }
   }
-  
-  console.log(`📄 MHTML: boundary="${boundary}", ${parts.length} parts, melhor part tem ${bestTRs} <tr>`);
-  return bestPart || raw;
+
+  if (sheetBodies.length > 1) {
+    // Concatena o conteúdo das <table> de todas as planilhas num único HTML.
+    const combined = sheetBodies.join('\n');
+    const totalTRs = (combined.match(/<tr/gi) || []).length;
+    console.log(`📄 MHTML: ${parts.length} parts, ${sheetBodies.length} planilhas de dados concatenadas (${totalTRs} <tr> no total)`);
+    return combined;
+  }
+
+  console.log(`📄 MHTML: boundary="${boundary}", ${parts.length} parts, ${sheetBodies.length} planilha(s); usando maior part (${bestTRs} <tr>)`);
+  return (sheetBodies.length === 1 ? sheetBodies[0] : bestPart) || raw;
 }
 
 function parseMapaFormat(doc) {
