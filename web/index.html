@@ -306,6 +306,7 @@ body.anim-none #mc.enter>div>*{opacity:1!important}
 .search-wrap .s-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;display:flex;align-items:center}
 .form-sep{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;margin-top:4px}
 .cfg-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:16px}
+body:not(.role-admin) .cfg-admin-only{display:none!important}
 .cfg-card-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;background:var(--panel-2)}
 .cfg-card-body{padding:16px}
 .cfg-card-body .s3>*+*{margin-top:14px}
@@ -3520,6 +3521,7 @@ function filtrarAcomps(q) {
 
 async function renderConfig() {
   const isAdmin = ME.role === 'admin';
+  document.body.classList.toggle('role-admin', isAdmin);
   const nb = await IDB.count('beneficiarios');
   // Contagem real de famílias (códigos distintos entre beneficiários existentes)
   const _benCfg = await getBenefCache();
@@ -3718,39 +3720,74 @@ async function renderConfig() {
       </div>
     </div>`:''}
 
-    <!-- ── Aparência e conteúdo ── -->
+    <!-- ── Minhas preferências (todos os usuários · local neste aparelho) ── -->
     <div class="cfg-card" data-tab="aparencia">
-      <div class="cfg-card-head">${fi('image',15)} Aparência e conteúdo</div>
+      <div class="cfg-card-head">${fi('sliders',15)} Minhas preferências</div>
       <div class="cfg-card-body"><div class="s3">
-
-        <div class="form-sep" style="margin-top:0">${fi('settings',12)} Comportamento</div>
+        <div class="small muted" style="margin-top:0">Preferências deste aparelho — valem para você e não afetam outros usuários.</div>
         <div class="g2">
+          <div class="field" style="margin-bottom:0">
+            <label>Tema</label>
+            <select onchange="applyTheme(this.value);saveMeta('tema',this.value)">
+              <option value="light" ${(await IDB.getMeta('tema')||'light')==='light'?'selected':''}>Claro</option>
+              <option value="dark"  ${(await IDB.getMeta('tema')||'')==='dark'?'selected':''}>Escuro</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Tamanho do texto</label>
+            <select onchange="saveDesign('designFontSize',this.value)">
+              <option value="14" ${(await IDB.getMeta('designFontSize')||'15')==='14'?'selected':''}>Pequeno</option>
+              <option value="15" ${(await IDB.getMeta('designFontSize')||'15')==='15'?'selected':''}>Normal</option>
+              <option value="16" ${(await IDB.getMeta('designFontSize')||'15')==='16'?'selected':''}>Grande</option>
+              <option value="17" ${(await IDB.getMeta('designFontSize')||'15')==='17'?'selected':''}>Extra grande</option>
+            </select>
+          </div>
+        </div>
+        <div class="g2">
+          <div class="field" style="margin-bottom:0">
+            <label>Densidade</label>
+            <select onchange="saveDesign('designDensity',this.value)">
+              <option value="compact"     ${(await IDB.getMeta('designDensity')||'normal')==='compact'?'selected':''}>Compacta</option>
+              <option value="normal"      ${(await IDB.getMeta('designDensity')||'normal')==='normal'?'selected':''}>Normal</option>
+              <option value="comfortable" ${(await IDB.getMeta('designDensity')||'normal')==='comfortable'?'selected':''}>Confortável</option>
+            </select>
+          </div>
           <div class="field" style="margin-bottom:0">
             <label>Tela inicial após login</label>
             <select onchange="saveDesign('designDefaultPage',this.value)">
-              <option value="home"     ${(await IDB.getMeta('designDefaultPage')||'home')==='home'    ?'selected':''}>Início</option>
-              <option value="search"   ${(await IDB.getMeta('designDefaultPage')||'')==='search'  ?'selected':''}>Buscar</option>
+              <option value="home"     ${(await IDB.getMeta('designDefaultPage')||'home')==='home'?'selected':''}>Início</option>
+              <option value="search"   ${(await IDB.getMeta('designDefaultPage')||'')==='search'?'selected':''}>Buscar</option>
               <option value="families" ${(await IDB.getMeta('designDefaultPage')||'')==='families'?'selected':''}>Famílias</option>
-              <option value="acomp"    ${(await IDB.getMeta('designDefaultPage')||'')==='acomp'   ?'selected':''}>Acompanhamentos</option>
+              <option value="acomp"    ${(await IDB.getMeta('designDefaultPage')||'')==='acomp'?'selected':''}>Registros</option>
             </select>
           </div>
+        </div>
+        <div class="g2">
           <div class="field" style="margin-bottom:0">
             <label>Duração das notificações</label>
             <select onchange="saveDesign('designToastDur',this.value)">
               <option value="2" ${(await IDB.getMeta('designToastDur')||'4')==='2'?'selected':''}>2 segundos</option>
-              <option value="4" ${(await IDB.getMeta('designToastDur')||'4')==='4'?'selected':''}>4 segundos (padrão)</option>
+              <option value="4" ${(await IDB.getMeta('designToastDur')||'4')==='4'?'selected':''}>4 segundos</option>
               <option value="6" ${(await IDB.getMeta('designToastDur')||'4')==='6'?'selected':''}>6 segundos</option>
-              <option value="8" ${(await IDB.getMeta('designToastDur')||'4')==='8'?'selected':''}>8 segundos</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Alertas na tela inicial</label>
+            <select onchange="saveDesign('designShowAlerts',this.value)">
+              <option value="show" ${(await IDB.getMeta('designShowAlerts')||(isAdmin?'show':'hide'))==='show'?'selected':''}>Mostrar</option>
+              <option value="hide" ${(await IDB.getMeta('designShowAlerts')||(isAdmin?'show':'hide'))==='hide'?'selected':''}>Ocultar</option>
             </select>
           </div>
         </div>
-        <div class="field" style="margin-bottom:0">
-          <label>Alertas na tela inicial</label>
-          <select onchange="saveDesign('designShowAlerts',this.value)">
-            <option value="show" ${(await IDB.getMeta('designShowAlerts')||'show')==='show'?'selected':''}>Mostrar alertas (famílias sem acomp., vacinação)</option>
-            <option value="hide" ${(await IDB.getMeta('designShowAlerts')||'')==='hide'?'selected':''}>Ocultar alertas</option>
-          </select>
-        </div>
+      </div></div>
+    </div>
+
+    <!-- ── Aparência e conteúdo (administração) ── -->
+    <div class="cfg-card cfg-admin-only" data-tab="aparencia">
+      <div class="cfg-card-head">${fi('image',15)} Aparência e conteúdo <span class="tag tag-i" style="font-size:9px;margin-left:6px">admin</span></div>
+      <div class="cfg-card-body"><div class="s3">
+
+
 
         ${can('banner.manage') ? `<div class="form-sep">${fi('image',12)} Banners informativos (slides)</div>
         <div class="field" style="margin-bottom:0">
