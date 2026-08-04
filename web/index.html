@@ -417,6 +417,16 @@ body:not(.role-admin) .cfg-admin-only{display:none!important}
 /* ── Métricas principais compactas ── */
 .mb-stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 @media(max-width:420px){.mb-stat-grid{grid-template-columns:repeat(2,1fr)}}
+/* Operadores/dispositivos em cards lado a lado */
+.mb-ops-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+/* Destaque da Home: card "hoje" + ação principal lado a lado */
+.home-hero{display:grid;grid-template-columns:1.15fr .85fr;gap:10px;align-items:stretch}
+.home-hero .mb-today{margin:0}
+.home-cta-col{display:flex;flex-direction:column;gap:5px;justify-content:center}
+.home-cta{width:100%;background:var(--brand-blue);color:#fff;font-weight:800;border:none;border-radius:14px;padding:16px;font-size:16px;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;transition:filter .12s,transform .1s;box-shadow:0 2px 10px rgba(19,81,180,.28)}
+.home-cta:hover{filter:brightness(1.08)}
+.home-cta:active{transform:scale(.98)}
+@media(max-width:640px){.home-hero{grid-template-columns:1fr}}
 .mb-stat{padding:11px 10px;text-align:center;border:1px solid var(--border);background:var(--panel);border-radius:var(--r-lg);box-shadow:var(--shadow-sm)}
 .mb-stat-num{font-size:22px;font-weight:800;line-height:1;letter-spacing:-.5px}
 .mb-stat-lbl{font-size:10.5px;color:var(--muted);margin-top:4px;font-weight:600;line-height:1.15}
@@ -2881,7 +2891,7 @@ async function renderHome() {
     adminPanel = `<div class="card card-sub nh" style="padding:14px">
       <div class="mb-section-title">${fi('users',12)} Operadores
         <span class="tag tag-ok" style="margin-left:auto">${nOnline} online</span></div>
-      <div class="s3" style="--gap-3:6px;margin-top:8px">${rows || '<div class="small muted">Nenhum operador cadastrado.</div>'}</div>
+      <div class="mb-ops-grid" style="margin-top:8px">${rows || '<div class="small muted">Nenhum operador cadastrado.</div>'}</div>
       <div class="small muted" style="font-size:10px;margin-top:8px;text-align:center">Atualiza em tempo real conforme os operadores acessam e registram acompanhamentos.</div>
     </div>`;
   }
@@ -2920,21 +2930,24 @@ async function renderHome() {
 
     ${adminPanel}
 
-    <!-- ── Destaque: acompanhamentos realizados hoje (todos os perfis) ── -->
-    <div class="card nh mb-today" role="button" tabindex="0" aria-label="Ver acompanhamentos em Registros" onclick="nav('acomp')" style="cursor:pointer;padding:16px;display:flex;align-items:center;gap:14px;background:var(--accent);color:var(--accent-text);border:none">
-      <div style="font-size:36px;font-weight:800;line-height:1;min-width:52px;text-align:center">${acHoje.toLocaleString('pt-BR')}</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-weight:700;font-size:15px">Acompanhamentos realizados hoje</div>
-        <div style="font-size:12px;opacity:.9;text-transform:capitalize">${hoje}</div>
+    <!-- ── Destaque: acompanhamentos de hoje + ação principal (lado a lado) ── -->
+    <div class="home-hero">
+      <div class="card nh mb-today" role="button" tabindex="0" aria-label="Ver acompanhamentos em Registros" onclick="nav('acomp')" style="cursor:pointer;padding:16px;display:flex;align-items:center;gap:14px;background:var(--accent);color:var(--accent-text);border:none">
+        <div style="font-size:32px;font-weight:800;line-height:1;min-width:48px;text-align:center">${acHoje.toLocaleString('pt-BR')}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:15px">Acompanhamentos realizados hoje</div>
+          <div style="font-size:12px;opacity:.9;text-transform:capitalize">${hoje}</div>
+        </div>
+        <div style="opacity:.9">${fi('check-circle',26)}</div>
       </div>
-      <div style="opacity:.9">${fi('check-circle',28)}</div>
-    </div>
 
-    <!-- ── Ação principal: registrar acompanhamento ── -->
-    ${can('acomp.create') ? `<button class="btn btn-p btn-b home-cta" onclick="nav('search')" style="display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:16px;font-size:16px;font-weight:700;border-radius:14px;margin-top:2px">
-      ${fi('plus-circle',19)} Registrar acompanhamento
-    </button>
-    <div class="small muted" style="text-align:center;margin-top:-4px">Busque o beneficiário e toque em <b>Acompanhar</b>.</div>` : ''}
+      ${can('acomp.create') ? `<div class="home-cta-col">
+        <button class="home-cta" role="button" tabindex="0" aria-label="Registrar acompanhamento" onclick="nav('search')">
+          ${fi('plus-circle',19)} Registrar acompanhamento
+        </button>
+        <div class="small muted" style="text-align:center">Busque o beneficiário e toque em <b>Acompanhar</b>.</div>
+      </div>` : ''}
+    </div>
 
     <!-- ── Métricas principais (compactas) ── -->
     <div class="mb-stat-grid">
