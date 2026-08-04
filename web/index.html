@@ -78,6 +78,9 @@ input[type="text"],input[type="password"],input[type="url"],input[type="email"],
 textarea{min-height:80px;resize:vertical}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.2),0 1px 4px rgba(0,0,0,.04)}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}@media(max-width:420px){.g2{grid-template-columns:1fr}}
+/* Foco visível de teclado (acessibilidade) */
+a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,[role="button"]:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
+[role="button"]{cursor:pointer}
 .s3>*+*{margin-top:var(--gap-3,16px)}.s4>*+*{margin-top:var(--gap-4,20px)}
 .flex{display:flex}.aic{align-items:center}.jcb{justify-content:space-between}
 #toast{position:fixed;bottom:116px;left:50%;transform:translateX(-50%);max-width:calc(100vw - 40px);background:var(--panel);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px 18px;font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:999;opacity:0;pointer-events:none;transition:opacity .2s;white-space:pre-line}
@@ -747,7 +750,7 @@ header.top{padding:12px 16px}
 <button class="btn-offline" id="offBtn" onclick="toggleManualOffline()" title="Ativar/desativar modo offline"></button>
 <div class="vig" id="vigC"></div>
 <div class="right">
-  <div class="ss off" id="ssEl" onclick="toggleManualOffline()" title="Toque para ativar/desativar o modo offline" style="cursor:pointer"><span class="dot"></span><span id="ssT">Offline</span></div>
+  <div class="ss off" id="ssEl" role="button" tabindex="0" aria-label="Ativar ou desativar o modo offline" onclick="toggleManualOffline()" title="Toque para ativar/desativar o modo offline" style="cursor:pointer"><span class="dot"></span><span id="ssT">Offline</span></div>
   <button class="btn-icon" id="themeBtn" onclick="toggleTheme()" title="Alternar tema">
     <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
   </button>
@@ -784,6 +787,16 @@ header.top{padding:12px 16px}
 <input type="file" id="logoFile" accept="image/*" style="display:none" onchange="uploadLogo(this.files[0])">
 
 <script>
+// Acessibilidade: elementos com role="button" respondem a Enter/Espaço como um botão.
+document.addEventListener('keydown', function(e){
+  if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+  const t = e.target;
+  if (!t || t.getAttribute('role') !== 'button') return;
+  const tag = t.tagName;
+  if (tag === 'BUTTON' || tag === 'A' || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  e.preventDefault();
+  t.click();
+}, true);
 // Mini-implementação de hash seguro (Web Crypto API)
 // Ícone oficial do app (blocos coloridos) — logo padrão do login e ícone PWA
 const APP_ICON = './app-icon.png';
@@ -2809,7 +2822,7 @@ async function renderHome() {
   // ── Registros aguardando sincronização ───────────────
   const pendSync = acomps.filter(a => !a.synced_at).length;
   const syncBanner = (SB && pendSync > 0) ? `
-    <div class="sync-pend" onclick="if(MANUAL_OFF){toggleManualOffline()}else{Sync.upload();showToast('Sincronizando...','ok')}" title="Toque para sincronizar agora">
+    <div class="sync-pend" role="button" tabindex="0" aria-label="Sincronizar agora" onclick="if(MANUAL_OFF){toggleManualOffline()}else{Sync.upload();showToast('Sincronizando...','ok')}" title="Toque para sincronizar agora">
       ${fi('refresh-cw',15)}
       <span style="flex:1">${pendSync} registro${pendSync>1?'s':''} aguardando sincronização${MANUAL_OFF?' — modo offline ativado':navigator.onLine?'':' — sem internet, será enviado ao reconectar'}</span>
       ${MANUAL_OFF?`<span style="text-decoration:underline">Reativar</span>`:navigator.onLine?`<span style="text-decoration:underline">Sincronizar</span>`:''}
@@ -2893,7 +2906,7 @@ async function renderHome() {
     ${adminPanel}
 
     <!-- ── Destaque: acompanhamentos realizados hoje (todos os perfis) ── -->
-    <div class="card nh mb-today" onclick="nav('acomp')" style="cursor:pointer;padding:16px;display:flex;align-items:center;gap:14px;background:var(--accent);color:var(--accent-text);border:none">
+    <div class="card nh mb-today" role="button" tabindex="0" aria-label="Ver acompanhamentos em Registros" onclick="nav('acomp')" style="cursor:pointer;padding:16px;display:flex;align-items:center;gap:14px;background:var(--accent);color:var(--accent-text);border:none">
       <div style="font-size:36px;font-weight:800;line-height:1;min-width:52px;text-align:center">${acHoje.toLocaleString('pt-BR')}</div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:700;font-size:15px">Acompanhamentos realizados hoje</div>
@@ -2995,28 +3008,28 @@ async function renderHome() {
 
     <!-- ── Alertas ── -->
     ${showAlerts ? `
-    ${vencidosN > 0 ? `<div class="card alert-action" style="background:var(--err-soft);border-color:var(--err)" onclick="showVencidos()" title="Ver acompanhamentos vencidos">
+    ${vencidosN > 0 ? `<div class="card alert-action" role="button" tabindex="0" style="background:var(--err-soft);border-color:var(--err)" onclick="showVencidos()" title="Ver acompanhamentos vencidos" aria-label="Ver acompanhamentos vencidos">
       <div class="flex aic jcb">
         <div class="flex aic" style="gap:8px"><span style="color:var(--err)">${fi('clock',16)}</span>
         <div><div style="font-weight:600;color:var(--err)">${vencidosN} acompanhamento${vencidosN>1?'s':''} vencido${vencidosN>1?'s':''}</div>
         <div class="small muted">Sem acompanhamento no semestre atual</div></div></div>
         <span style="color:var(--err);opacity:.6">${fi('chevron-right',16)}</span>
       </div></div>` : ''}
-    ${famSemAcomp > 0 ? `<div class="card alert-action" style="background:var(--warn-soft);border-color:var(--warn)" onclick="_filtroRapido('semAcomp')" title="Ver famílias sem acompanhamento">
+    ${famSemAcomp > 0 ? `<div class="card alert-action" role="button" tabindex="0" style="background:var(--warn-soft);border-color:var(--warn)" onclick="_filtroRapido('semAcomp')" title="Ver famílias sem acompanhamento" aria-label="Ver famílias sem acompanhamento">
       <div class="flex aic jcb">
         <div class="flex aic" style="gap:8px"><span style="color:var(--warn)">${fi('alert-triangle',16)}</span>
         <div><div style="font-weight:600;color:var(--warn)">${famSemAcomp} famílias sem acompanhamento</div>
         <div class="small muted">Nenhum membro foi acompanhado ainda</div></div></div>
         <span style="color:var(--warn);opacity:.6">${fi('chevron-right',16)}</span>
       </div></div>` : ''}
-    ${vacPendente > 0 ? `<div class="card alert-action" style="background:var(--err-soft);border-color:var(--err)" onclick="_filtroRapido('vacPend')" title="Ver beneficiários com vacinação pendente">
+    ${vacPendente > 0 ? `<div class="card alert-action" role="button" tabindex="0" style="background:var(--err-soft);border-color:var(--err)" onclick="_filtroRapido('vacPend')" title="Ver beneficiários com vacinação pendente" aria-label="Ver beneficiários com vacinação pendente">
       <div class="flex aic jcb">
         <div class="flex aic" style="gap:8px"><span style="color:var(--err)">${fi('x-circle',16)}</span>
         <div><div style="font-weight:600;color:var(--err)">${vacPendente} com vacinação pendente</div>
         <div class="small muted">Toque para ver a lista</div></div></div>
         <span style="color:var(--err);opacity:.6">${fi('chevron-right',16)}</span>
       </div></div>` : ''}
-    ${gestantes > 0 ? `<div class="card alert-action" style="background:var(--ok-soft);border-color:var(--ok)" onclick="_filtroRapido('gestante')" title="Ver gestantes">
+    ${gestantes > 0 ? `<div class="card alert-action" role="button" tabindex="0" style="background:var(--ok-soft);border-color:var(--ok)" onclick="_filtroRapido('gestante')" title="Ver gestantes" aria-label="Ver gestantes">
       <div class="flex aic jcb">
         <div class="flex aic" style="gap:8px"><span style="color:var(--ok)">${fi('check-circle',16)}</span>
         <div><div style="font-weight:600;color:var(--ok)">${gestantes} acomp. de gestantes registrados</div>
@@ -3195,7 +3208,7 @@ function _renderFamLista(familias, nb, page) {
         : todosOk ? `<span class="tag tag-ok" style="font-size:10px">${fi('check-circle',11)} Em dia</span>`
         : nOk > 0 ? `<span class="tag tag-w" style="font-size:10px">${nOk}/${nMem} acomp.</span>` : '';
       const st = todosOk ? 'border-left:4px solid var(--ok);' : '';
-      return `<div class="card" style="${st}" onclick="showFamily('${esc(f.familyId)}')">
+      return `<div class="card" role="button" tabindex="0" aria-label="Abrir família" style="${st}" onclick="showFamily('${esc(f.familyId)}')">
       <div class="flex aic jcb" style="margin-bottom:6px"><div class="fb">${esc(codDisplay(f))}</div><div style="display:flex;gap:4px;align-items:center">${acTag}<span class="tag tag-i">${nMem} membro${nMem!==1?'s':''}</span></div></div>
       <div style="font-weight:500;font-size:14px">${esc((f.endereco||'').substring(0,80))}</div>
       <div class="res-card-meta" style="margin-top:4px">${esc(f.bairro||'')}${f.bairro&&f.eas?'<span class="dot"></span>':''}${f.eas?esc(f.eas.substring(0,35)):''}</div></div>`;}).join('')}
@@ -3256,7 +3269,7 @@ async function renderAcomp() {
     const podeComp = a.acompanhado !== false; // comprovante só p/ acompanhamento realizado
     return `<div class="card nh">
       <div class="flex aic jcb" style="margin-bottom:6px">
-        <div style="font-weight:500;${podeComp?'cursor:pointer;color:var(--accent-2,var(--accent));display:inline-flex;align-items:center;gap:5px':''}" ${podeComp?`onclick="comprovanteAcompBenef('${esc(a.nis)}')" title="Emitir comprovante de acompanhamento"`:''}>${esc(b?.nome||'NIS: '+a.nis)}${podeComp?` ${fi('file-text',12)}`:''}${a.cadastro_avulso?' <span class="tag tag-w">AVULSO</span>':''}</div>
+        <div style="font-weight:500;${podeComp?'cursor:pointer;color:var(--accent-2,var(--accent));display:inline-flex;align-items:center;gap:5px':''}" ${podeComp?`role="button" tabindex="0" aria-label="Emitir comprovante de acompanhamento" onclick="comprovanteAcompBenef('${esc(a.nis)}')" title="Emitir comprovante de acompanhamento"`:''}>${esc(b?.nome||'NIS: '+a.nis)}${podeComp?` ${fi('file-text',12)}`:''}${a.cadastro_avulso?' <span class="tag tag-w">AVULSO</span>':''}</div>
         <span class="tag tag-ok">${new Date(a.data).toLocaleDateString()}</span>
       </div>
       <div class="small muted">NIS: ${esc(a.nis)}${a.conta_sync?' · via '+esc(a.conta_sync.split('@')[0]):''} ${a.synced_at?'':'<span class="tag tag-w">Pendente</span>'}</div>
@@ -3439,7 +3452,7 @@ function filtrarAcomps(q) {
     const podeComp = a.acompanhado !== false; // comprovante só p/ acompanhamento realizado
     return `<div class="card nh">
       <div class="flex aic jcb" style="margin-bottom:6px">
-        <div style="font-weight:500;${podeComp?'cursor:pointer;color:var(--accent-2,var(--accent));display:inline-flex;align-items:center;gap:5px':''}" ${podeComp?`onclick="comprovanteAcompBenef('${esc(a.nis)}')" title="Emitir comprovante de acompanhamento"`:''}>${esc(b?.nome||'NIS: '+a.nis)}${podeComp?` ${fi('file-text',12)}`:''}${a.cadastro_avulso?' <span class="tag tag-w">AVULSO</span>':''}</div>
+        <div style="font-weight:500;${podeComp?'cursor:pointer;color:var(--accent-2,var(--accent));display:inline-flex;align-items:center;gap:5px':''}" ${podeComp?`role="button" tabindex="0" aria-label="Emitir comprovante de acompanhamento" onclick="comprovanteAcompBenef('${esc(a.nis)}')" title="Emitir comprovante de acompanhamento"`:''}>${esc(b?.nome||'NIS: '+a.nis)}${podeComp?` ${fi('file-text',12)}`:''}${a.cadastro_avulso?' <span class="tag tag-w">AVULSO</span>':''}</div>
         <span class="tag tag-ok">${new Date(a.data).toLocaleDateString()}</span>
       </div>
       <div class="small muted">NIS: ${esc(a.nis)}${a.conta_sync?' · via '+esc(a.conta_sync.split('@')[0]):''} ${a.synced_at?'':'<span class="tag tag-w">Pendente</span>'}</div>
@@ -4259,17 +4272,17 @@ async function doSearch(q) {
 
     if (parcial.length > 0) {
       html += `<div class="small" style="margin-top:8px;font-weight:500;display:flex;align-items:center;gap:4px">${fi('edit',13)} Nomes parecidos:</div>
-        ${parcial.map(b=>`<div class="card card-sub nh" style="margin-top:6px;cursor:pointer" onclick="showBenef('${b.nis}')">
+        ${parcial.map(b=>`<div class="card card-sub nh" role="button" tabindex="0" aria-label="Abrir beneficiário" style="margin-top:6px;cursor:pointer" onclick="showBenef('${b.nis}')">
           ${esc(b.nome)} <span class="small muted">(NIS: ${esc(b.nis)})</span></div>`).join('')}`;
     }
     if (porBairro.length > 0) {
       html += `<div class="small" style="margin-top:8px;font-weight:500;display:flex;align-items:center;gap:4px">${fi('map-pin',13)} Por bairro:</div>
-        ${porBairro.slice(0,3).map(b=>`<div class="card card-sub nh" style="margin-top:6px;cursor:pointer" onclick="showBenef('${b.nis}')">
+        ${porBairro.slice(0,3).map(b=>`<div class="card card-sub nh" role="button" tabindex="0" aria-label="Abrir beneficiário" style="margin-top:6px;cursor:pointer" onclick="showBenef('${b.nis}')">
           ${esc(b.nome)} <span class="small muted">(${esc(b.bairro)})</span></div>`).join('')}`;
     }
     if (porFam.length > 0) {
       html += `<div class="small" style="margin-top:8px;font-weight:500;display:flex;align-items:center;gap:4px">${fi('users',13)} Por família:</div>
-        ${porFam.slice(0,3).map(b=>`<div class="card card-sub nh" style="margin-top:6px;cursor:pointer" onclick="showBenef('${b.nis}')">
+        ${porFam.slice(0,3).map(b=>`<div class="card card-sub nh" role="button" tabindex="0" aria-label="Abrir beneficiário" style="margin-top:6px;cursor:pointer" onclick="showBenef('${b.nis}')">
           ${esc(b.nome)} <span class="small muted">(Fam: ${esc(b.cod_fam)})</span></div>`).join('')}`;
     }
     if (!parcial.length && !porBairro.length && !porFam.length) {
@@ -4283,7 +4296,7 @@ async function doSearch(q) {
     const canEdit = ME && ME.role !== 'visualizador';
     if (canEdit) {
       _avulsoNome = /^\d+$/.test(q) ? '' : q.toUpperCase();
-      html += `<div class="card" style="background:var(--accent-soft);border-color:var(--accent);cursor:pointer" onclick="showAcompAvulso()">
+      html += `<div class="card" role="button" tabindex="0" aria-label="Cadastrar acompanhamento avulso" style="background:var(--accent-soft);border-color:var(--accent);cursor:pointer" onclick="showAcompAvulso()">
         <div class="flex aic" style="gap:12px">
           <span style="display:flex;color:var(--accent-text)">${fi('clipboard',28)}</span>
           <div>
@@ -4314,7 +4327,7 @@ async function doSearch(q) {
     const statusIcon = acSem
       ? `<span style="flex-shrink:0;display:flex;align-items:center;color:var(--${naoAc?'warn':'ok'})">${fi(naoAc?'alert-triangle':'check-circle',26)}</span>`
       : `<span style="flex-shrink:0;display:flex;align-items:center;color:var(--muted);opacity:.45">${fi('clock',24)}</span>`;
-    return `<div class="card" style="${cardStyle};display:flex;align-items:center;gap:12px" onclick="showBenef('${b.nis}')">
+    return `<div class="card" role="button" tabindex="0" aria-label="Abrir beneficiário ${esc(b.nome||'')}" style="${cardStyle};display:flex;align-items:center;gap:12px" onclick="showBenef('${b.nis}')">
       <div style="flex:1;min-width:0">
       <div class="res-card-name">
         ${esc(b.nome)}
@@ -5174,7 +5187,7 @@ async function showVencidos() {
     ? `<div class="empty-state"><div class="ei">${fi('award',44)}</div><strong>Tudo em dia</strong><p>Nenhum acompanhamento vencido pelas regras de periodicidade.</p></div>`
     : `<div class="s3">
         <div class="small muted">Regra: 1 acompanhamento por semestre (S1 jan–jun · S2 jul–dez). Pendentes do semestre ${semestreLabel(semestreAtualRef())}. Toque para abrir o beneficiário.</div>
-        ${v.slice(0, 100).map(x => `<div class="card" onclick="showBenef('${esc(x.b.nis)}')">
+        ${v.slice(0, 100).map(x => `<div class="card" role="button" tabindex="0" aria-label="Abrir beneficiário ${esc(x.b.nome||'')}" onclick="showBenef('${esc(x.b.nis)}')">
           <div class="res-card-name">${esc(x.b.nome)}
             <span class="tag" style="background:var(--err-soft);color:var(--err)">${x.ultimaData == null ? 'nunca acompanhado' : `há ${x.diasDesde} dias`}</span></div>
           <div class="res-card-meta">
@@ -5233,7 +5246,7 @@ async function showFamily(fid) {
           const st = ac ? 'border-left:4px solid var(--ok);background:var(--ok-soft);' : '';
           return `
           <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:8px;${st}">
-            <div onclick="showBenef('${esc(m.nis)}')" style="flex:1;cursor:pointer;min-width:0">
+            <div role="button" tabindex="0" aria-label="Abrir beneficiário ${esc(m.nome||'')}" onclick="showBenef('${esc(m.nis)}')" style="flex:1;cursor:pointer;min-width:0">
               <div style="font-weight:500;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${esc(m.nome)} ${badgeAcompSemestre(ac)}</div>
               <div class="small muted">NIS: ${esc(m.nis)}${m.idade?' · '+m.idade+' anos':''}${m.gestante?' · <span class="tag tag-w" style="font-size:10px">Gestante</span>':''}</div>
             </div>
@@ -5829,7 +5842,7 @@ function showProximoMembro(pendentes, dataAcomp) {
     </div>
     <div class="small muted" style="font-weight:600">Deseja acompanhar agora?</div>
     ${pendentes.map(m => `
-      <div class="card" onclick="iniciarAcompMembro('${m.nis}','${esc(dataAcomp)}')" style="cursor:pointer">
+      <div class="card" role="button" tabindex="0" aria-label="Iniciar acompanhamento de ${esc(m.nome||m.nis)}" onclick="iniciarAcompMembro('${m.nis}','${esc(dataAcomp)}')" style="cursor:pointer">
         <div class="flex aic jcb">
           <div>
             <div style="font-weight:500">${esc(m.nome)}</div>
@@ -7943,7 +7956,7 @@ function showRelatoriosHub() {
   openSheet('Relatórios', `<div class="s3">
     <div class="small muted" style="margin-bottom:2px">Escolha como o app deve entregar os dados.</div>
 
-    <div class="card card-sub nh rel-hub-card" onclick="closeSheet(); gerarRelatorioVigencia()" style="cursor:pointer">
+    <div class="card card-sub nh rel-hub-card" role="button" tabindex="0" aria-label="Relatório consolidado geral" onclick="closeSheet(); gerarRelatorioVigencia()" style="cursor:pointer">
       <div style="display:flex;align-items:center;gap:10px">
         <div class="mb-quick-icon">${fi('bar-chart-2',20)}</div>
         <div style="flex:1;min-width:0">
@@ -7954,7 +7967,7 @@ function showRelatoriosHub() {
       </div>
     </div>
 
-    <div class="card card-sub nh rel-hub-card" onclick="closeSheet(); showRelatorioAcompModal()" style="cursor:pointer">
+    <div class="card card-sub nh rel-hub-card" role="button" tabindex="0" aria-label="Relatório individualizado por beneficiário" onclick="closeSheet(); showRelatorioAcompModal()" style="cursor:pointer">
       <div style="display:flex;align-items:center;gap:10px">
         <div class="mb-quick-icon">${fi('users',20)}</div>
         <div style="flex:1;min-width:0">
@@ -7965,7 +7978,7 @@ function showRelatoriosHub() {
       </div>
     </div>
 
-    <div class="card card-sub nh rel-hub-card" onclick="closeSheet(); showRelatorioAcompModal('comprovante')" style="cursor:pointer">
+    <div class="card card-sub nh rel-hub-card" role="button" tabindex="0" aria-label="Comprovante de acompanhamento" onclick="closeSheet(); showRelatorioAcompModal('comprovante')" style="cursor:pointer">
       <div style="display:flex;align-items:center;gap:10px">
         <div class="mb-quick-icon">${fi('file-text',20)}</div>
         <div style="flex:1;min-width:0">
