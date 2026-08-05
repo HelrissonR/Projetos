@@ -86,6 +86,7 @@ export default function Pos() {
         quantity: l.quantity,
         unit_price: l.product.price,
         subtotal: l.product.price * l.quantity,
+        cost: l.product.cost ?? 0, // custo histórico (snapshot no momento da venda)
       }))
       const sale = await salesRepo.create(
         {

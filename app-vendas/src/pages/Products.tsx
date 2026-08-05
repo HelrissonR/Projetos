@@ -63,17 +63,18 @@ export default function Products() {
   const minOf = (p: Product) => p.min_stock ?? settings.low_stock_threshold
   const isLow = (p: Product) => p.stock <= minOf(p)
 
-  const filtered = useMemo(
-    () =>
-      products.filter((p) => {
-        const matchesSearch =
-          p.name.toLowerCase().includes(search.toLowerCase()) ||
-          (p.sku ?? '').toLowerCase().includes(search.toLowerCase())
-        const matchesLow = !lowOnly || p.stock <= (p.min_stock ?? settings.low_stock_threshold)
-        return matchesSearch && matchesLow
-      }),
-    [products, search, lowOnly, settings.low_stock_threshold],
-  )
+  const filtered = useMemo(() => {
+    const list = products.filter((p) => {
+      const matchesSearch =
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        (p.sku ?? '').toLowerCase().includes(search.toLowerCase())
+      // Estoque baixo: só ativos (igual ao Dashboard) e abaixo do mínimo.
+      const matchesLow = !lowOnly || (p.active && p.stock <= (p.min_stock ?? settings.low_stock_threshold))
+      return matchesSearch && matchesLow
+    })
+    // No modo "estoque baixo", ordena do mais crítico (esgotado primeiro).
+    return lowOnly ? list.sort((a, b) => a.stock - b.stock) : list
+  }, [products, search, lowOnly, settings.low_stock_threshold])
 
   // Limpa o prefiltro (mostra todos os produtos de novo)
   const clearFilter = () => {

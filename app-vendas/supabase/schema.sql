@@ -76,7 +76,8 @@ create table if not exists public.sale_items (
   product_name text not null,
   quantity int not null default 1,
   unit_price numeric(12,2) not null default 0,
-  subtotal numeric(12,2) not null default 0
+  subtotal numeric(12,2) not null default 0,
+  cost numeric(12,2) not null default 0 -- custo histórico (snapshot no momento da venda)
 );
 
 create index if not exists idx_sale_items_sale on public.sale_items(sale_id);
@@ -136,10 +137,11 @@ begin
   on conflict (id) do nothing;
   if not found then return; end if; -- reenvio idempotente
   for it in select * from jsonb_array_elements(coalesce(p_items,'[]'::jsonb)) loop
-    insert into public.sale_items (id, sale_id, product_id, product_name, quantity, unit_price, subtotal)
+    insert into public.sale_items (id, sale_id, product_id, product_name, quantity, unit_price, subtotal, cost)
     values (coalesce((it->>'id')::uuid, gen_random_uuid()), v_sid, nullif(it->>'product_id','')::uuid,
             it->>'product_name', coalesce((it->>'quantity')::int,1),
-            coalesce((it->>'unit_price')::numeric,0), coalesce((it->>'subtotal')::numeric,0))
+            coalesce((it->>'unit_price')::numeric,0), coalesce((it->>'subtotal')::numeric,0),
+            coalesce((it->>'cost')::numeric,0))
     on conflict (id) do nothing;
     v_pid := nullif(it->>'product_id','')::uuid; v_qty := coalesce((it->>'quantity')::int,0);
     if v_pid is not null and v_qty <> 0 then
@@ -172,9 +174,10 @@ begin
   on conflict (id) do nothing;
   for it in select * from jsonb_array_elements(coalesce(v_order.items,'[]'::jsonb)) loop
     v_pid := nullif(it->>'product_id','')::uuid; v_qty := coalesce((it->>'quantity')::int,0);
-    insert into public.sale_items (id, sale_id, product_id, product_name, quantity, unit_price, subtotal)
+    insert into public.sale_items (id, sale_id, product_id, product_name, quantity, unit_price, subtotal, cost)
     values (gen_random_uuid(), p_sale_id, v_pid, it->>'product_name', coalesce(v_qty,1),
-            coalesce((it->>'unit_price')::numeric,0), coalesce((it->>'subtotal')::numeric,0));
+            coalesce((it->>'unit_price')::numeric,0), coalesce((it->>'subtotal')::numeric,0),
+            coalesce((select cost from public.products where id = v_pid), 0));
     if v_pid is not null and v_qty <> 0 then
       update public.products set stock = stock - v_qty where id = v_pid returning stock into v_new;
       if v_new is not null and v_new < 0 then raise exception 'Estoque insuficiente para o produto %', v_pid using errcode='check_violation'; end if;
@@ -195,6 +198,7 @@ alter table public.products  add column if not exists image text;
 alter table public.products  add column if not exists description text;
 alter table public.products  add column if not exists min_stock int;
 alter table public.products  add column if not exists max_stock int;
+alter table public.sale_items add column if not exists cost numeric(12,2) not null default 0;
 alter table public.products  drop constraint if exists products_min_le_max;
 alter table public.products  add constraint products_min_le_max
   check (min_stock is null or max_stock is null or min_stock <= max_stock);

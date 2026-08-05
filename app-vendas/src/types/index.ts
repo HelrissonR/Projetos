@@ -71,6 +71,9 @@ export interface SaleItem {
   quantity: number
   unit_price: number
   subtotal: number
+  // Custo do produto NO MOMENTO da venda (custo histórico). O lucro de vendas
+  // antigas não muda quando o custo do produto é atualizado depois.
+  cost?: number
 }
 
 export interface Sale {

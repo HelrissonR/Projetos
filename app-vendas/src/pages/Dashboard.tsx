@@ -124,8 +124,19 @@ export default function Dashboard() {
   const revenue = completed.reduce((s, x) => s + x.total, 0)
   const ticket = completed.length ? revenue / completed.length : 0
   const stockValue = products.reduce((s, p) => s + p.price * p.stock, 0)
-  // Estoque baixo usa o mínimo do produto quando definido; senão o limite global.
-  const lowStock = products.filter((p) => p.stock <= (p.min_stock ?? settings.low_stock_threshold))
+  // Estoque baixo: só produtos ATIVOS (inativos não geram alarme), usando o
+  // mínimo do produto quando definido, senão o limite global. Ordena do mais
+  // crítico (esgotado primeiro, depois menor estoque) para priorizar reposição.
+  const lowStock = useMemo(() => {
+    const min = (p: Product) => p.min_stock ?? settings.low_stock_threshold
+    return products
+      .filter((p) => p.active && p.stock <= min(p))
+      .sort((a, b) => a.stock - b.stock)
+  }, [products, settings.low_stock_threshold])
+  const outOfStock = lowStock.filter((p) => p.stock <= 0)
+  // Quantos badges mostrar antes de resumir com "+N mais" (evita a parede de avisos).
+  const LOW_STOCK_SHOWN = 15
+  const lowStockShown = lowStock.slice(0, LOW_STOCK_SHOWN)
 
   // Lucro estimado = (preço de venda - custo atual) por item vendido, menos descontos
   const profit = useMemo(() => {
@@ -134,7 +145,10 @@ export default function Dashboard() {
     completed.forEach((s) => {
       discount += s.discount || 0
       s.items?.forEach((i) => {
-        gross += (i.unit_price - (costOf.get(i.product_id) ?? 0)) * i.quantity
+        // Custo histórico (gravado na venda) quando disponível; senão, cai no
+        // custo atual do produto — mantém compatível com vendas antigas.
+        const unitCost = i.cost ?? costOf.get(i.product_id) ?? 0
+        gross += (i.unit_price - unitCost) * i.quantity
       })
     })
     return gross - discount
@@ -212,7 +226,13 @@ export default function Dashboard() {
           label="Estoque baixo"
           value={lowStock.length}
           format={(n) => String(Math.round(n))}
-          hint={lowStock.length > 0 ? 'toque para ver' : 'abaixo do limite'}
+          hint={
+            outOfStock.length > 0
+              ? `${outOfStock.length} esgotado(s) · toque`
+              : lowStock.length > 0
+                ? 'toque para ver'
+                : 'tudo em dia'
+          }
           onClick={lowStock.length > 0 ? () => navigate('/produtos?estoque=baixo') : undefined}
         />
       </div>
@@ -261,18 +281,41 @@ export default function Dashboard() {
 
       {lowStock.length > 0 && (
         <div className="card mt-6">
-          <h2 className="mb-1 flex items-center gap-2 font-semibold text-red-600"><IconWarning /> Produtos com estoque baixo</h2>
-          <p className="mb-3 text-xs text-slate-500">Toque em um produto para abri-lo e repor o estoque.</p>
+          <h2 className="mb-1 flex flex-wrap items-center gap-2 font-semibold text-red-600">
+            <IconWarning /> Produtos com estoque baixo
+            <span className="text-xs font-normal text-slate-500">
+              ({lowStock.length}
+              {outOfStock.length > 0 ? ` · ${outOfStock.length} esgotado(s)` : ''})
+            </span>
+          </h2>
+          <p className="mb-3 text-xs text-slate-500">
+            Ordenados do mais crítico. Toque em um produto para abri-lo e repor o estoque.
+          </p>
           <div className="flex flex-wrap gap-2">
-            {lowStock.map((p) => (
+            {lowStockShown.map((p) => {
+              const gone = p.stock <= 0
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => navigate('/produtos?busca=' + encodeURIComponent(p.name))}
+                  className={`badge transition ${
+                    gone
+                      ? 'bg-red-600 text-white hover:bg-red-700'
+                      : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-900/70'
+                  }`}
+                >
+                  {p.name} — {gone ? 'esgotado' : `${p.stock} un`}
+                </button>
+              )
+            })}
+            {lowStock.length > LOW_STOCK_SHOWN && (
               <button
-                key={p.id}
-                onClick={() => navigate('/produtos?busca=' + encodeURIComponent(p.name))}
-                className="badge bg-red-100 text-red-700 transition hover:bg-red-200 dark:bg-red-900/40 dark:text-red-300 dark:hover:bg-red-900/70"
+                onClick={() => navigate('/produtos?estoque=baixo')}
+                className="badge bg-slate-200 text-slate-700 transition hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
               >
-                {p.name} — {p.stock} un
+                +{lowStock.length - LOW_STOCK_SHOWN} mais — ver todos
               </button>
-            ))}
+            )}
           </div>
         </div>
       )}
