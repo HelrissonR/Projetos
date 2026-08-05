@@ -30,6 +30,10 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 const CACHE_PREFIX = 'appvendas:cache:'
 const OUTBOX_KEY = 'appvendas:outbox'
+// Fila de operações que falharam por erro REAL do banco (não rede): em vez de
+// descartar em silêncio, guardamos aqui para mostrar ao usuário e permitir
+// retentar. Ex.: "estoque insuficiente" ao sincronizar uma venda feita offline.
+const FAILED_KEY = 'appvendas:failed'
 
 export type OutboxOp =
   | { id: string; kind: 'upsert'; table: string; record: Record<string, unknown> }
@@ -79,6 +83,66 @@ function enqueue(op: OutboxOp): void {
 }
 export function pendingCount(): number {
   return loadOutbox().length
+}
+
+// -------- Fila de falhas (dead-letter) --------
+export interface FailedOp {
+  op: OutboxOp
+  error: string
+  at: string
+}
+function loadFailed(): FailedOp[] {
+  try {
+    const raw = localStorage.getItem(FAILED_KEY)
+    return raw ? (JSON.parse(raw) as FailedOp[]) : []
+  } catch {
+    return []
+  }
+}
+function saveFailed(list: FailedOp[]): void {
+  try {
+    localStorage.setItem(FAILED_KEY, JSON.stringify(list))
+  } catch {
+    /* melhor perder o registro de falha do que quebrar a operação */
+  }
+}
+export function failedCount(): number {
+  return loadFailed().length
+}
+export function getFailed(): FailedOp[] {
+  return loadFailed()
+}
+/** Rótulo legível de uma operação, para exibir na lista de falhas. */
+export function describeOp(op: OutboxOp): string {
+  const t = 'table' in op ? op.table : ''
+  switch (op.kind) {
+    case 'rpc':
+      if (op.fn === 'create_sale_tx') return 'Registrar venda'
+      if (op.fn === 'cancel_sale_tx') return 'Cancelar venda'
+      if (op.fn === 'approve_order_tx') return 'Aprovar pedido'
+      if (op.fn === 'adjust_product_stock') return 'Ajustar estoque'
+      return op.fn
+    case 'delete':
+      return `Excluir em ${t}`
+    case 'update':
+      return `Atualizar ${t}`
+    default:
+      return `Salvar ${t}`
+  }
+}
+/** Recoloca todas as falhas na fila de saída e tenta sincronizar de novo. */
+export function retryFailed(supabase: SupabaseClient): void {
+  const failed = loadFailed()
+  if (failed.length === 0) return
+  saveOutbox([...loadOutbox(), ...failed.map((f) => f.op)])
+  saveFailed([])
+  notify()
+  void flush(supabase)
+}
+/** Descarta as falhas (usuário decidiu ignorá-las). */
+export function clearFailed(): void {
+  saveFailed([])
+  notify()
 }
 
 // -------- Notificação de estado (para o indicador de sync na UI) --------
@@ -219,8 +283,12 @@ export async function flush(supabase: SupabaseClient): Promise<void> {
         await applyOp(supabase, op)
       } catch (e) {
         if (isNetworkError(e)) break // volta a tentar mais tarde
-        // Erro não recuperável: descarta este item para não travar a fila.
-        console.error('Operação de sync descartada (erro não recuperável):', op, e)
+        // Erro REAL do banco (ex.: estoque insuficiente, violação de RLS): não
+        // descarta em silêncio — move para a fila de falhas para o usuário ver
+        // e decidir retentar. Assim nenhuma alteração some sem aviso.
+        const msg = (e as { message?: string })?.message ?? String(e)
+        console.error('Operação movida para a fila de falhas:', op, e)
+        saveFailed([...loadFailed(), { op, error: msg, at: new Date().toISOString() }])
       }
       // Remove o item processado por id (re-lendo para não sobrescrever novos).
       saveOutbox(loadOutbox().filter((o) => o.id !== op.id))
@@ -234,4 +302,26 @@ export async function flush(supabase: SupabaseClient): Promise<void> {
 
 export function isSyncing(): boolean {
   return syncing
+}
+
+// -------- Limpeza de dados locais (ao sair da conta) --------
+/**
+ * Remove TODO o cache, o outbox e a fila de falhas do dispositivo. Chamado no
+ * logout para que dados do negócio (produtos, vendas, clientes) não fiquem
+ * acessíveis a quem usar o aparelho depois. Preserva chaves não relacionadas.
+ */
+export function clearLocalData(): void {
+  try {
+    const toRemove: string[] = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i)
+      if (k && k.startsWith(CACHE_PREFIX)) toRemove.push(k)
+    }
+    toRemove.forEach((k) => localStorage.removeItem(k))
+    localStorage.removeItem(OUTBOX_KEY)
+    localStorage.removeItem(FAILED_KEY)
+  } catch {
+    /* ignore */
+  }
+  notify()
 }

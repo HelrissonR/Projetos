@@ -116,6 +116,80 @@ revoke all on function public.adjust_product_stock(uuid, int) from public;
 revoke all on function public.adjust_product_stock(uuid, int) from anon;
 grant execute on function public.adjust_product_stock(uuid, int) to authenticated;
 
+-- ==========================================================================
+-- Transações atômicas (venda/cancelamento/aprovação) — evitam venda incompleta,
+-- estoque baixado sem venda e aprovação duplicada. SECURITY DEFINER + guardas;
+-- execução restrita a `authenticated` (o admin logado). O aviso do linter sobre
+-- "signed-in users can execute SECURITY DEFINER" é ESPERADO: é exatamente quem
+-- deve poder registrar vendas. Os anônimos estão revogados.
+-- ==========================================================================
+create or replace function public.create_sale_tx(p_sale jsonb, p_items jsonb)
+returns void language plpgsql security definer set search_path = public as $$
+declare it jsonb; v_pid uuid; v_qty int; v_new int; v_sid uuid := (p_sale->>'id')::uuid;
+begin
+  if v_sid is null then raise exception 'Venda sem id'; end if;
+  insert into public.sales (id, customer_id, customer_name, total, discount, payment_method, status, created_at)
+  values (v_sid, nullif(p_sale->>'customer_id','')::uuid, p_sale->>'customer_name',
+          coalesce((p_sale->>'total')::numeric,0), coalesce((p_sale->>'discount')::numeric,0),
+          coalesce(p_sale->>'payment_method',''), coalesce(p_sale->>'status','completed'),
+          coalesce((p_sale->>'created_at')::timestamptz, now()))
+  on conflict (id) do nothing;
+  if not found then return; end if; -- reenvio idempotente
+  for it in select * from jsonb_array_elements(coalesce(p_items,'[]'::jsonb)) loop
+    insert into public.sale_items (id, sale_id, product_id, product_name, quantity, unit_price, subtotal)
+    values (coalesce((it->>'id')::uuid, gen_random_uuid()), v_sid, nullif(it->>'product_id','')::uuid,
+            it->>'product_name', coalesce((it->>'quantity')::int,1),
+            coalesce((it->>'unit_price')::numeric,0), coalesce((it->>'subtotal')::numeric,0))
+    on conflict (id) do nothing;
+    v_pid := nullif(it->>'product_id','')::uuid; v_qty := coalesce((it->>'quantity')::int,0);
+    if v_pid is not null and v_qty <> 0 then
+      update public.products set stock = stock - v_qty where id = v_pid returning stock into v_new;
+      if v_new is null then raise exception 'Produto % não encontrado', v_pid using errcode='no_data_found'; end if;
+      if v_new < 0 then raise exception 'Estoque insuficiente para o produto %', v_pid using errcode='check_violation'; end if;
+    end if;
+  end loop;
+end; $$;
+
+create or replace function public.cancel_sale_tx(p_id uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare it record;
+begin
+  update public.sales set status='canceled' where id=p_id and status='completed';
+  if not found then return; end if; -- já cancelada/inexistente (idempotente)
+  for it in select product_id, quantity from public.sale_items where sale_id=p_id and product_id is not null loop
+    update public.products set stock = stock + it.quantity where id = it.product_id;
+  end loop;
+end; $$;
+
+create or replace function public.approve_order_tx(p_id uuid, p_sale_id uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare v_order record; it jsonb; v_pid uuid; v_qty int; v_new int;
+begin
+  select * into v_order from public.orders where id=p_id and status='pending' for update;
+  if not found then raise exception 'Pedido já processado ou inexistente' using errcode='check_violation'; end if;
+  insert into public.sales (id, customer_id, customer_name, total, discount, payment_method, status, created_at)
+  values (p_sale_id, null, v_order.customer_name, coalesce(v_order.total,0), 0, 'Catálogo/WhatsApp', 'completed', now())
+  on conflict (id) do nothing;
+  for it in select * from jsonb_array_elements(coalesce(v_order.items,'[]'::jsonb)) loop
+    v_pid := nullif(it->>'product_id','')::uuid; v_qty := coalesce((it->>'quantity')::int,0);
+    insert into public.sale_items (id, sale_id, product_id, product_name, quantity, unit_price, subtotal)
+    values (gen_random_uuid(), p_sale_id, v_pid, it->>'product_name', coalesce(v_qty,1),
+            coalesce((it->>'unit_price')::numeric,0), coalesce((it->>'subtotal')::numeric,0));
+    if v_pid is not null and v_qty <> 0 then
+      update public.products set stock = stock - v_qty where id = v_pid returning stock into v_new;
+      if v_new is not null and v_new < 0 then raise exception 'Estoque insuficiente para o produto %', v_pid using errcode='check_violation'; end if;
+    end if;
+  end loop;
+  update public.orders set status='approved' where id=p_id;
+end; $$;
+
+revoke all on function public.create_sale_tx(jsonb, jsonb) from public, anon;
+revoke all on function public.cancel_sale_tx(uuid)         from public, anon;
+revoke all on function public.approve_order_tx(uuid, uuid) from public, anon;
+grant execute on function public.create_sale_tx(jsonb, jsonb) to authenticated;
+grant execute on function public.cancel_sale_tx(uuid)         to authenticated;
+grant execute on function public.approve_order_tx(uuid, uuid) to authenticated;
+
 -- Migrações para bancos criados antes destes campos (idempotentes)
 alter table public.products  add column if not exists image text;
 alter table public.products  add column if not exists description text;

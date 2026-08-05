@@ -98,8 +98,7 @@ export default function Pos() {
         },
         items,
       )
-      // Baixa de estoque
-      await Promise.all(cart.map((l) => productsRepo.adjustStock(l.product.id, -l.quantity)))
+      // A baixa de estoque acontece junto da venda, na mesma transação (RPC).
       notify(`Venda finalizada — ${money(total)}`)
       if (printOnFinish) setReceipt({ ...sale, items })
       setCart([])

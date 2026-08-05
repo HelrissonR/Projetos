@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import PageHeader from '../components/PageHeader'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
-import { productsRepo, salesRepo } from '../lib/db'
+import { salesRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
 import { dateTime, money as fmtMoney } from '../lib/format'
@@ -32,11 +32,8 @@ export default function SalesHistory() {
   const cancel = async (s: Sale) => {
     if (!confirm('Cancelar esta venda? O estoque será devolvido.')) return
     try {
-      await salesRepo.cancel(s.id)
-      // Devolve estoque
-      if (s.items) {
-        await Promise.all(s.items.map((i) => productsRepo.adjustStock(i.product_id, i.quantity)))
-      }
+      // Cancela a venda e devolve o estoque na mesma transação (RPC).
+      await salesRepo.cancel(s)
       notify('Venda cancelada')
       setViewing(null)
       load()

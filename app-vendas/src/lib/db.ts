@@ -42,6 +42,22 @@ const asRow = (rec: object): Record<string, unknown> => rec as Record<string, un
 
 const useDb = () => supabase !== null
 
+// Aplica um conjunto de deltas de estoque no cache de produtos de uma só vez
+// (usado no efeito otimista de venda/cancelamento/aprovação). Ignora ids nulos.
+function applyStockDelta(deltas: { id: string | null; delta: number }[]): void {
+  const list = cacheGet<Product[]>('products', [])
+  let changed = false
+  for (const { id, delta } of deltas) {
+    if (!id || !delta) continue
+    const idx = list.findIndex((p) => p.id === id)
+    if (idx >= 0) {
+      list[idx] = { ...list[idx], stock: list[idx].stock + delta }
+      changed = true
+    }
+  }
+  if (changed) cacheSet('products', list)
+}
+
 // ---------- Settings ----------
 export const settingsRepo = {
   async get(): Promise<Settings | null> {
@@ -221,13 +237,17 @@ export const salesRepo = {
     }
     return lsGet<Sale[]>('sales', []).sort((a, b) => b.created_at.localeCompare(a.created_at))
   },
+  // Cria venda + itens + baixa de estoque numa ÚNICA transação no banco
+  // (RPC create_sale_tx). Se qualquer parte falhar, nada é gravado — evita
+  // venda sem itens ou estoque baixado sem venda. Offline: enfileira a mesma
+  // RPC (idempotente pelo id) e aplica o efeito otimista no cache (venda no
+  // topo + estoque de cada item decrementado).
   async create(sale: Omit<Sale, 'id' | 'created_at'>, items: SaleItem[]): Promise<Sale> {
     if (useDb()) {
-      // IDs no cliente → upsert idempotente no sync.
       const saleId = uid()
       const created_at = new Date().toISOString()
       const rec: Sale = { ...sale, id: saleId, created_at, items: items.map((i) => ({ ...i, id: uid(), sale_id: saleId })) }
-      const saleRow: Record<string, unknown> = {
+      const p_sale: Record<string, unknown> = {
         id: saleId,
         customer_id: emptyToNull(sale.customer_id),
         customer_name: sale.customer_name,
@@ -237,13 +257,15 @@ export const salesRepo = {
         status: sale.status,
         created_at,
       }
-      const itemRows = rec.items!.map((i) => asRow(i))
-      // Otimista: adiciona a venda ao cache no topo.
-      await writeThrough(supabase!, { id: uid(), kind: 'upsert', table: 'sales', record: saleRow }, () => {
-        cacheSet('sales', [rec, ...cacheGet<Sale[]>('sales', [])])
-      })
-      // Itens (idempotente por id). Sem mutação de cache extra — já em `rec`.
-      await writeThrough(supabase!, { id: uid(), kind: 'upsertMany', table: 'sale_items', rows: itemRows }, () => {})
+      const p_items = rec.items!.map((i) => asRow(i))
+      await writeThrough(
+        supabase!,
+        { id: uid(), kind: 'rpc', fn: 'create_sale_tx', args: { p_sale, p_items } },
+        () => {
+          cacheSet('sales', [rec, ...cacheGet<Sale[]>('sales', [])])
+          applyStockDelta(items.map((i) => ({ id: i.product_id, delta: -i.quantity })))
+        },
+      )
       return rec
     }
     const rec: Sale = {
@@ -256,24 +278,28 @@ export const salesRepo = {
     lsSet('sales', [...list, rec])
     return rec
   },
-  async cancel(id: string): Promise<void> {
+  // Cancela a venda e DEVOLVE o estoque atomicamente (RPC cancel_sale_tx).
+  // Idempotente: cancelar de novo não devolve estoque em dobro.
+  async cancel(sale: Sale): Promise<void> {
     if (useDb()) {
       await writeThrough(
         supabase!,
-        { id: uid(), kind: 'update', table: 'sales', rowId: id, patch: { status: 'canceled' } },
+        { id: uid(), kind: 'rpc', fn: 'cancel_sale_tx', args: { p_id: sale.id } },
         () => {
           const list = cacheGet<Sale[]>('sales', [])
-          const idx = list.findIndex((s) => s.id === id)
-          if (idx >= 0) {
+          const idx = list.findIndex((s) => s.id === sale.id)
+          // Só devolve estoque no cache se estava 'completed' (espelha o banco).
+          if (idx >= 0 && list[idx].status === 'completed') {
             list[idx] = { ...list[idx], status: 'canceled' }
             cacheSet('sales', list)
+            applyStockDelta((sale.items ?? []).map((i) => ({ id: i.product_id, delta: i.quantity })))
           }
         },
       )
       return
     }
     const list = lsGet<Sale[]>('sales', [])
-    const idx = list.findIndex((s) => s.id === id)
+    const idx = list.findIndex((s) => s.id === sale.id)
     if (idx >= 0) {
       list[idx].status = 'canceled'
       lsSet('sales', list)
@@ -316,6 +342,48 @@ export const ordersRepo = {
     }
     lsSet('orders', [...lsGet<Order[]>('orders', []), rec])
     return rec
+  },
+  // Aprova o pedido: baixa o estoque e marca 'approved' ATOMICAMENTE (RPC
+  // approve_order_tx), impedindo aprovação duplicada e estoque negativo. O
+  // efeito otimista decrementa o estoque no cache.
+  async approve(order: Order): Promise<void> {
+    if (useDb()) {
+      const saleId = uid()
+      const created_at = new Date().toISOString()
+      // Reflete no cache a venda gerada (espelha o que a RPC cria no banco).
+      const saleRec: Sale = {
+        id: saleId,
+        customer_id: null,
+        customer_name: order.customer_name,
+        total: order.total,
+        discount: 0,
+        payment_method: 'Catálogo/WhatsApp',
+        status: 'completed',
+        created_at,
+        items: (order.items ?? []).map((i) => ({ ...i, id: uid(), sale_id: saleId })),
+      }
+      await writeThrough(
+        supabase!,
+        { id: uid(), kind: 'rpc', fn: 'approve_order_tx', args: { p_id: order.id, p_sale_id: saleId } },
+        () => {
+          const list = cacheGet<Order[]>('orders', [])
+          const idx = list.findIndex((o) => o.id === order.id)
+          if (idx >= 0 && list[idx].status === 'pending') {
+            list[idx] = { ...list[idx], status: 'approved' }
+            cacheSet('orders', list)
+            cacheSet('sales', [saleRec, ...cacheGet<Sale[]>('sales', [])])
+            applyStockDelta((order.items ?? []).map((i) => ({ id: i.product_id, delta: -i.quantity })))
+          }
+        },
+      )
+      return
+    }
+    const list = lsGet<Order[]>('orders', [])
+    const idx = list.findIndex((o) => o.id === order.id)
+    if (idx >= 0) {
+      list[idx].status = 'approved'
+      lsSet('orders', list)
+    }
   },
   // Gestão do pedido pelo admin (pode ocorrer offline → enfileira).
   async setStatus(id: string, status: Order['status']): Promise<void> {

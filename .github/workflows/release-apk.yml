@@ -1,0 +1,109 @@
+name: Build APK release assinado
+
+# Gera um APK de PRODUÇÃO ASSINADO (instalável direto no aparelho, sem passar
+# pela Play Store) — sem `debuggable`, com backup desativado e versão única e
+# crescente por build. Use este APK para distribuir a versão final.
+#
+# Reaproveita os MESMOS 4 secrets do build da Play Store (release-aab.yml):
+#   ANDROID_KEYSTORE_BASE64   – conteúdo do upload-keystore.jks em base64
+#   ANDROID_KEYSTORE_PASSWORD – senha do keystore
+#   ANDROID_KEY_ALIAS         – alias da chave (upload)
+#   ANDROID_KEY_PASSWORD      – senha da chave
+#
+# Dispara quando o commit na branch de vendas contém "[apk-release]".
+# O APK fica em Actions → run → Artifacts → "app-vendas-apk-release".
+
+on:
+  push:
+    branches: ['claude/sales-product-management-app-u2q1tm']
+
+jobs:
+  release-apk:
+    if: contains(github.event.head_commit.message, '[apk-release]')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app-vendas
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verificar secrets de assinatura
+        id: check
+        run: |
+          if [ -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "has=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Secrets de assinatura ausentes — pulando build do APK release. Configure ANDROID_KEYSTORE_BASE64/PASSWORD/KEY_ALIAS/KEY_PASSWORD."
+          else
+            echo "has=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.check.outputs.has == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app-vendas/package-lock.json
+      - uses: actions/setup-java@v4
+        if: steps.check.outputs.has == 'true'
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Instalar dependências
+        if: steps.check.outputs.has == 'true'
+        run: npm ci
+
+      - name: Build web (conectado ao Supabase + offline-first)
+        if: steps.check.outputs.has == 'true'
+        run: npm run build
+
+      - name: Adicionar plataforma Android
+        if: steps.check.outputs.has == 'true'
+        run: npx cap add android
+
+      - name: Adicionar permissão de câmera (leitor de código)
+        if: steps.check.outputs.has == 'true'
+        run: |
+          sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#<uses-permission android:name="android.permission.INTERNET" />\n    <uses-permission android:name="android.permission.CAMERA" />\n    <uses-feature android:name="android.hardware.camera" android:required="false" />#' android/app/src/main/AndroidManifest.xml
+
+      - name: Desativar backup automático (dados sensíveis/sessão)
+        if: steps.check.outputs.has == 'true'
+        run: sed -i 's#android:allowBackup="true"#android:allowBackup="false"#' android/app/src/main/AndroidManifest.xml
+
+      - name: Sincronizar assets
+        if: steps.check.outputs.has == 'true'
+        run: npx cap sync android
+
+      - name: Definir versão (única e crescente por build)
+        if: steps.check.outputs.has == 'true'
+        run: |
+          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
+          sed -i "s/versionName \"1.0\"/versionName \"1.0.${{ github.run_number }}\"/" android/app/build.gradle
+          grep -E "versionCode|versionName" android/app/build.gradle
+
+      - name: Restaurar keystore de assinatura
+        if: steps.check.outputs.has == 'true'
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/upload-keystore.jks
+
+      - name: Compilar APK release assinado
+        if: steps.check.outputs.has == 'true'
+        working-directory: app-vendas/android
+        env:
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KS_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file="$PWD/upload-keystore.jks" \
+            -Pandroid.injected.signing.store.password="$KS_PASS" \
+            -Pandroid.injected.signing.key.alias="$KS_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEY_PASS"
+
+      - name: Publicar APK release como artefato
+        if: steps.check.outputs.has == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-vendas-apk-release
+          path: app-vendas/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error

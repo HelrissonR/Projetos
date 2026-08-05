@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import PageHeader from '../components/PageHeader'
 import EmptyState from '../components/EmptyState'
-import { ordersRepo, productsRepo, salesRepo } from '../lib/db'
+import { ordersRepo } from '../lib/db'
 import { useSettings } from '../context/SettingsContext'
 import { useToast } from '../context/ToastContext'
 import { dateTime } from '../lib/format'
@@ -38,27 +38,9 @@ export default function Orders() {
   const approve = async (o: Order) => {
     setBusy(o.id)
     try {
-      // Cria a venda a partir do pedido
-      await salesRepo.create(
-        {
-          customer_id: null,
-          customer_name: o.customer_name,
-          total: o.total,
-          discount: 0,
-          payment_method: 'Catálogo/WhatsApp',
-          status: 'completed',
-        },
-        o.items.map((i) => ({
-          product_id: i.product_id,
-          product_name: i.product_name,
-          quantity: i.quantity,
-          unit_price: i.unit_price,
-          subtotal: i.subtotal,
-        })),
-      )
-      // Baixa de estoque
-      await Promise.all(o.items.map((i) => productsRepo.adjustStock(i.product_id, -i.quantity)))
-      await ordersRepo.setStatus(o.id, 'approved')
+      // Converte o pedido em venda, baixa o estoque e marca 'approved' — tudo
+      // numa única transação no banco (sem baixa dupla nem aprovação repetida).
+      await ordersRepo.approve(o)
       notify('Pedido aprovado e convertido em venda')
       load()
     } catch (e) {

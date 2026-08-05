@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { Session, User } from '@supabase/supabase-js'
 import { supabase, isSupabaseConfigured } from '../lib/supabase'
 import { prefetchAll } from '../lib/prefetch'
+import { clearLocalData, pendingCount } from '../lib/offline'
 
 interface Ctx {
   user: User | null
@@ -61,7 +62,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
+    // Se houver escritas pendentes, avisa para não perder dados sem sincronizar.
+    if (pendingCount() > 0) {
+      const ok = confirm(
+        'Há alterações ainda não sincronizadas que serão perdidas ao sair. Deseja sair mesmo assim?',
+      )
+      if (!ok) return
+    }
     if (supabase) await supabase.auth.signOut()
+    // Limpa cache/outbox/falhas para que os dados do negócio não fiquem no
+    // dispositivo após o logout (proteção de dados em aparelho compartilhado).
+    clearLocalData()
   }
 
   return (
