@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import PageHeader from '../components/PageHeader'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
@@ -20,6 +20,12 @@ export default function SalesHistory() {
   const [viewing, setViewing] = useState<Sale | null>(null)
   const [receipt, setReceipt] = useState<Sale | null>(null)
 
+  // Filtros do histórico
+  const [search, setSearch] = useState('')
+  const [period, setPeriod] = useState<'today' | '7d' | '30d' | 'all'>('all')
+  const [payment, setPayment] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'completed' | 'canceled'>('all')
+
   const load = async () => {
     setLoading(true)
     setSales(await salesRepo.list())
@@ -28,6 +34,50 @@ export default function SalesHistory() {
   useEffect(() => {
     load()
   }, [])
+
+  // Formas de pagamento presentes nas vendas (para o seletor de filtro)
+  const payments = useMemo(
+    () => Array.from(new Set(sales.map((s) => s.payment_method).filter(Boolean))).sort(),
+    [sales],
+  )
+
+  const since = useMemo(() => {
+    if (period === 'all') return 0
+    const days = period === 'today' ? 1 : period === '7d' ? 7 : 30
+    const d = new Date()
+    d.setHours(0, 0, 0, 0)
+    d.setDate(d.getDate() - (days - 1))
+    return d.getTime()
+  }, [period])
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim()
+    return sales.filter((s) => {
+      if (since && new Date(s.created_at).getTime() < since) return false
+      if (payment && s.payment_method !== payment) return false
+      if (statusFilter !== 'all' && s.status !== statusFilter) return false
+      if (q) {
+        const inCustomer = (s.customer_name ?? '').toLowerCase().includes(q)
+        const inItems = (s.items ?? []).some((i) => i.product_name.toLowerCase().includes(q))
+        if (!inCustomer && !inItems) return false
+      }
+      return true
+    })
+  }, [sales, since, payment, statusFilter, search])
+
+  // Total faturado no recorte filtrado (só vendas concluídas)
+  const filteredRevenue = useMemo(
+    () => filtered.filter((s) => s.status === 'completed').reduce((acc, s) => acc + s.total, 0),
+    [filtered],
+  )
+
+  const hasFilter = search !== '' || period !== 'all' || payment !== '' || statusFilter !== 'all'
+  const clearFilters = () => {
+    setSearch('')
+    setPeriod('all')
+    setPayment('')
+    setStatusFilter('all')
+  }
 
   const cancel = async (s: Sale) => {
     if (!confirm('Cancelar esta venda? O estoque será devolvido.')) return
@@ -59,7 +109,7 @@ export default function SalesHistory() {
   }
 
   const exportCsv = async () => {
-    const rows = sales.map((s) => ({
+    const rows = filtered.map((s) => ({
       data: dateTime(s.created_at, settings.locale),
       cliente: s.customer_name ?? 'Consumidor final',
       pagamento: s.payment_method,
@@ -80,7 +130,11 @@ export default function SalesHistory() {
     <div>
       <PageHeader
         title="Histórico de vendas"
-        subtitle={`${sales.length} venda(s)`}
+        subtitle={
+          hasFilter
+            ? `${filtered.length} de ${sales.length} venda(s) · ${money(filteredRevenue)}`
+            : `${sales.length} venda(s)`
+        }
         action={
           <div className="flex flex-wrap gap-2">
             <button className="btn-ghost border border-slate-300 dark:border-slate-700" onClick={exportCsv}>
@@ -95,15 +149,56 @@ export default function SalesHistory() {
         }
       />
 
+      {!loading && sales.length > 0 && (
+        <div className="card mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <input
+            className="input"
+            placeholder="Buscar cliente ou produto…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <select className="input" value={period} onChange={(e) => setPeriod(e.target.value as typeof period)}>
+            <option value="all">Todo o período</option>
+            <option value="today">Hoje</option>
+            <option value="7d">Últimos 7 dias</option>
+            <option value="30d">Últimos 30 dias</option>
+          </select>
+          <select className="input" value={payment} onChange={(e) => setPayment(e.target.value)}>
+            <option value="">Todas as formas</option>
+            {payments.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+          <select
+            className="input"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+          >
+            <option value="all">Todos os status</option>
+            <option value="completed">Concluídas</option>
+            <option value="canceled">Canceladas</option>
+          </select>
+          {hasFilter && (
+            <button className="btn-ghost justify-self-start text-sm text-brand sm:col-span-2 lg:col-span-4" onClick={clearFilters}>
+              Limpar filtros
+            </button>
+          )}
+        </div>
+      )}
+
       {loading ? (
         <SkeletonCards count={5} />
       ) : sales.length === 0 ? (
         <EmptyState icon={<IconReceipt />} text="Nenhuma venda registrada ainda." />
+      ) : filtered.length === 0 ? (
+        <EmptyState icon={<IconReceipt />} text="Nenhuma venda encontrada com esses filtros." />
       ) : (
         <>
           {/* Mobile: cartões (evita corte de conteúdo em telas estreitas) */}
           <div className="stagger grid gap-3 md:hidden">
-            {sales.map((s) => (
+            {filtered.map((s) => (
               <button
                 key={s.id}
                 onClick={() => setViewing(s)}
@@ -145,7 +240,7 @@ export default function SalesHistory() {
                 </tr>
               </thead>
               <tbody>
-                {sales.map((s) => (
+                {filtered.map((s) => (
                   <tr key={s.id} className="border-b border-slate-100 last:border-0 dark:border-slate-800">
                     <td className="p-3">{dateTime(s.created_at)}</td>
                     <td className="p-3">{s.customer_name ?? 'Consumidor final'}</td>

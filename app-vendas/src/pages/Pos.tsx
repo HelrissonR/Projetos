@@ -20,6 +20,10 @@ export default function Pos() {
   const [customerId, setCustomerId] = useState<string>('')
   const [discount, setDiscount] = useState(0)
   const [payment, setPayment] = useState('')
+  const [received, setReceived] = useState('') // valor recebido em dinheiro (p/ troco)
+  const [split, setSplit] = useState(false) // pagamento dividido em duas formas
+  const [payment2, setPayment2] = useState('')
+  const [amount2, setAmount2] = useState('') // valor pago na 2ª forma
   const [checkout, setCheckout] = useState(false)
   const [processing, setProcessing] = useState(false)
   const [printOnFinish, setPrintOnFinish] = useState(true)
@@ -49,6 +53,13 @@ export default function Pos() {
   const subtotal = cartSubtotal(cart)
   const total = cartTotal(cart, discount)
 
+  // Troco (só faz sentido quando o valor recebido supera o total)
+  const receivedNum = Number(received) || 0
+  const change = receivedNum > total ? receivedNum - total : 0
+  // Pagamento dividido: a 2ª forma cobre `amount2`; a 1ª cobre o restante.
+  const amount2Num = Number(amount2) || 0
+  const amount1 = Math.max(0, total - amount2Num)
+
   const addToCart = (product: Product) => {
     setCart((c) => {
       const existing = c.find((l) => l.product.id === product.id)
@@ -77,6 +88,16 @@ export default function Pos() {
   const finish = async () => {
     if (cart.length === 0) return
     if (!payment) return notify('Selecione a forma de pagamento', 'error')
+    if (split) {
+      if (!payment2) return notify('Selecione a segunda forma de pagamento', 'error')
+      if (payment2 === payment) return notify('Escolha duas formas diferentes', 'error')
+      if (amount2Num <= 0 || amount2Num >= total)
+        return notify('O valor da 2ª forma deve ser maior que zero e menor que o total', 'error')
+    }
+    // Forma de pagamento registrada: composta quando dividido.
+    const paymentLabel = split
+      ? `${payment} (${money(amount1)}) + ${payment2} (${money(amount2Num)})`
+      : payment
     setProcessing(true)
     try {
       const customer = customers.find((c) => c.id === customerId) ?? null
@@ -94,18 +115,22 @@ export default function Pos() {
           customer_name: customer?.name ?? null,
           total,
           discount,
-          payment_method: payment,
+          payment_method: paymentLabel,
           status: 'completed',
         },
         items,
       )
       // A baixa de estoque acontece junto da venda, na mesma transação (RPC).
-      notify(`Venda finalizada — ${money(total)}`)
+      notify(change > 0 ? `Venda finalizada — troco ${money(change)}` : `Venda finalizada — ${money(total)}`)
       if (printOnFinish) setReceipt({ ...sale, items })
       setCart([])
       setDiscount(0)
       setCustomerId('')
       setPayment('')
+      setReceived('')
+      setSplit(false)
+      setPayment2('')
+      setAmount2('')
       setCheckout(false)
       load()
     } catch (e) {
@@ -263,6 +288,71 @@ export default function Pos() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Troco (dinheiro): valor recebido → mostra o troco a devolver */}
+          {!split && (
+            <div>
+              <label className="label">Valor recebido (para troco)</label>
+              <input
+                type="number"
+                step="0.01"
+                className="input"
+                placeholder="opcional"
+                value={received}
+                onChange={(e) => setReceived(e.target.value)}
+              />
+              {change > 0 && (
+                <div className="mt-1 flex justify-between rounded-md bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                  <span>Troco</span>
+                  <span>{money(change)}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Pagamento dividido em duas formas */}
+          <div>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={split} onChange={(e) => setSplit(e.target.checked)} />
+              Dividir em duas formas de pagamento
+            </label>
+            {split && (
+              <div className="mt-2 space-y-2 rounded-lg border border-slate-200 p-3 dark:border-slate-800">
+                <div className="flex flex-wrap gap-2">
+                  {enabledPayments
+                    .filter((pm) => pm.label !== payment)
+                    .map((pm) => (
+                      <button
+                        key={pm.id}
+                        type="button"
+                        onClick={() => setPayment2(pm.label)}
+                        className={
+                          payment2 === pm.label
+                            ? 'btn-primary'
+                            : 'btn-ghost border border-slate-300 dark:border-slate-700'
+                        }
+                      >
+                        {pm.label}
+                      </button>
+                    ))}
+                </div>
+                <div>
+                  <label className="label">Valor na 2ª forma{payment2 ? ` (${payment2})` : ''}</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="input"
+                    value={amount2}
+                    onChange={(e) => setAmount2(e.target.value)}
+                  />
+                </div>
+                <div className="flex justify-between text-sm text-slate-500">
+                  <span>{payment || '1ª forma'}</span>
+                  <span>{money(amount1)}</span>
+                </div>
+              </div>
+            )}
           </div>
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={printOnFinish} onChange={(e) => setPrintOnFinish(e.target.checked)} />
