@@ -18,6 +18,8 @@ export default function Pos() {
   const [search, setSearch] = useState('')
   const [cart, setCart] = useState<CartLine[]>([])
   const [customerId, setCustomerId] = useState<string>('')
+  const [custPickerOpen, setCustPickerOpen] = useState(false)
+  const [custSearch, setCustSearch] = useState('')
   const [discount, setDiscount] = useState(0)
   const [payment, setPayment] = useState('')
   const [received, setReceived] = useState('') // valor recebido em dinheiro (p/ troco)
@@ -39,6 +41,16 @@ export default function Pos() {
   }, [])
 
   const enabledPayments = settings.payment_methods.filter((p) => p.enabled)
+
+  const selectedCustomer = customers.find((c) => c.id === customerId) ?? null
+  const initials = (name: string) =>
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((w) => w[0]?.toUpperCase() ?? '')
+      .join('')
+  const custFiltered = customers.filter((c) => c.name.toLowerCase().includes(custSearch.toLowerCase()))
 
   const filtered = useMemo(
     () =>
@@ -135,6 +147,8 @@ export default function Pos() {
       setCart([])
       setDiscount(0)
       setCustomerId('')
+      setCustPickerOpen(false)
+      setCustSearch('')
       setPayment('')
       setReceived('')
       setSplit(false)
@@ -169,7 +183,6 @@ export default function Pos() {
                 const found = products.find((p) => p.sku === code)
                 if (found) {
                   addToCart(found)
-                  notify(`${found.name} adicionado ao carrinho`)
                   setSearch('')
                 } else {
                   setSearch(code)
@@ -179,21 +192,54 @@ export default function Pos() {
             />
           </div>
           <div className="stagger grid grid-cols-2 gap-3 sm:grid-cols-3">
-            {filtered.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => addToCart(p)}
-                disabled={p.stock <= 0}
-                className="card card-interactive flex flex-col items-start text-left disabled:opacity-50"
-              >
-                {p.image && (
-                  <img src={p.image} alt={p.name} className="mb-2 h-24 w-full rounded-md object-cover" />
-                )}
-                <span className="font-medium">{p.name}</span>
-                <span className="text-sm text-brand">{money(p.price)}</span>
-                <span className="mt-1 text-xs text-slate-400">{p.stock} em estoque</span>
-              </button>
-            ))}
+            {filtered.map((p) => {
+              const q = cart.find((l) => l.product.id === p.id)?.quantity ?? 0
+              const out = p.stock <= 0
+              return (
+                <div key={p.id} className="card flex flex-col p-3">
+                  <div className="mb-2 flex h-24 w-full items-center justify-center overflow-hidden rounded-md bg-slate-100 dark:bg-slate-800">
+                    {p.image ? (
+                      <img src={p.image} alt={p.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-3xl text-slate-300">🧴</span>
+                    )}
+                  </div>
+                  <span className="line-clamp-2 text-sm font-medium leading-tight">{p.name}</span>
+                  <span className="mt-1 text-base font-bold text-brand">{money(p.price)}</span>
+                  <span className={`mt-0.5 text-xs ${out ? 'text-red-500' : 'text-slate-400'}`}>
+                    {out ? 'esgotado' : `${p.stock} em estoque`}
+                  </span>
+                  <div className="mt-3">
+                    {q === 0 ? (
+                      <button
+                        className="btn-primary w-full py-1.5 text-sm disabled:opacity-50"
+                        disabled={out}
+                        onClick={() => addToCart(p)}
+                      >
+                        Adicionar
+                      </button>
+                    ) : (
+                      <div className="flex items-center justify-between gap-1">
+                        <button
+                          className="btn-ghost border border-slate-300 px-3 dark:border-slate-700"
+                          onClick={() => setQty(p.id, q - 1)}
+                        >
+                          −
+                        </button>
+                        <span className="font-semibold tabular-nums">{q}</span>
+                        <button
+                          className="btn-ghost border border-slate-300 px-3 disabled:opacity-40 dark:border-slate-700"
+                          disabled={q >= p.stock}
+                          onClick={() => addToCart(p)}
+                        >
+                          +
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
             {filtered.length === 0 && <p className="text-slate-400">Nenhum produto disponível.</p>}
           </div>
         </div>
@@ -278,14 +324,81 @@ export default function Pos() {
         <div className="space-y-4">
           <div>
             <label className="label">Cliente (opcional)</label>
-            <select className="input" value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-              <option value="">Consumidor final</option>
-              {customers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+            <button
+              type="button"
+              onClick={() => setCustPickerOpen((v) => !v)}
+              className="flex w-full items-center gap-3 rounded-lg border border-slate-300 p-2.5 text-left transition hover:border-brand dark:border-slate-700"
+            >
+              <span
+                className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
+                  selectedCustomer ? 'bg-brand text-white dark:text-black' : 'bg-slate-200 text-slate-500 dark:bg-slate-700'
+                }`}
+              >
+                {selectedCustomer ? initials(selectedCustomer.name) : '🛒'}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium">
+                  {selectedCustomer ? selectedCustomer.name : 'Consumidor final'}
+                </span>
+                <span className="block truncate text-xs text-slate-400">
+                  {selectedCustomer?.phone || 'Toque para escolher um cliente'}
+                </span>
+              </span>
+              <span className="flex-shrink-0 text-slate-400">{custPickerOpen ? '▲' : '▼'}</span>
+            </button>
+
+            {custPickerOpen && (
+              <div className="mt-2 overflow-hidden rounded-lg border border-slate-200 dark:border-slate-800">
+                <input
+                  className="input rounded-none border-0 border-b border-slate-200 dark:border-slate-800"
+                  placeholder="Buscar cliente…"
+                  value={custSearch}
+                  onChange={(e) => setCustSearch(e.target.value)}
+                  autoFocus
+                />
+                <div className="max-h-56 overflow-y-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCustomerId('')
+                      setCustPickerOpen(false)
+                      setCustSearch('')
+                    }}
+                    className="flex w-full items-center gap-3 p-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800"
+                  >
+                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-200 text-sm dark:bg-slate-700">
+                      🛒
+                    </span>
+                    <span className="font-medium">Consumidor final</span>
+                  </button>
+                  {custFiltered.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => {
+                        setCustomerId(c.id)
+                        setCustPickerOpen(false)
+                        setCustSearch('')
+                      }}
+                      className={`flex w-full items-center gap-3 p-2.5 text-left hover:bg-slate-50 dark:hover:bg-slate-800 ${
+                        c.id === customerId ? 'bg-brand-soft' : ''
+                      }`}
+                    >
+                      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brand text-sm font-semibold text-white dark:text-black">
+                        {initials(c.name)}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium">{c.name}</span>
+                        {c.phone && <span className="block truncate text-xs text-slate-400">{c.phone}</span>}
+                      </span>
+                    </button>
+                  ))}
+                  {custFiltered.length === 0 && (
+                    <p className="p-3 text-center text-sm text-slate-400">Nenhum cliente encontrado.</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           <div>
             <label className="label">Desconto</label>
