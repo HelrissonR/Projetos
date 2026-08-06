@@ -1,0 +1,54 @@
+import { Suspense, lazy } from 'react'
+import { Route, Routes } from 'react-router-dom'
+import Layout from './components/Layout'
+import BackHandler from './components/BackHandler'
+import Login from './pages/Login'
+import { useSettings } from './context/SettingsContext'
+import { useAuth } from './context/AuthContext'
+
+// Code-splitting: cada página vira um chunk carregado sob demanda.
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Pos = lazy(() => import('./pages/Pos'))
+const Products = lazy(() => import('./pages/Products'))
+const Customers = lazy(() => import('./pages/Customers'))
+const SalesHistory = lazy(() => import('./pages/SalesHistory'))
+const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const Orders = lazy(() => import('./pages/Orders'))
+const Catalog = lazy(() => import('./pages/Catalog'))
+
+function Loader() {
+  return <div className="flex min-h-screen items-center justify-center text-slate-400">Carregando…</div>
+}
+
+export default function App() {
+  const { loading: settingsLoading } = useSettings()
+  const { user, loading: authLoading, authEnabled } = useAuth()
+
+  if (settingsLoading || authLoading) return <Loader />
+
+  const needsLogin = authEnabled && !user
+
+  return (
+    <Suspense fallback={<Loader />}>
+      <BackHandler />
+      <Routes>
+        {/* Catálogo público — acessível sem login (loja para clientes) */}
+        <Route path="/catalogo" element={<Catalog />} />
+
+        {needsLogin ? (
+          <Route path="*" element={<Login />} />
+        ) : (
+          <Route element={<Layout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="pdv" element={<Pos />} />
+            <Route path="pedidos" element={<Orders />} />
+            <Route path="produtos" element={<Products />} />
+            <Route path="clientes" element={<Customers />} />
+            <Route path="vendas" element={<SalesHistory />} />
+            <Route path="configuracoes" element={<SettingsPage />} />
+          </Route>
+        )}
+      </Routes>
+    </Suspense>
+  )
+}
