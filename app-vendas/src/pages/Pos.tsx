@@ -65,11 +65,20 @@ export default function Pos() {
       const existing = c.find((l) => l.product.id === product.id)
       const inCart = existing?.quantity ?? 0
       if (!canAddQuantity(inCart, 1, product.stock)) {
-        notify(`Estoque insuficiente de "${product.name}"`, 'error')
+        // Já está com todo o estoque disponível no carrinho (não é falta real).
+        notify(
+          inCart > 0
+            ? `"${product.name}" já está no carrinho com todo o estoque disponível (${product.stock})`
+            : `Estoque insuficiente de "${product.name}"`,
+          'error',
+        )
         return c
       }
+      const qty = inCart + 1
+      // Confirmação visível (no celular o carrinho fica fora da tela).
+      notify(`${product.name} · ${qty} no carrinho`)
       if (existing) {
-        return c.map((l) => (l.product.id === product.id ? { ...l, quantity: l.quantity + 1 } : l))
+        return c.map((l) => (l.product.id === product.id ? { ...l, quantity: qty } : l))
       }
       return [...c, { product, quantity: 1 }]
     })
@@ -141,7 +150,7 @@ export default function Pos() {
   }
 
   return (
-    <div>
+    <div className="pb-20 lg:pb-0">
       <PageHeader title="Vendas / PDV" subtitle="Selecione produtos e finalize a venda" />
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -235,6 +244,20 @@ export default function Pos() {
           </div>
         </div>
       </div>
+
+      {/* Barra fixa de carrinho no celular (o carrinho lateral fica fora da tela) */}
+      {cart.length > 0 && (
+        <button
+          onClick={() => setCheckout(true)}
+          className="btn-primary fixed inset-x-3 bottom-3 z-30 flex items-center justify-between shadow-lg lg:hidden"
+        >
+          <span className="flex items-center gap-2">
+            <IconCart />
+            {cart.reduce((n, l) => n + l.quantity, 0)} item(ns)
+          </span>
+          <span className="font-bold">{money(total)} · Finalizar</span>
+        </button>
+      )}
 
       {/* Checkout modal */}
       <Modal
