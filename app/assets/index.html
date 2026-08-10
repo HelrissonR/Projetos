@@ -153,58 +153,89 @@ body:has(#pageLogin.active) nav.bottom{display:none!important}
 .lcard-dev{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:12px;font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.02em}
 .lcard-dev .ldev-badge{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:6px;background:var(--accent);color:var(--accent-text);font-size:9px;font-weight:800;letter-spacing:.01em;flex-shrink:0}
 
-/* ══ LOGIN v2 — Split institucional (desktop) + cartão limpo (mobile) ══ */
-#pageLogin.active{padding:26px;align-items:center;justify-content:center;background:#000;min-height:100vh}
-.login-shell{display:grid;grid-template-columns:1.08fr .92fr;gap:22px;width:100%;max-width:1120px;align-items:stretch}
-/* ── Card esquerdo: marca ── */
-.login-brand{background:#fff;color:#1a1d24;border-radius:30px;padding:44px 46px;display:flex;flex-direction:column;position:relative;overflow:hidden;min-height:600px}
-.lb-kicker{font-size:15px;font-weight:700;letter-spacing:.045em;text-transform:uppercase;color:#3b4150;line-height:1.32;max-width:22ch;margin:0}
-.lb-title{font-size:56px;line-height:1;font-weight:800;letter-spacing:-.02em;color:#0b0d12;margin:20px 0 0}
-.lb-illus{flex:1;display:flex;align-items:center;justify-content:center;margin:14px 0;min-height:0}
-.lb-illus img{width:100%;height:auto;display:block}
-.lb-foot{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-top:auto}
-.lb-dev{font-size:12px;color:#3b4150;line-height:1.4}
-.lb-dev b{font-weight:800;letter-spacing:.02em;color:#1a1d24}
-.lb-credit{font-size:11px;color:#9aa0ac;text-decoration:none;white-space:nowrap}
-.lb-credit:hover{color:#5b6270}
-/* ── Card direito: formulário ── */
-.login-form-col{background:#fff;border-radius:30px;padding:42px 46px;min-height:600px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+/* ══ LOGIN v3 — Gestor de Condicionalidades (mockup 1920×1080) ══ */
+#pageLogin.active{padding:40px 20px;align-items:center;justify-content:center;background:linear-gradient(135deg,#111D32 0%,#0C1729 100%);min-height:100vh}
+.login-shell{display:grid;grid-template-columns:minmax(0,1.64fr) minmax(440px,1fr);gap:47px;width:100%;max-width:1700px;align-items:stretch}
+.login-brand,.login-form-col{background:#fff;border-radius:48px;min-height:900px;position:relative;display:flex;flex-direction:column}
+/* ── HERO (painel esquerdo) ── */
+.login-brand{padding:48px 56px 26px;overflow:hidden}
+.hero-head{display:flex;align-items:center;gap:20px}
+.hero-logo{width:54px;height:54px;border-radius:14px;background:#155EEF;display:grid;place-items:center;color:#fff;flex-shrink:0}
+.hero-head-t{font-size:20px;font-weight:600;line-height:24px;color:#253551}
+.hero-title{font-size:68px;font-weight:800;line-height:1;letter-spacing:-1.5px;color:#132039;margin:34px 0 0}
+.hero-sub{font-size:20px;font-weight:400;line-height:28px;color:#3F4A5F;max-width:600px;margin:18px 0 0}
+.hero-illus{position:relative;flex:1;margin:20px 0 0;min-height:0}
+.hero-foot{border-top:1px solid #E5E7EB;padding-top:16px;margin-top:auto;display:flex;align-items:center;gap:9px;font-size:13px;color:#667085}
+.hero-foot svg{flex-shrink:0}
+/* Dashboard (SVG/HTML) */
+.dash{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:640px}
+.dash-mon{background:#172B4D;border-radius:16px;padding:12px}
+.dash-screen{background:#fff;border-radius:8px;padding:14px 15px 15px}
+.dash-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px}
+.dash-h b{font-size:12px;font-weight:700;color:#172B4D}
+.dash-h i{display:block;width:16px;height:2.5px;background:#155EEF;border-radius:2px;margin:2.5px 0}
+.dash-h .mn{display:flex;gap:6px}
+.dash-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.dc{background:#F7F9FC;border:1px solid #EEF1F6;border-radius:9px;padding:9px 9px 8px}
+.dc-t{display:flex;align-items:center;gap:5px;font-size:8.5px;font-weight:700;color:#344054}
+.dc-t .di{width:16px;height:16px;border-radius:5px;background:#EEF4FF;display:grid;place-items:center;color:#155EEF;flex-shrink:0}
+.dc-d{font-size:7px;color:#98A2B3;margin:1px 0 4px 21px}
+.dc-v{font-size:17px;font-weight:800;color:#132039}
+.dc.don{display:flex;align-items:center;gap:8px}
+.dc.don .dv{font-size:8px;color:#98A2B3}
+.dash-charts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.dchart{background:#F7F9FC;border:1px solid #EEF1F6;border-radius:9px;padding:9px}
+.dchart-t{font-size:8.5px;font-weight:700;color:#344054;margin-bottom:6px}
+.dash-bottom{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.dbm{background:#F7F9FC;border:1px solid #EEF1F6;border-radius:9px;padding:8px 9px;display:flex;align-items:center;gap:7px}
+.dbm .di{width:20px;height:20px;border-radius:6px;background:#EEF4FF;display:grid;place-items:center;color:#155EEF;flex-shrink:0}
+.dbm.warn .di{background:#FEF3F2;color:#F04438}
+.dbm-l{font-size:7px;color:#667085;line-height:1.25}
+.dbm-v{font-size:14px;font-weight:800;color:#132039}
+.dbm.warn .dbm-v{color:#F04438}
+.dash-stand{width:120px;height:16px;background:#172B4D;border-radius:0 0 5px 5px;margin:0 auto}
+.dash-neck{width:26px;height:14px;background:#1f3860;margin:0 auto}
+.dash-base{width:150px;height:8px;background:#233c66;border-radius:6px;margin:0 auto}
+/* decorações */
+.hero-deco{position:absolute;pointer-events:none}
+.deco-clip{left:0;top:36%}
+.deco-plant{left:8px;bottom:2%}
+.deco-robot{right:-6px;bottom:6%}
+.deco-ghost{right:4%;top:24%;opacity:.5}
+/* ── LOGIN (painel direito) ── */
+.login-form-col{padding:42px 20px 34px;align-items:center;overflow:hidden}
 .login-card{display:contents}
-.lc-support{position:absolute;top:26px;right:30px;color:#0b0d12;line-height:0}
-.lc-avatar{width:112px;height:112px;border-radius:50%;background:#1a4bff;display:grid;place-items:center;margin:16px auto 0;color:#fff}
-.lc-title{font-size:22px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-align:center;color:#3b4150;margin:20px 0 30px}
-.lfield-wrap{display:flex;flex-direction:column;gap:16px;margin-bottom:4px}
-.lc-label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#6b7280;margin:0 0 7px 6px;display:block}
-.lfield{display:flex;align-items:center;gap:10px;border:1.5px solid #e3e5ea;border-radius:999px;background:#fff;padding:6px 12px 6px 6px;overflow:visible;transition:border-color .15s,box-shadow .15s}
-.lfield:focus-within{border-color:#1a4bff;box-shadow:0 0 0 3px rgba(26,75,255,.14)}
-.lfield-ico{width:34px;height:34px;border-radius:50%;background:#1a4bff;color:#fff;display:grid;place-items:center;flex-shrink:0}
-.lfield-input{flex:1;border:none;background:transparent;padding:11px 4px;font-size:15px;color:#1a1d24;min-width:0}
-.lfield-input:focus{outline:none;box-shadow:none}
-.lfield-input::placeholder{color:#aab0bb}
-.lfield-reveal{width:36px;height:36px;display:grid;place-items:center;color:#9aa0ac;background:none;border:none;cursor:pointer;flex-shrink:0;border-radius:50%;padding:0}
-.lfield-reveal:hover{color:#1a1d24}
-.lc-actions{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:auto;padding-top:28px}
-.lc-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#0b0d12;color:#fff;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;border:none;border-radius:999px;padding:14px 36px;cursor:pointer;transition:transform .1s,opacity .15s;flex-shrink:0}
-.lc-btn:hover{opacity:.9}.lc-btn:active{transform:scale(.98)}
-.lc-forgot{font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:#3b4150;text-align:right;line-height:1.45;text-decoration:none;max-width:22ch}
-.lc-forgot:hover{color:#1a4bff}
-.lerr-msg{color:#dc2626;font-size:13px;font-weight:600;margin:16px 0 0}
-.lerr-msg:empty{display:none}
+.nl-logo{margin-top:0}
+.nl-avatar{width:132px;height:132px;border-radius:50%;background:#DCE7FF;border:2px solid #A9C1FF;display:grid;place-items:center;margin-top:28px;color:#fff}
+.nl-h{font-size:36px;font-weight:700;line-height:43px;color:#16213A;text-align:center;margin:20px 0 0}
+.nl-sub{font-size:20px;font-weight:400;color:#667085;text-align:center;margin:5px 0 0}
+.nl-form{width:100%;max-width:490px;margin-top:52px}
+.nl-field{position:relative;margin-top:30px}
+.nl-field.first{margin-top:0}
+.nl-ico{position:absolute;left:24px;top:50%;transform:translateY(-50%);width:24px;height:24px;color:#596579;pointer-events:none;display:grid;place-items:center}
+.login-form-col .nl-input{width:100%;height:70px;border:1.5px solid #D0D5DD;border-radius:17px;background:#fff;padding:0 55px 0 66px;font-size:17px;color:#16213A;font-family:inherit;transition:border-color .15s,box-shadow .15s}
+.login-form-col .nl-input::placeholder{color:#98A2B3}
+.login-form-col .nl-input:focus{outline:none;border-color:#155EEF;box-shadow:0 0 0 3px rgba(21,94,239,.10)}
+.nl-eye{position:absolute;right:22px;top:50%;transform:translateY(-50%);width:26px;height:26px;color:#98A2B3;background:none;border:none;cursor:pointer;padding:0;display:grid;place-items:center}
+.nl-eye:hover{color:#596579}
+.nl-forgot{display:block;text-align:right;font-size:15px;font-weight:500;color:#155EEF;text-decoration:underline;margin-top:24px}
+.nl-err{color:#F04438;font-size:14px;font-weight:500;text-align:center;margin-top:16px}
+.nl-err:empty{display:none}
 #loginBlocksArea:empty{display:none}
-/* entrada suave dos cards */
+.nl-submit{width:100%;height:66px;margin-top:40px;border:none;border-radius:17px;background:linear-gradient(90deg,#155EEF 0%,#175CD3 100%);color:#fff;font-size:17px;font-weight:600;letter-spacing:.2px;cursor:pointer;transition:transform .1s,box-shadow .15s}
+.nl-submit:hover{box-shadow:0 8px 20px rgba(21,94,239,.18);transform:translateY(-1px)}
+.nl-submit:active{transform:translateY(0)}
+.nl-help{display:flex;align-items:center;justify-content:center;gap:7px;font-size:14px;color:#667085;margin-top:auto;padding-top:30px}
+/* entrada suave */
 .login-brand{animation:lgPanel .6s cubic-bezier(.2,.7,.2,1) both}
 .login-form-col{animation:lgPanel .6s cubic-bezier(.2,.7,.2,1) .08s both}
 @keyframes lgPanel{from{opacity:0;transform:translateY(16px) scale(.99)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.login-brand,.login-form-col{animation:none!important}}
-@media(max-width:860px){
-  #pageLogin.active{padding:16px}
-  .login-shell{grid-template-columns:1fr;max-width:460px;gap:16px}
-  .login-brand{min-height:0;padding:30px 28px;align-items:center;text-align:center}
-  .lb-kicker{max-width:none}
-  .lb-title{font-size:40px}
-  .lb-illus img{width:auto;max-height:210px;max-width:100%}
-  .lb-foot{flex-direction:column;align-items:center;gap:6px;text-align:center}
-  .login-form-col{min-height:0;padding:32px 26px}
+/* responsivo: empilha em telas estreitas */
+@media(max-width:1120px){
+  .login-shell{grid-template-columns:1fr;max-width:560px}
+  .login-brand{display:none}
+  .login-form-col{min-height:0;padding:40px 26px 30px}
 }
 
 /* ══ LOGIN — animações modernas ══════════════════════ */
@@ -693,65 +724,173 @@ header.top{padding:12px 16px}
 <div id="pageLogin" class="page active">
 <div class="login-shell">
 
-  <!-- Card de marca -->
+  <!-- ═══ PAINEL ESQUERDO (Hero) ═══ -->
   <aside class="login-brand">
-    <h2 class="lb-kicker">Gestor de acompanhamento de condicionalidades</h2>
-    <h1 class="lb-title">BOLSA FAM&Iacute;LIA</h1>
-    <div class="lb-illus"><img src="login-illustration.png" alt="" aria-hidden="true"></div>
-    <div class="lb-foot">
-      <div class="lb-dev"><b>DESENVOLVEDOR:</b> R. Helrisson Marinho do Nascimento</div>
-      <a class="lb-credit" href="https://storyset.com" target="_blank" rel="noopener">ilustra&ccedil;&atilde;o por StorySet</a>
+    <div class="hero-head">
+      <div class="hero-logo" aria-hidden="true">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3.5 19v-1a5 5 0 0 1 5-5 5 5 0 0 1 4 2"/><circle cx="16.5" cy="10" r="2.3"/><path d="M13 19v-.5a4 4 0 0 1 7.5-1.9"/></svg>
+      </div>
+      <div class="hero-head-t">GESTOR DE ACOMPANHAMENTO<br>DE CONDICIONALIDADES</div>
+    </div>
+
+    <h1 class="hero-title">BOLSA FAM&Iacute;LIA</h1>
+    <p class="hero-sub">Acompanhe fam&iacute;lias, vig&ecirc;ncias, estabelecimentos<br>e indicadores de sa&uacute;de em um s&oacute; lugar.</p>
+
+    <div class="hero-illus" aria-hidden="true">
+      <!-- fantasma família ao fundo -->
+      <svg class="hero-deco deco-ghost" width="86" height="86" viewBox="0 0 24 24" fill="none" stroke="#DCE3EF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 19v-1a5 5 0 0 1 6-4.9"/><circle cx="16.5" cy="9.5" r="2.4"/><path d="M12.5 19v-.5a4.2 4.2 0 0 1 8-1.8"/></svg>
+
+      <!-- prancheta -->
+      <svg class="hero-deco deco-clip" width="86" height="112" viewBox="0 0 86 112" fill="none">
+        <rect x="6" y="12" width="74" height="94" rx="9" fill="#fff" stroke="#E4E7EC" stroke-width="2"/>
+        <rect x="30" y="6" width="26" height="14" rx="5" fill="#C9D3E4"/>
+        <g>
+          <rect x="18" y="34" width="15" height="15" rx="4" fill="#155EEF"/><path d="M21.5 41.5l2.5 2.5 4.5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <rect x="40" y="38" width="30" height="6" rx="3" fill="#E4E7EC"/>
+          <rect x="18" y="56" width="15" height="15" rx="4" fill="#155EEF"/><path d="M21.5 63.5l2.5 2.5 4.5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <rect x="40" y="60" width="30" height="6" rx="3" fill="#E4E7EC"/>
+          <rect x="18" y="78" width="15" height="15" rx="4" fill="#155EEF"/><path d="M21.5 85.5l2.5 2.5 4.5-5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          <rect x="40" y="82" width="24" height="6" rx="3" fill="#E4E7EC"/>
+        </g>
+      </svg>
+
+      <!-- planta -->
+      <svg class="hero-deco deco-plant" width="70" height="92" viewBox="0 0 70 92" fill="none">
+        <path d="M35 60c0-14-8-22-20-24 2 13 8 21 20 24z" fill="#CBD6EA"/>
+        <path d="M35 58c0-16 8-26 22-28-2 15-9 25-22 28z" fill="#9DB0D0"/>
+        <path d="M35 62c0-9 4-15 11-17-1 9-4 14-11 17z" fill="#B7C4DD"/>
+        <path d="M22 62h26l-4 26a4 4 0 0 1-4 3.4H30a4 4 0 0 1-4-3.4z" fill="#3B4A66"/>
+        <rect x="20" y="58" width="30" height="7" rx="3" fill="#2C3A54"/>
+      </svg>
+
+      <!-- monitor / dashboard -->
+      <div class="dash">
+        <div class="dash-mon">
+          <div class="dash-screen">
+            <div class="dash-h">
+              <b>Painel de Acompanhamento</b>
+              <span class="mn"><span><i></i><i></i></span></span>
+            </div>
+            <div class="dash-cards">
+              <div class="dc">
+                <div class="dc-t"><span class="di"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="3"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg></span>Fam&iacute;lias</div>
+                <div class="dc-d">Acompanhadas</div><div class="dc-v">24.586</div>
+              </div>
+              <div class="dc">
+                <div class="dc-t"><span class="di"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="4"/><path d="M6 21v-2a6 6 0 0 1 12 0v2"/></svg></span>Crian&ccedil;as</div>
+                <div class="dc-d">0 a 6 anos</div><div class="dc-v">18.732</div>
+              </div>
+              <div class="dc">
+                <div class="dc-t"><span class="di"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="6" r="3"/><path d="M12 9c-2 4-2 7 0 12M12 9c2 4 2 7 0 12"/></svg></span>Gestantes</div>
+                <div class="dc-d">Acompanhadas</div><div class="dc-v">2.345</div>
+              </div>
+              <div class="dc don">
+                <svg width="40" height="40" viewBox="0 0 40 40"><circle cx="20" cy="20" r="15" fill="none" stroke="#E4E7EC" stroke-width="6"/><circle cx="20" cy="20" r="15" fill="none" stroke="#155EEF" stroke-width="6" stroke-linecap="round" stroke-dasharray="80 94.2" transform="rotate(-90 20 20)"/><text x="20" y="23.5" text-anchor="middle" font-size="10" font-weight="800" fill="#132039">85%</text></svg>
+                <div><div class="dc-t" style="gap:0">Acompanh.</div><div class="dv">Meta: 90%</div></div>
+              </div>
+            </div>
+            <div class="dash-charts">
+              <div class="dchart">
+                <div class="dchart-t">Indicadores de Sa&uacute;de</div>
+                <svg width="100%" height="58" viewBox="0 0 170 58" preserveAspectRatio="none">
+                  <line x1="4" y1="46" x2="166" y2="46" stroke="#E4E7EC" stroke-width="1"/>
+                  <rect x="16" y="20" width="12" height="26" rx="2" fill="#155EEF"/><rect x="30" y="30" width="12" height="16" rx="2" fill="#BcD3FF" style="fill:#BFD3FF"/>
+                  <rect x="70" y="12" width="12" height="34" rx="2" fill="#155EEF"/><rect x="84" y="26" width="12" height="20" rx="2" fill="#BFD3FF"/>
+                  <rect x="124" y="16" width="12" height="30" rx="2" fill="#155EEF"/><rect x="138" y="32" width="12" height="14" rx="2" fill="#BFD3FF"/>
+                </svg>
+              </div>
+              <div class="dchart">
+                <div class="dchart-t">Situa&ccedil;&atilde;o das Condicionalidades</div>
+                <svg width="100%" height="58" viewBox="0 0 170 58" preserveAspectRatio="none">
+                  <polyline points="8,34 40,22 72,30 104,16 136,26 162,20" fill="none" stroke="#155EEF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <g fill="#155EEF"><circle cx="8" cy="34" r="2.4"/><circle cx="40" cy="22" r="2.4"/><circle cx="72" cy="30" r="2.4"/><circle cx="104" cy="16" r="2.4"/><circle cx="136" cy="26" r="2.4"/><circle cx="162" cy="20" r="2.4"/></g>
+                </svg>
+              </div>
+            </div>
+            <div class="dash-bottom">
+              <div class="dbm">
+                <span class="di"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg></span>
+                <div><div class="dbm-v">452</div><div class="dbm-l">Estabelec. de Sa&uacute;de</div></div>
+              </div>
+              <div class="dbm">
+                <span class="di"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+                <div><div class="dbm-v">3.892</div><div class="dbm-l">Visitas (M&ecirc;s)</div></div>
+              </div>
+              <div class="dbm warn">
+                <span class="di"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
+                <div><div class="dbm-v">18</div><div class="dbm-l">Aten&ccedil;&atilde;o necess&aacute;ria</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dash-neck"></div>
+        <div class="dash-base"></div>
+      </div>
+
+      <!-- robô -->
+      <svg class="hero-deco deco-robot" width="122" height="150" viewBox="0 0 122 150" fill="none">
+        <line x1="61" y1="30" x2="61" y2="16" stroke="#C7D2E4" stroke-width="3"/><circle cx="61" cy="12" r="5" fill="#155EEF"/>
+        <rect x="26" y="28" width="70" height="54" rx="20" fill="#fff" stroke="#E4E7EC" stroke-width="2"/>
+        <rect x="34" y="40" width="54" height="30" rx="14" fill="#172B4D"/>
+        <circle cx="50" cy="55" r="4.6" fill="#4D8DFF"/><circle cx="72" cy="55" r="4.6" fill="#4D8DFF"/>
+        <rect x="30" y="86" width="62" height="46" rx="16" fill="#fff" stroke="#E4E7EC" stroke-width="2"/>
+        <circle cx="61" cy="108" r="9" fill="#EEF4FF"/><path d="M61 103v10M56 108h10" stroke="#155EEF" stroke-width="2.4" stroke-linecap="round"/>
+        <rect x="12" y="92" width="16" height="30" rx="8" fill="#155EEF" transform="rotate(18 20 107)"/>
+        <rect x="94" y="82" width="15" height="30" rx="7.5" fill="#155EEF" transform="rotate(-24 101 97)"/>
+      </svg>
+    </div>
+
+    <div class="hero-foot">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+      Desenvolvido por R. Helrisson Marinho do Nascimento&nbsp;&nbsp;|&nbsp;&nbsp;Vers&atilde;o 1.0.0
     </div>
   </aside>
 
-  <!-- Formul&aacute;rio -->
+  <!-- ═══ PAINEL DIREITO (Login) ═══ -->
   <main class="login-form-col">
     <div class="login-card">
-      <span class="lc-support" aria-hidden="true">
-        <svg width="38" height="38" viewBox="0 0 36 36" fill="none">
-          <path d="M3 6.5h15a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3h-5.5L8 22v-3.5H3a3 3 0 0 1-3-3v-6a3 3 0 0 1 3-3z" fill="#fff" stroke="#0b0d12" stroke-width="1.6" stroke-linejoin="round"/>
-          <path d="M16.5 13.5H30a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3h-1.5V29L24 25.5h-7.5a3 3 0 0 1-3-3v-6a3 3 0 0 1 3-3z" fill="#1a4bff"/>
-          <path d="M21.4 18.2a2 2 0 0 1 3.7 1.05c0 1.3-1.7 1.55-1.7 2.75" stroke="#fff" stroke-width="1.6" stroke-linecap="round" fill="none"/>
-          <circle cx="23.35" cy="23.6" r=".95" fill="#fff"/>
+      <div class="nl-logo" aria-hidden="true">
+        <svg width="65" height="65" viewBox="0 0 64 64" fill="none">
+          <path d="M32 55S9 41 9 24.5C9 16 15.5 10 23 10c4.6 0 8.2 2.3 9 5.5C33 12.3 36.4 10 41 10c7.5 0 14 6 14 14.5C55 41 32 55 32 55z" fill="#EAF1FF" stroke="#155EEF" stroke-width="2.4" stroke-linejoin="round"/>
+          <path d="M43 20c4.4 0 8 3.4 8 8.2 0 6-6 11-11 14 6-2 15-8 15-17.7C55 18 50.5 13.6 45 13.6c-2.4 0-4.6.9-6.2 2.4A8 8 0 0 1 43 20z" fill="#43B86B"/>
+          <circle cx="26" cy="28" r="4.3" fill="#155EEF"/><path d="M18.5 41v-1.2c0-3.4 3-6 7.5-6s7.5 2.6 7.5 6V41z" fill="#155EEF"/>
+          <circle cx="38" cy="30" r="3.2" fill="#2869F5"/><path d="M32.5 40v-.8c0-2.6 2.4-4.6 5.5-4.6s5.5 2 5.5 4.6v.8z" fill="#2869F5"/>
         </svg>
-      </span>
-      <div class="lc-avatar" aria-hidden="true">
-        <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5zm0 2c-4 0-8 2-8 5v1h16v-1c0-3-4-5-8-5z"/></svg>
       </div>
-      <h1 class="lc-title">Acesse sua conta</h1>
+      <div class="nl-avatar" aria-hidden="true">
+        <svg width="74" height="74" viewBox="0 0 24 24" fill="#9DB8F5"><circle cx="12" cy="8.4" r="4.4"/><path d="M3.5 21v-1c0-3.6 3.8-6 8.5-6s8.5 2.4 8.5 6v1z"/></svg>
+      </div>
+      <h1 class="nl-h">Bem-vindo</h1>
+      <p class="nl-sub">Acesse sua conta</p>
 
-      <div class="lfield-wrap">
-        <div>
-          <label class="lc-label" for="loginUser">Nome de usu&aacute;rio/email</label>
-          <div class="lfield">
-            <span class="lfield-ico">
-              <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            </span>
-            <input type="text" id="loginUser" class="lfield-input" placeholder="Nome de usu&aacute;rio" autocomplete="username" aria-label="Nome de usu&aacute;rio ou e-mail">
-          </div>
+      <form class="nl-form" onsubmit="_doLoginSafe();return false" novalidate>
+        <label for="loginUser" class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Usu&aacute;rio ou e-mail</label>
+        <div class="nl-field first">
+          <span class="nl-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+          <input type="text" id="loginUser" class="nl-input" placeholder="Digite seu usu&aacute;rio ou e-mail" autocomplete="username" aria-label="Usu&aacute;rio ou e-mail">
         </div>
-        <div>
-          <label class="lc-label" for="loginPass">Senha</label>
-          <div class="lfield">
-            <span class="lfield-ico">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            </span>
-            <input type="password" id="loginPass" class="lfield-input" placeholder="Senha" autocomplete="current-password" aria-label="Senha">
-            <button type="button" class="lfield-reveal" id="lPassReveal" onclick="_togglePassReveal()" title="Mostrar/ocultar senha" aria-label="Mostrar senha">
-              <svg id="lPassRevealIcon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
-          </div>
+
+        <label for="loginPass" class="visually-hidden" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Senha</label>
+        <div class="nl-field">
+          <span class="nl-ico"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+          <input type="password" id="loginPass" class="nl-input" placeholder="Digite sua senha" autocomplete="current-password" aria-label="Senha">
+          <button type="button" class="nl-eye" id="lPassReveal" onclick="_togglePassReveal()" title="Mostrar/ocultar senha" aria-label="Mostrar senha">
+            <svg id="lPassRevealIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
         </div>
+
+        <a class="nl-forgot" href="#" onclick="return false">Esqueceu sua senha?</a>
+
+        <div id="loginErr" class="nl-err" role="alert"></div>
+        <div id="loginBlocksArea"></div>
+
+        <button type="submit" class="nl-submit">ENTRAR</button>
+      </form>
+
+      <div class="nl-help">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#98A2B3" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+        Precisa de ajuda? Fale com o administrador.
       </div>
-
-      <div id="loginErr" class="lerr-msg" role="alert"></div>
-
-      <div class="lc-actions">
-        <button class="lc-btn" onclick="_doLoginSafe()">Entrar</button>
-        <a class="lc-forgot" href="#" onclick="return false">Esqueceu a senha? Fale com o administrador</a>
-      </div>
-
-      <div id="loginBlocksArea"></div>
     </div>
   </main>
 
