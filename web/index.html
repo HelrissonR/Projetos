@@ -157,19 +157,19 @@ body:has(#pageLogin.active) nav.bottom{display:none!important}
 #pageLogin.active{padding:26px;align-items:center;justify-content:center;background:#000;min-height:100vh}
 .login-shell{display:grid;grid-template-columns:1.08fr .92fr;gap:22px;width:100%;max-width:1120px;align-items:stretch}
 /* ── Card esquerdo: marca ── */
-.login-brand{background:#fff;color:#1a1d24;border-radius:30px;padding:44px 46px;display:flex;flex-direction:column;position:relative;overflow:hidden;min-height:560px}
+.login-brand{background:#fff;color:#1a1d24;border-radius:30px;padding:44px 46px;display:flex;flex-direction:column;position:relative;overflow:hidden;min-height:600px}
 .lb-kicker{font-size:15px;font-weight:700;letter-spacing:.045em;text-transform:uppercase;color:#3b4150;line-height:1.32;max-width:22ch;margin:0}
 .lb-title{font-size:56px;line-height:1;font-weight:800;letter-spacing:-.02em;color:#0b0d12;margin:20px 0 0}
-.lb-illus{flex:1;display:flex;align-items:center;justify-content:center;margin:6px 0;min-height:0}
-.lb-illus img{max-width:100%;max-height:352px;width:auto;height:auto;display:block}
+.lb-illus{flex:1;display:flex;align-items:center;justify-content:center;margin:14px 0;min-height:0}
+.lb-illus img{width:100%;height:auto;display:block}
 .lb-foot{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-top:auto}
 .lb-dev{font-size:12px;color:#3b4150;line-height:1.4}
 .lb-dev b{font-weight:800;letter-spacing:.02em;color:#1a1d24}
 .lb-credit{font-size:11px;color:#9aa0ac;text-decoration:none;white-space:nowrap}
 .lb-credit:hover{color:#5b6270}
 /* ── Card direito: formulário ── */
-.login-form-col{display:flex;align-items:stretch;justify-content:center}
-.login-card{background:#fff;border-radius:30px;padding:42px 46px;width:100%;display:flex;flex-direction:column;position:relative}
+.login-form-col{background:#fff;border-radius:30px;padding:42px 46px;min-height:600px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.login-card{display:contents}
 .lc-support{position:absolute;top:26px;right:30px;color:#0b0d12;line-height:0}
 .lc-avatar{width:112px;height:112px;border-radius:50%;background:#1a4bff;display:grid;place-items:center;margin:16px auto 0;color:#fff}
 .lc-title{font-size:22px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;text-align:center;color:#3b4150;margin:20px 0 30px}
@@ -183,7 +183,7 @@ body:has(#pageLogin.active) nav.bottom{display:none!important}
 .lfield-input::placeholder{color:#aab0bb}
 .lfield-reveal{width:36px;height:36px;display:grid;place-items:center;color:#9aa0ac;background:none;border:none;cursor:pointer;flex-shrink:0;border-radius:50%;padding:0}
 .lfield-reveal:hover{color:#1a1d24}
-.lc-actions{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:24px}
+.lc-actions{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:auto;padding-top:28px}
 .lc-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#0b0d12;color:#fff;font-weight:700;font-size:14px;letter-spacing:.06em;text-transform:uppercase;border:none;border-radius:999px;padding:14px 36px;cursor:pointer;transition:transform .1s,opacity .15s;flex-shrink:0}
 .lc-btn:hover{opacity:.9}.lc-btn:active{transform:scale(.98)}
 .lc-forgot{font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:#3b4150;text-align:right;line-height:1.45;text-decoration:none;max-width:22ch}
@@ -193,18 +193,18 @@ body:has(#pageLogin.active) nav.bottom{display:none!important}
 #loginBlocksArea:empty{display:none}
 /* entrada suave dos cards */
 .login-brand{animation:lgPanel .6s cubic-bezier(.2,.7,.2,1) both}
-.login-card{animation:lgPanel .6s cubic-bezier(.2,.7,.2,1) .08s both}
+.login-form-col{animation:lgPanel .6s cubic-bezier(.2,.7,.2,1) .08s both}
 @keyframes lgPanel{from{opacity:0;transform:translateY(16px) scale(.99)}to{opacity:1;transform:none}}
-@media(prefers-reduced-motion:reduce){.login-brand,.login-card{animation:none!important}}
+@media(prefers-reduced-motion:reduce){.login-brand,.login-form-col{animation:none!important}}
 @media(max-width:860px){
   #pageLogin.active{padding:16px}
   .login-shell{grid-template-columns:1fr;max-width:460px;gap:16px}
   .login-brand{min-height:0;padding:30px 28px;align-items:center;text-align:center}
   .lb-kicker{max-width:none}
   .lb-title{font-size:40px}
-  .lb-illus img{max-height:210px}
+  .lb-illus img{width:auto;max-height:210px;max-width:100%}
   .lb-foot{flex-direction:column;align-items:center;gap:6px;text-align:center}
-  .login-card{padding:32px 26px}
+  .login-form-col{min-height:0;padding:32px 26px}
 }
 
 /* ══ LOGIN — animações modernas ══════════════════════ */
