@@ -766,6 +766,19 @@ input,select,textarea{border-radius:11px}
 /* 10) Ilustrações originais nos estados vazios */
 .illus{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:6px}
 .illus-credit{font-size:10px;color:var(--muted);opacity:.65;letter-spacing:.02em}
+/* Detalhe do beneficiário — cabeçalho e fatos */
+.benef-head{display:flex;align-items:center;gap:14px;padding:4px 2px 2px}
+.benef-facts{border:1px solid color-mix(in srgb,var(--border) 60%,transparent);border-radius:14px;overflow:hidden}
+.benef-facts .bf-item{padding:11px 14px}
+.benef-facts .bf-item+.bf-item{border-top:1px solid color-mix(in srgb,var(--border) 55%,transparent)}
+.benef-facts .sheet-lbl{margin-bottom:2px}
+/* Opções Sim/Não e wizard — estado selecionado em violeta */
+.cbf{transition:border-color .12s,background .12s}
+.cbf input[type="checkbox"],.cbf input[type="radio"]{accent-color:var(--violet)}
+.cbf:has(input:checked){border-color:var(--violet);background:var(--violet-soft)}
+.cbf:has(input:checked) label{color:var(--violet);font-weight:700}
+.wiz-seg.active{background:var(--violet)}
+.fam-prog-bar>div{background:var(--violet)}
 
 /* ── Relatório (PDF / impressão) — refino preto & branco ── */
 #printArea{display:none}
@@ -5631,27 +5644,37 @@ async function showFamily(fid) {
   const acSem = await acompanhadosNoSemestre();
   const codLabel = fid.startsWith('FAM_IND_') ? 'Individual' : fid.replace(/^FAM_/,'');
   const canEdit = ME && ME.role !== 'visualizador';
+  const _nOk = members.filter(m => acSem.get(m.nis)).length;
+  const _todosOk = members.length > 0 && _nOk === members.length;
+  const _famChip = members.length === 0 ? '' : _todosOk
+    ? `<span class="pchip pchip-ok">${fi('check-circle',11)} Família em dia</span>`
+    : `<span class="pchip pchip-w">${_nOk}/${members.length} acompanhados</span>`;
   openSheet(`Família ${codLabel}`,`<div class="s3">
-    <div>
-      <div class="fb">${esc(codLabel)}</div>
-      <div style="font-weight:500;margin-top:8px">${esc(f.endereco||'')}</div>
-      <div class="small muted">${esc(f.bairro||'')}${f.zona?' · '+esc(f.zona):''}</div>
+    <div class="benef-head">
+      <div class="pr-icon" style="background:var(--violet-soft);color:var(--violet);width:56px;height:56px;border-radius:15px">${fi('home',24)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:800;font-size:17px;letter-spacing:-.02em">Família ${esc(codLabel)}</div>
+        <div class="small muted" style="margin-top:2px">${esc(f.endereco||'Sem endereço')}${f.bairro?` · ${esc(f.bairro)}`:''}${f.zona?' · '+esc(f.zona):''}</div>
+        <div style="margin-top:7px">${_famChip}</div>
+      </div>
     </div>
     <div>
-      <div class="small muted" style="margin-bottom:8px">Membros (${members.length})</div>
+      <div class="mb-section-title">${fi('users',12)} Membros <span style="margin-left:auto;font-weight:600;text-transform:none;letter-spacing:0">${members.length}</span></div>
       ${members.length === 0
         ? `<div class="card card-sub nh muted small">Nenhum membro encontrado para esta família.</div>`
         : members.map(m=>{
           const ac = acSem.get(m.nis);
-          const st = ac ? 'border-left:4px solid var(--ok);background:var(--ok-soft);' : '';
+          const _mi = (function(){const p=String(m.nome||'?').trim().split(/\s+/);return (p[0][0]+(p[1]?.[0]||'')).toUpperCase();})();
+          const _av = ac ? 'background:var(--ok-soft);color:var(--ok)' : 'background:var(--violet-soft);color:var(--violet)';
           return `
-          <div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:8px;${st}">
-            <div role="button" tabindex="0" aria-label="Abrir beneficiário ${esc(m.nome||'')}" onclick="showBenef('${esc(m.nis)}')" style="flex:1;cursor:pointer;min-width:0">
-              <div style="font-weight:500;display:flex;align-items:center;gap:6px;flex-wrap:wrap">${esc(m.nome)} ${badgeAcompSemestre(ac)}</div>
-              <div class="small muted">NIS: ${esc(m.nis)}${m.idade?' · '+m.idade+' anos':''}${m.gestante?' · <span class="tag tag-w" style="font-size:10px">Gestante</span>':''}</div>
+          <div class="plum-row">
+            <div class="pr-icon" style="${_av};border-radius:50%;font-weight:800;font-size:13px" role="button" tabindex="0" aria-label="Abrir ${esc(m.nome||'')}" onclick="showBenef('${esc(m.nis)}')">${_mi}</div>
+            <div class="pr-body" role="button" tabindex="0" onclick="showBenef('${esc(m.nis)}')">
+              <div class="pr-title">${esc(m.nome)}</div>
+              <div class="pr-sub">NIS ${esc(m.nis)}${m.idade?' · '+m.idade+' anos':''}${m.gestante?' · Gestante':''}</div>
             </div>
             ${can('acomp.create')
-              ? `<button class="btn btn-s ${ac?'btn-g':'btn-p'}" onclick="showAcompForm('${esc(m.nis)}')" style="flex-shrink:0;display:inline-flex;align-items:center;gap:4px">${fi('edit',13)} ${ac?'Reacompanhar':'Acompanhar'}</button>`
+              ? `<button class="btn btn-s ${ac?'btn-g':'btn-p'}" onclick="showAcompForm('${esc(m.nis)}')" style="flex-shrink:0;display:inline-flex;align-items:center;gap:4px">${fi('edit',13)} ${ac?'Reacomp.':'Acompanhar'}</button>`
               : ''}
           </div>`;}).join('')}
     </div>
@@ -5667,33 +5690,55 @@ async function showBenef(nis) {
   const avulsoTag = b.cadastro_avulso
     ? `<div class="card card-sub nh" style="background:var(--warn-soft);border-color:var(--warn)"><div class="small" style="color:var(--warn);font-weight:600">${fi('alert-triangle',13)} Cadastro avulso</div><div class="small muted">Cadastrado por: ${esc(b.cadastrado_por||'-')} em ${b.data_cadastro_avulso?new Date(b.data_cadastro_avulso).toLocaleDateString():'-'}</div></div>`
     : '';
+  // Status do semestre atual para o cabeçalho
+  const _refSem = semestreAtualRef();
+  const _ultimo = acomps[0];
+  const _emDia = _ultimo && _ultimo.data && semestreRef(_ultimo.data) === _refSem && _ultimo.acompanhado !== false;
+  const _naoLoc = _ultimo && _ultimo.data && semestreRef(_ultimo.data) === _refSem && _ultimo.acompanhado === false;
+  const _ini = (function(){const p=String(b.nome||'?').trim().split(/\s+/);return (p[0][0]+(p[1]?.[0]||'')).toUpperCase();})();
+  const _statChip = _emDia ? `<span class="pchip pchip-ok">${fi('check-circle',11)} Acompanhado</span>`
+    : _naoLoc ? `<span class="pchip pchip-w">${fi('alert-triangle',11)} Não localizado</span>`
+    : `<span class="pchip pchip-d">Pendente na vigência</span>`;
+  const _avStyle = _emDia ? 'background:var(--ok-soft);color:var(--ok)' : _naoLoc ? 'background:var(--warn-soft);color:var(--warn)' : 'background:var(--violet-soft);color:var(--violet)';
   openSheet(b.nome,`<div class="s3">
     ${avulsoTag}
-    <div><div class="sheet-lbl">NIS</div><div style="font-weight:500;font-size:16px">${esc(b.nis)}</div></div>
-    ${b.endereco?`<div><div class="sheet-lbl">Endereço</div><div>${esc(b.endereco)}</div>${b.bairro?`<div class="small muted">${esc(b.bairro)}</div>`:''}</div>`:''}
-    ${b.cod_fam&&!b.cod_fam.startsWith('FAM_IND_')?`<div><div class="sheet-lbl">Código Familiar</div><div class="fb">${esc(b.cod_fam.replace(/^FAM_/,''))}</div></div>`:''}
-    ${b.dob?`<div><div class="sheet-lbl">Nascimento</div><div>${new Date(b.dob+'T12:00:00').toLocaleDateString('pt-BR')}${b.idade?' · '+b.idade+' anos':''}</div></div>`:''}
-    ${b.cns?`<div><div class="sheet-lbl">CNS</div><div class="small">${esc(b.cns)}</div></div>`:''}
-    ${b.eas?`<div><div class="sheet-lbl">EAS</div><div class="small">${esc(b.eas)}</div></div>`:''}
+    <div class="benef-head">
+      <div class="pr-icon" style="${_avStyle};border-radius:50%;font-weight:800;font-size:18px;width:56px;height:56px">${_ini}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:800;font-size:17px;letter-spacing:-.02em;line-height:1.15">${esc(b.nome)}</div>
+        <div class="small muted" style="margin-top:2px">NIS ${esc(b.nis)}${b.idade?' · '+b.idade+' anos':''}</div>
+        <div style="margin-top:7px">${_statChip}${b.gestante?' <span class="pchip pchip-w">Gestante</span>':''}</div>
+      </div>
+    </div>
+    <div class="benef-facts">
+      ${b.endereco?`<div class="bf-item"><div class="sheet-lbl">Endereço</div><div>${esc(b.endereco)}${b.bairro?` · ${esc(b.bairro)}`:''}</div></div>`:''}
+      ${b.cod_fam&&!b.cod_fam.startsWith('FAM_IND_')?`<div class="bf-item"><div class="sheet-lbl">Código Familiar</div><div class="fb">${esc(b.cod_fam.replace(/^FAM_/,''))}</div></div>`:''}
+      ${b.dob?`<div class="bf-item"><div class="sheet-lbl">Nascimento</div><div>${new Date(b.dob+'T12:00:00').toLocaleDateString('pt-BR')}</div></div>`:''}
+      ${b.cns?`<div class="bf-item"><div class="sheet-lbl">CNS</div><div class="small">${esc(b.cns)}</div></div>`:''}
+      ${b.eas?`<div class="bf-item"><div class="sheet-lbl">EAS</div><div class="small">${esc(b.eas)}</div></div>`:''}
+    </div>
     ${(can('acomp.create')||can('benef.edit'))?`<div class="g2" style="gap:8px">
       ${can('acomp.create')?`<button class="btn btn-p" onclick="showAcompForm('${b.nis}')" style="display:inline-flex;align-items:center;gap:6px;flex:1">${fi('edit',15)} Acompanhar</button>`:''}
       ${can('benef.edit')?`<button class="btn btn-g" onclick="editBenef('${b.nis}')" style="display:inline-flex;align-items:center;gap:6px;flex:1">${fi('user-plus',15)} Editar dados</button>`:''}
     </div>`:''}
     <button class="btn btn-g btn-b" onclick="comprovanteBuscaAtiva('${b.nis}')" style="display:inline-flex;align-items:center;justify-content:center;gap:6px">${fi('file-text',15)} Comprovante de busca ativa</button>
     ${_evoChart(acomps)}
-    ${acomps.length?`<div><div class="small muted" style="margin-bottom:8px">Acompanhamentos (${acomps.length})</div>${acomps.slice(0,15).map(a=>`<div class="card card-sub nh">
-      <div class="flex aic jcb" style="margin-bottom:4px"><span class="tag tag-ok">${new Date(a.data).toLocaleDateString()}</span><div style="display:flex;gap:4px">${a.gestante?'<span class="tag tag-w">Gestante</span>':''}${a.synced_at?'':'<span class="tag tag-w">Pendente</span>'}</div></div>
-      ${(a.tecnico||a.estabelecimento)?`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:5px">
-        ${a.tecnico?`<span class="tag tag-i" style="font-size:10px">${fi('users',11)} ${esc(a.tecnico)}</span>`:''}
-        ${a.estabelecimento?`<span class="small muted" style="display:inline-flex;align-items:center;gap:3px">${fi('map-pin',11)} ${esc(a.estabelecimento)}</span>`:''}
-      </div>`:''}
-      ${a.acompanhado===false?`<div class="small" style="color:var(--warn);font-weight:600">✗ Não acompanhado${a.motivo_na?` — ${esc(a.motivo_na)}`:''}</div>`:''}
-      ${a.peso?`<div class="small">Peso: ${a.peso}kg | Altura: ${a.altura}cm | IMC: ${a.imc}</div>`:''}
-      ${a.vacina_ok!=null?`<div class="small">Vacina: ${a.vacina_ok?'✓ Em dia':'✗ Pendente'}</div>`:''}
-      ${a.gestante&&a.dum?`<div class="small">DUM: ${new Date(a.dum).toLocaleDateString()}</div>`:''}
-      ${a.tria_risco?`<div class="small" style="margin-top:4px">TRIA: ${_triaLabel(a.tria_risco)}</div>`:''}
-      ${a.observacoes?`<div class="small muted" style="font-style:italic;margin-bottom:4px">"${esc(a.observacoes)}"</div>`:''}
-      ${(can('acomp.edit')||can('acomp.delete'))?`<div class="flex" style="gap:6px;margin-top:6px">${can('acomp.edit')?`<button class="btn btn-s btn-g" onclick="editAcomp('${a.id}')" style="display:inline-flex;align-items:center;gap:4px">${fi('edit',12)} Editar</button>`:''}${can('acomp.delete')?`<button class="btn btn-s btn-g" onclick="deleteAcomp('${a.id}')" style="display:inline-flex;align-items:center;gap:4px;color:var(--err)">${fi('x-circle',12)} Excluir</button>`:''}</div>`:''}</div>`).join('')}</div>`:'<div class="card card-sub nh muted small">Nenhum acompanhamento</div>'}</div>`);
+    ${acomps.length?`<div><div class="mb-section-title">${fi('clock',12)} Histórico <span style="margin-left:auto;font-weight:600;text-transform:none;letter-spacing:0">${acomps.length}</span></div>${acomps.slice(0,15).map(a=>`<div class="card card-sub nh" style="padding:12px">
+      <div class="flex aic jcb" style="margin-bottom:8px"><span class="pchip pchip-ok">${new Date(a.data).toLocaleDateString()}</span><div style="display:flex;gap:4px">${a.gestante?'<span class="pchip pchip-w">Gestante</span>':''}${a.synced_at?'':'<span class="pchip pchip-w">Pendente</span>'}</div></div>
+      <div class="ac-chips">
+        ${a.acompanhado===false?`<span class="pchip pchip-w">${fi('alert-triangle',11)} Não acompanhado</span>`:''}
+        ${a.vacina_ok!=null?`<span class="pchip ${a.vacina_ok?'pchip-ok':'pchip-d'}">Vacina ${a.vacina_ok?'em dia':'pendente'}</span>`:''}
+        ${a.tria_risco?`<span class="pchip" style="background:var(--violet-soft);color:var(--violet)">TRIA: ${_triaLabel(a.tria_risco).replace(/<[^>]*>/g,'').trim()}</span>`:''}
+        ${a.tecnico?`<span class="pchip" style="background:var(--panel-2);color:var(--muted)">${fi('users',11)} ${esc(a.tecnico)}</span>`:''}
+      </div>
+      ${(a.peso||a.estabelecimento||a.observacoes||(a.gestante&&a.dum)||(can('acomp.edit')||can('acomp.delete')))?`<details class="ac-more"><summary>${fi('chevron-down',13)} Ver detalhes</summary><div class="ac-more-body">
+        ${a.estabelecimento?`<div class="small muted">${fi('map-pin',11)} ${esc(a.estabelecimento)}</div>`:''}
+        ${a.acompanhado===false&&a.motivo_na?`<div class="small" style="color:var(--warn);font-weight:600">Motivo: ${esc(a.motivo_na)}</div>`:''}
+        ${a.peso?`<div class="small">Peso: ${a.peso}kg | Altura: ${a.altura}cm | IMC: ${a.imc}</div>`:''}
+        ${a.gestante&&a.dum?`<div class="small">DUM: ${new Date(a.dum).toLocaleDateString()}</div>`:''}
+        ${a.observacoes?`<div class="small muted" style="font-style:italic">"${esc(a.observacoes)}"</div>`:''}
+        ${(can('acomp.edit')||can('acomp.delete'))?`<div class="flex" style="gap:6px;margin-top:4px">${can('acomp.edit')?`<button class="btn btn-s btn-g" onclick="editAcomp('${a.id}')" style="display:inline-flex;align-items:center;gap:4px">${fi('edit',12)} Editar</button>`:''}${can('acomp.delete')?`<button class="btn btn-s btn-g" onclick="deleteAcomp('${a.id}')" style="display:inline-flex;align-items:center;gap:4px;color:var(--err)">${fi('x-circle',12)} Excluir</button>`:''}</div>`:''}
+      </div></details>`:''}</div>`).join('')}</div>`:'<div class="card card-sub nh muted small">Nenhum acompanhamento</div>'}</div>`);
 }
 
 // Emite um comprovante impresso de busca ativa do beneficiário (padrão PBF na Saúde)
@@ -5849,12 +5894,11 @@ async function showAcompForm(nis) {
 
   openSheet(`Acompanhamento`,`<div class="s3">
 
-    <div class="card card-sub nh" style="padding:12px 16px">
-      <div style="font-weight:600;font-size:16px">${esc(CURB.nome)}</div>
-      <div class="res-card-meta" style="margin-top:4px">
-        <span>NIS: ${esc(CURB.nis)}</span>
-        ${codFamLabel?`<span class="dot"></span><span>Fam: ${esc(codFamLabel)}</span>`:''}
-        ${CURB.gestante?'<span class="dot"></span><span class="tag tag-w" style="font-size:10px">Gestante</span>':''}
+    <div class="benef-head" style="padding:2px">
+      <div class="pr-icon" style="background:var(--violet-soft);color:var(--violet);border-radius:50%;font-weight:800;font-size:15px;width:48px;height:48px">${(function(){const p=String(CURB.nome||'?').trim().split(/\s+/);return (p[0][0]+(p[1]?.[0]||'')).toUpperCase();})()}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:800;font-size:16px;letter-spacing:-.02em">${esc(CURB.nome)}</div>
+        <div class="small muted" style="margin-top:2px">NIS ${esc(CURB.nis)}${codFamLabel?` · Fam ${esc(codFamLabel)}`:''}${CURB.gestante?' · Gestante':''}</div>
       </div>
     </div>
 
