@@ -882,16 +882,19 @@ input:focus,select:focus,textarea:focus,.plogin .plc-input:focus{outline:2px sol
 
 /* ── Relatório (PDF / impressão) — refino preto & branco ── */
 #printArea{display:none}
-.rpt-head{display:flex;align-items:center;gap:14px;border-bottom:2px solid #111;padding-bottom:12px;margin-bottom:18px}
-.rpt-logo{width:56px;height:56px;object-fit:contain;flex-shrink:0}
-.rpt-inst{font-size:17px;font-weight:800;letter-spacing:-.01em;line-height:1.12;color:#111}
-.rpt-title{font-size:12px;font-weight:600;color:#333;margin-top:3px}
-.rpt-meta{font-size:10.5px;color:#666;margin-top:4px;line-height:1.5}
-.rpt-kpis{display:flex;flex-wrap:wrap;border:1px solid #ddd;border-radius:8px;overflow:hidden;margin-bottom:16px}
-.rpt-kpi{flex:1;min-width:88px;padding:12px 14px;border-right:1px solid #eee}
+/* ── Documentos impressos: identidade Plum ── */
+.rpt-head{display:flex;align-items:center;gap:16px;background:linear-gradient(160deg,#3d1258 0%,#2b0c42 100%);color:#fff;padding:18px 20px;margin-bottom:0}
+.rpt-logo{width:52px;height:52px;object-fit:contain;flex-shrink:0;background:#fff;padding:5px}
+.rpt-mark{width:52px;height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.14);color:#fff;font-size:17px;font-weight:800;letter-spacing:-.02em}
+.rpt-kicker{font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#c79cf3}
+.rpt-inst{font-size:16px;font-weight:800;letter-spacing:-.02em;line-height:1.15;color:#fff;margin-top:3px}
+.rpt-title{font-size:10.5px;font-weight:600;color:rgba(255,255,255,.78);margin-top:3px}
+.rpt-meta{font-size:9px;color:#4a4453;background:#f0e7fb;padding:7px 20px;margin-bottom:16px;line-height:1.5}
+.rpt-kpis{display:flex;flex-wrap:wrap;border-top:2px solid #7226d9;background:#faf9fb;margin-bottom:16px}
+.rpt-kpi{flex:1;min-width:88px;padding:12px 16px;border-right:1px solid #e8e4eb}
 .rpt-kpi:last-child{border-right:0}
-.rpt-kpi .k-num{font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1;color:#111;font-variant-numeric:tabular-nums}
-.rpt-kpi .k-lbl{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#666;margin-top:6px}
+.rpt-kpi .k-num{font-size:23px;font-weight:800;letter-spacing:-.03em;line-height:1;color:#7226d9;font-variant-numeric:tabular-nums}
+.rpt-kpi .k-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#736b7b;margin-top:6px}
 .ui-confirm-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;transition:opacity .18s;padding:24px}
 .ui-confirm-ov.show{opacity:1}
 .ui-confirm{background:var(--card,#fff);color:var(--text);border:1px solid var(--line,rgba(0,0,0,.12));border-radius:16px;max-width:340px;width:100%;padding:20px;box-shadow:0 14px 44px rgba(0,0,0,.30);transform:translateY(8px);transition:transform .18s}
@@ -901,8 +904,8 @@ input:focus,select:focus,textarea:focus,.plogin .plc-input:focus{outline:2px sol
 .ui-confirm-btns{display:flex;gap:10px}
 .ui-confirm-btns .btn{flex:1}
 .ui-confirm .btn-danger{background:var(--err,#c62828);color:#fff;border-color:transparent}
-#printArea .rpt-selo{display:inline-block;border:1.5px solid #111;border-radius:4px;padding:3px 9px;font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.10em;margin-top:6px}
-#printArea .rpt-selo-nota{font-size:8.5px;color:#555;margin:4px 0 10px}
+#printArea .rpt-selo{display:inline-block;background:#7226d9;color:#fff;padding:4px 10px;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.12em}
+#printArea .rpt-selo-nota{font-size:8.5px;color:#736b7b;margin:5px 0 12px}
 #printArea table.mapa2{table-layout:fixed;width:100%}
 #printArea table.mapa2 th,#printArea table.mapa2 td{font-size:8.4px;padding:4px 5px;word-wrap:break-word;overflow-wrap:anywhere;hyphens:auto;vertical-align:middle;line-height:1.3}
 #printArea table.mapa2 th{text-align:left;font-size:8px;letter-spacing:.03em}
@@ -912,30 +915,30 @@ input:focus,select:focus,textarea:focus,.plogin .plc-input:focus{outline:2px sol
 #printArea table.mapa2 td.nome{font-weight:600}
 /* Fichas (comprovantes): rotulo a esquerda, largura fixa, sem desalinhamento */
 #printArea table.ficha,#printArea table.acoes{table-layout:fixed;width:100%}
-#printArea table.ficha th{text-align:left;vertical-align:middle;background:#f4f4f4}
+#printArea table.ficha th{text-align:left;vertical-align:middle;background:#f0e7fb;color:#35104f}
 #printArea table.ficha td{vertical-align:middle;word-wrap:break-word;overflow-wrap:anywhere}
 #printArea table.acoes th.c,#printArea table.acoes td.c{text-align:center}
 #printArea table.acoes td{word-wrap:break-word;overflow-wrap:anywhere}
 /* O relatorio nominal injeta @page landscape no proprio documento impresso */
 #printArea .rpt-sign{margin-top:34px;text-align:center;page-break-inside:avoid}
-#printArea .rpt-sign .sign-line{width:230px;border-top:1px solid #111;margin:0 auto 5px}
-#printArea .rpt-sign .sign-name{font-size:10.5px;font-weight:700}
-#printArea .rpt-sign .sign-role{font-size:8.5px;color:#555;text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
-#printArea .rpt-eas-sub{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;margin:14px 0 4px;border-bottom:1px solid #111;padding-bottom:2px}
+#printArea .rpt-sign .sign-line{width:230px;border-top:1px solid #241b2c;margin:0 auto 5px}
+#printArea .rpt-sign .sign-name{font-size:10.5px;font-weight:700;color:#241b2c}
+#printArea .rpt-sign .sign-role{font-size:8px;color:#736b7b;text-transform:uppercase;letter-spacing:.09em;margin-top:2px}
+#printArea .rpt-eas-sub{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#35104f;margin:16px 0 5px;padding-left:9px;border-left:3px solid #7226d9}
 @media print{
   @page{size:A4;margin:14mm}
   body>*{display:none!important}
-  #printArea{display:block!important;color:#111;font-family:system-ui,-apple-system,Arial,sans-serif;font-size:11.5px;font-variant-numeric:tabular-nums;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #printArea{display:block!important;color:#241b2c;font-family:'Inter var','Inter',system-ui,-apple-system,Arial,sans-serif;font-size:11.5px;font-variant-numeric:tabular-nums;letter-spacing:-.005em;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   #printArea h1{font-size:17px;margin:0}
-  #printArea h2{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#555;margin:18px 0 7px;padding-bottom:5px;border-bottom:1px solid #ddd}
+  #printArea h2{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.10em;color:#35104f;margin:18px 0 8px;padding-left:9px;border-left:3px solid #7226d9;border-bottom:0}
   #printArea table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:10.5px;font-variant-numeric:tabular-nums}
   #printArea thead{display:table-header-group}
-  #printArea th{background:#f4f4f4;font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:9.5px;color:#333;text-align:left;padding:6px 8px;border-bottom:1.5px solid #111}
-  #printArea td{padding:5px 8px;border-bottom:1px solid #e2e2e2;vertical-align:top}
-  #printArea tbody tr:nth-child(even) td{background:#fafafa}
+  #printArea th{background:#f0e7fb;font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-size:8.5px;color:#35104f;text-align:left;padding:7px 8px;border-bottom:1.5px solid #7226d9}
+  #printArea td{padding:5px 8px;border-bottom:1px solid #e8e4eb;vertical-align:top}
+  #printArea tbody tr:nth-child(even) td{background:#faf9fb}
   #printArea .pg{page-break-after:always}
   #printArea .no-break{page-break-inside:avoid}
-  #printArea .rpt-foot{margin-top:22px;font-size:9px;color:#888;border-top:1px solid #eee;padding-top:8px}
+  #printArea .rpt-foot{margin-top:22px;font-size:8.5px;color:#8b8494;border-top:1px solid #e8e4eb;padding-top:8px}
 }
 
 /* ── Refino: cabeçalho, fichas (sheet) e formulário ── */
@@ -7050,13 +7053,14 @@ async function _reportHeader(titulo, metaHtml) {
   const inst = await IDB.getMeta('instituicao') || 'Prefeitura Municipal';
   const logo = await IDB.getMeta('logoApp') || '';
   return `<div class="rpt-head">
-    ${logo ? `<img class="rpt-logo" src="${logo}" alt="">` : ''}
+    ${logo ? `<img class="rpt-logo" src="${logo}" alt="">` : `<div class="rpt-mark">BF</div>`}
     <div style="flex:1;min-width:0">
+      <div class="rpt-kicker">Bolsa Família &middot; Saúde</div>
       <div class="rpt-inst">${esc(inst)}</div>
       <div class="rpt-title">${titulo}</div>
-      ${metaHtml ? `<div class="rpt-meta">${metaHtml}</div>` : ''}
     </div>
-  </div>`;
+  </div>
+  ${metaHtml ? `<div class="rpt-meta">${metaHtml}</div>` : ''}`;
 }
 
 async function gerarRelatorioVigencia() {
