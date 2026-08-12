@@ -54,7 +54,7 @@ body:has(#pageLogin.active) #scrollTint{display:none}
 .top .right{display:flex;gap:4px;align-items:center}
 main{padding:20px}
 nav.bottom{position:fixed;bottom:0;left:0;right:0;background:transparent;padding:8px 12px calc(10px + env(safe-area-inset-bottom,0px));z-index:10}
-nav.bottom .inner{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);background:color-mix(in srgb,var(--panel) 92%,transparent);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid color-mix(in srgb,var(--border) 80%,transparent);border-radius:22px;padding:3px 6px;box-shadow:var(--shadow-md)}
+nav.bottom .inner{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(4,1fr);background:color-mix(in srgb,var(--panel) 92%,transparent);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid color-mix(in srgb,var(--border) 80%,transparent);border-radius:22px;padding:3px 6px;box-shadow:var(--shadow-md)}
 nav.bottom button{padding:7px 4px;color:var(--muted);font-size:11px;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:3px;border-radius:18px;position:relative;transition:color .15s,background .15s}
 nav.bottom button:active{background:var(--panel-2);transform:scale(.94);transition:transform .08s}
 nav.bottom button[aria-current="page"]{color:var(--text);font-weight:700}
@@ -780,6 +780,54 @@ input,select,textarea{border-radius:11px}
 .wiz-seg.active{background:var(--violet)}
 .fam-prog-bar>div{background:var(--violet)}
 
+/* ══ FLAT — sem cantos arredondados e sem bordas visíveis ══
+   Exceção: o hero plum (.plum-hero) mantém raio e detalhes. */
+*:not(.plum-hero):not(.plum-hero *){border-radius:0!important}
+.card,.card-sub,.cfg-card,.plum-row,.plum-strip,.benef-facts,.cbf,.af-panel,
+.btn,.btn-g,.btn-p,.btn-s,.afchip,.pchip,.mb-stat,.fam-prog,.cfg-accordion,
+input,select,textarea,.search-wrap,.af-bar,.home-cta,.plc-input,.plc-submit,
+.empty-state,.home-banner,.sync-pend,.alert-action,.ur,#sheet,.illus{border:none!important}
+/* Separação por superfície e por linha-fina apenas onde é estrutural */
+.card,.card-sub,.cfg-card,.plum-row,.benef-facts,.plum-strip{background:var(--panel)}
+.plum-row+.plum-row,.benef-facts .bf-item+.bf-item,.ur+.ur{box-shadow:inset 0 1px 0 var(--border)}
+.cfg-card-head{border-bottom:1px solid var(--border)!important}
+.ac-more-body{border-top:1px solid var(--border)!important}
+.mb-section-title::before{border-radius:0}
+/* Controles de formulário: fundo levemente distinto no lugar da borda */
+input,select,textarea,.plogin .plc-input{background:var(--panel-2)}
+input:focus,select:focus,textarea:focus,.plogin .plc-input:focus{outline:2px solid var(--violet);outline-offset:-2px;box-shadow:none!important}
+.cbf{background:var(--panel-2)}
+.cbf:has(input:checked){background:var(--violet-soft);box-shadow:inset 0 0 0 2px var(--violet)}
+/* Diálogo de escolha */
+.ui-choice-list{display:flex;flex-direction:column;gap:8px;margin:14px 0 4px}
+.ui-choice{display:flex;flex-direction:column;gap:3px;text-align:left;padding:13px 14px;background:var(--panel-2);color:var(--text);cursor:pointer;transition:background .12s,box-shadow .12s;width:100%}
+.ui-choice:hover{background:var(--violet-soft);box-shadow:inset 0 0 0 2px var(--violet)}
+.ui-choice .uc-t{font-weight:700;font-size:14px}
+.ui-choice .uc-h{font-size:12px;color:var(--muted)}
+/* Alternador da tela unificada de Registros */
+.reg-seg{display:grid;grid-template-columns:1fr 1fr;gap:2px;background:var(--panel-2);padding:3px;margin-bottom:16px}
+.reg-seg .rseg{display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 8px;font-size:13px;font-weight:700;color:var(--muted);background:transparent;cursor:pointer;transition:background .12s,color .12s}
+.reg-seg .rseg.active{background:var(--panel);color:var(--violet)}
+@media(max-width:400px){.reg-seg .rseg{font-size:12px;gap:5px;padding:10px 4px}}
+/* Filtros unificados de Famílias */
+.famf{background:var(--panel)}
+.famf-trigger{display:flex;align-items:center;gap:9px;width:100%;padding:13px 14px;background:var(--panel-2);color:var(--text);font-size:14px;font-weight:700;cursor:pointer}
+.famf-trigger .famf-caret{color:var(--muted);transition:transform .18s}
+.famf-trigger.open .famf-caret{transform:rotate(180deg)}
+.famf-badge{min-width:20px;height:20px;display:none;align-items:center;justify-content:center;background:var(--violet);color:#fff;font-size:11px;font-weight:800;padding:0 6px}
+.famf-badge:not(:empty){display:inline-flex}
+.famf-panel{display:flex;flex-direction:column;gap:2px;padding:2px 0 0}
+.famf-sub>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:12px 14px;font-size:13px;font-weight:600;background:var(--panel);color:var(--text);user-select:none}
+.famf-sub>summary::-webkit-details-marker{display:none}
+.famf-sub>summary::after{content:'▸';margin-left:auto;color:var(--muted);transition:transform .18s}
+.famf-sub[open]>summary::after{transform:rotate(90deg)}
+.famf-sub .famf-val{margin-left:auto;font-size:12px;font-weight:600;color:var(--muted);max-width:48%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.famf-sub .famf-val.on{color:var(--violet);font-weight:700}
+.famf-sub[open]>summary .famf-val{display:none}
+.famf-sub select{margin:0 0 4px;width:100%}
+.afchip{background:var(--panel-2)}
+.afchip.active{background:var(--violet);color:#fff}
+
 /* ══ LOGIN PLUM ═══════════════════════════════════════════ */
 #pageLogin.active{padding:0;display:block;background:var(--bg);min-height:100dvh}
 #pageLogin.active.has-bg{background:var(--bg)}
@@ -787,22 +835,21 @@ input,select,textarea{border-radius:11px}
 .plogin-hero{position:relative;display:flex;flex-direction:column;padding:56px 52px;color:#fff;background:linear-gradient(160deg,#3d1258 0%,#2b0c42 100%);overflow:hidden}
 .plogin-hero::after{content:'';position:absolute;width:420px;height:420px;right:-120px;top:-120px;border-radius:50%;background:radial-gradient(circle,rgba(156,98,233,.4),transparent 70%)}
 .plh-kicker{position:relative;z-index:1;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6)}
-.plh-title{position:relative;z-index:1;font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1.12;margin-top:14px;max-width:12ch}
+.plh-title{position:relative;z-index:1;font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1.18;margin-top:14px;max-width:20ch;text-wrap:balance}
 .plh-sub{position:relative;z-index:1;font-size:15px;color:rgba(255,255,255,.72);margin-top:14px;max-width:34ch;line-height:1.55}
 .plh-illus{position:relative;z-index:1;margin:auto 0;display:flex;justify-content:center}
 .plh-foot{position:relative;z-index:1;display:flex;flex-direction:column;gap:3px;font-size:11px;color:rgba(255,255,255,.5)}
 .plogin-card{display:flex;flex-direction:column;justify-content:center;padding:56px 52px;background:var(--panel)}
 .plc-inner{width:100%;max-width:400px;margin:0 auto}
-.plc-brand{display:flex;align-items:center;gap:12px;margin-bottom:32px}
-.plc-brand .plc-logo{width:46px;height:46px;border-radius:13px;background:var(--violet);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;letter-spacing:-.02em}
-.plc-brand strong{font-size:15px;font-weight:800;color:var(--text);letter-spacing:-.02em;display:block;line-height:1.1}
-.plc-brand small{font-size:11px;color:var(--muted);font-weight:600}
+.plc-brand{display:block;margin-bottom:28px}
+.plc-brand strong{font-size:15px;font-weight:800;color:var(--text);letter-spacing:-.02em;display:block;line-height:1.2}
+.plc-brand small{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
 .plc-h{font-size:26px;font-weight:800;letter-spacing:-.03em;color:var(--text)}
 .plc-sub{font-size:14px;color:var(--muted);margin-top:5px}
 .plc-form{margin-top:26px;display:flex;flex-direction:column;gap:14px}
 .plc-field{position:relative}
 .plc-field>.plc-ico{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--muted);display:flex;pointer-events:none}
-.plogin .plc-input{width:100%;height:52px;border:1px solid var(--border);border-radius:13px;background:var(--panel);padding:0 48px 0 46px;font-size:15px;color:var(--text);font-family:inherit;transition:border-color .15s,box-shadow .15s}
+.plogin .plc-input{width:100%;height:52px;border:1px solid var(--border);border-radius:13px;background:var(--panel-2);padding:0 48px 0 46px;font-size:15px;color:var(--text);font-family:inherit;transition:border-color .15s,box-shadow .15s}
 .plogin .plc-input::placeholder{color:var(--muted)}
 .plogin .plc-input:focus{outline:none;border-color:var(--violet);box-shadow:0 0 0 3px var(--violet-soft)}
 .plc-eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:38px;height:38px;border:none;background:transparent;color:var(--muted);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center}
@@ -815,7 +862,9 @@ input,select,textarea{border-radius:11px}
 .plc-dev b{color:var(--violet);font-weight:700}
 @media(max-width:860px){
   .plogin{grid-template-columns:1fr}
-  .plogin-hero{padding:34px 26px 26px;min-height:auto}
+  .plogin-hero{padding:26px 24px 24px;min-height:auto}
+  .plogin{min-height:auto}
+  .plh-kicker{font-size:11px}
   .plh-illus{display:none}
   .plh-title{font-size:26px;margin-top:10px}.plh-sub{display:none}.plh-foot{display:none}
   .plogin-card{padding:30px 26px 40px}
@@ -916,8 +965,7 @@ header.top{padding:12px 16px}
   <main class="plogin-card">
     <div class="plc-inner">
       <div class="plc-brand">
-        <span class="plc-logo">BF</span>
-        <span><strong>Bolsa Família</strong><small>Saúde · Condicionalidades</small></span>
+        <strong>Bolsa Família</strong><small>Saúde · Condicionalidades</small>
       </div>
 
       <h1 class="plc-h">Acesse sua conta</h1>
@@ -979,10 +1027,6 @@ header.top{padding:12px 16px}
 <button class="nav-icon" onclick="nav('home')" data-p="home">
   <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
   <span>Início</span>
-</button>
-<button class="nav-icon" onclick="nav('search')" data-p="search">
-  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-  <span>Buscar</span>
 </button>
 <button class="nav-icon" onclick="nav('families')" data-p="families">
   <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
@@ -1189,6 +1233,12 @@ const ICONS = {
   'trending-up':  `<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>`,
   heart:          `<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>`,
   bell:           `<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>`,
+  user:           `<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>`,
+  'rotate-ccw':   `<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>`,
+  'plus-circle':  `<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>`,
+  'user-circle':  `<circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3.2"/><path d="M6.2 18.6a6.5 6.5 0 0 1 11.6 0"/>`,
+  // Família: dois adultos + criança (distingue de "beneficiário" individual)
+  family:         `<circle cx="7" cy="6.5" r="2.6"/><path d="M2.4 15v-.6c0-2.2 2.1-3.6 4.6-3.6s4.6 1.4 4.6 3.6V15"/><circle cx="17" cy="6.5" r="2.6"/><path d="M12.4 15v-.6c0-2.2 2.1-3.6 4.6-3.6s4.6 1.4 4.6 3.6V15"/><circle cx="12" cy="16.4" r="2.1"/><path d="M8.4 22.5v-.4c0-1.8 1.6-2.9 3.6-2.9s3.6 1.1 3.6 2.9v.4"/>`,
   droplet:        `<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>`,
   cloud:          `<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>`,
   phone:          `<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>`,
@@ -1243,6 +1293,10 @@ const ILLUS = {
     <line x1="149" y1="103" x2="166" y2="120" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round"/>
   </svg>`,
 };
+// Avatar padrão (mesma figura para todos os beneficiários)
+function avatarPad(size = 20) {
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="flex-shrink:0"><circle cx="12" cy="8.2" r="4.2"/><path d="M3.8 21v-.9c0-3.5 3.7-5.9 8.2-5.9s8.2 2.4 8.2 5.9v.9z"/></svg>`;
+}
 function illus(name, credit) {
   const svg = ILLUS[name] || ILLUS.empty;
   return `<div class="illus">${svg}${credit!==false?`<div class="illus-credit">Ilustração original · Bolsa Família Saúde</div>`:''}</div>`;
@@ -3203,7 +3257,7 @@ async function renderHome() {
     ${adminPanel}
 
     ${can('acomp.create') ? `<button class="home-cta" role="button" tabindex="0" aria-label="Registrar acompanhamento" onclick="nav('search')" style="margin-bottom:4px">
-      ${fi('plus-circle',19)} Registrar acompanhamento
+      Registrar acompanhamento
     </button>` : ''}
 
     <!-- ── Agenda de prioridades (atalho) ── -->
@@ -3424,20 +3478,39 @@ async function renderFamilies() {
     </div>
     <div class="s3">
       <input type="text" id="famBusca" placeholder="Buscar por endereço, bairro ou nome..." oninput="filtrarFamilias()">
-      <div class="g2">
-        <select id="famBairro" onchange="filtrarFamilias()">
-          <option value="">Todos os bairros</option>
-          ${bairros.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('')}
-        </select>
-        <select id="famEas" onchange="filtrarFamilias()">
-          <option value="">Todas as EAS</option>
-          ${easList.map(e=>`<option value="${esc(e)}">${esc(e)}</option>`).join('')}
-        </select>
+
+      <!-- Filtros unificados: um único acesso que abre os submenus -->
+      <div class="famf">
+        <button class="famf-trigger" id="famfTrigger" onclick="_toggleFamFiltros()" aria-expanded="false">
+          ${fi('sliders',15)} <span style="flex:1;text-align:left">Filtros</span>
+          <span class="famf-badge" id="famfBadge"></span>
+          <span class="famf-caret">▾</span>
+        </button>
+        <div class="famf-panel" id="famfPanel" hidden>
+          <details class="famf-sub">
+            <summary>${fi('map-pin',13)} Bairro <span class="famf-val" id="famfValBairro">Todos</span></summary>
+            <select id="famBairro" onchange="filtrarFamilias()">
+              <option value="">Todos os bairros</option>
+              ${bairros.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('')}
+            </select>
+          </details>
+          <details class="famf-sub">
+            <summary>${fi('home',13)} EAS <span class="famf-val" id="famfValEas">Todas</span></summary>
+            <select id="famEas" onchange="filtrarFamilias()">
+              <option value="">Todas as EAS</option>
+              ${easList.map(e=>`<option value="${esc(e)}">${esc(e)}</option>`).join('')}
+            </select>
+          </details>
+          ${zonas.length>0?`<details class="famf-sub">
+            <summary>${fi('grid',13)} Zona <span class="famf-val" id="famfValZona">Todas</span></summary>
+            <select id="famZona" onchange="filtrarFamilias()">
+              <option value="">Todas as zonas</option>
+              ${zonas.map(z=>`<option value="${esc(z)}">${esc(z)}</option>`).join('')}
+            </select>
+          </details>`:''}
+          <button class="btn btn-s btn-g" onclick="_limparFamFiltros()" style="width:100%;justify-content:center">${fi('x',12)} Limpar filtros</button>
+        </div>
       </div>
-      ${zonas.length>0?`<select id="famZona" onchange="filtrarFamilias()">
-        <option value="">Todas as zonas</option>
-        ${zonas.map(z=>`<option value="${esc(z)}">${esc(z)}</option>`).join('')}
-      </select>`:''}
     </div>
     <div id="famLista">${_renderFamLista(familias, nb, 1)}</div>
   </div>`;
@@ -3478,11 +3551,11 @@ function _renderFamLista(familias, nb, page) {
         : nOk > 0 ? `<span class="pchip pchip-w">${nOk}/${nMem} acomp.</span>`
         : `<span class="pchip pchip-d">Pendente</span>`;
       return `<div class="plum-row" role="button" tabindex="0" aria-label="Abrir família" onclick="showFamily('${esc(f.familyId)}')">
-      <div class="pr-icon">${fi('home',20)}</div>
+      <div class="pr-icon">${fi('family',22)}</div>
       <div class="pr-body">
-        <div class="pr-title">Família ${esc(codDisplay(f))} <span class="pr-mem">· ${nMem} membro${nMem!==1?'s':''}</span></div>
+        <div class="pr-title">Família ${esc(codDisplay(f))}</div>
         <div class="pr-sub">${esc((f.endereco||'').substring(0,60)) || 'Sem endereço'}</div>
-        <div class="pr-meta">${esc(f.bairro||'')}${f.bairro&&f.eas?' · ':''}${f.eas?esc(f.eas.substring(0,30)):''}</div>
+        <div class="pr-meta">${nMem} membro${nMem!==1?'s':''}${f.bairro?' · '+esc(f.bairro):''}${f.eas?' · '+esc(f.eas.substring(0,26)):''}</div>
       </div>
       <div class="pr-right">${acTag}${fi('chevron-right',18)}</div></div>`;}).join('')}
     ${temMais ? `<button class="btn btn-g btn-b" id="btnMaisFams" onclick="_carregarMaisFamilias()"
@@ -3496,6 +3569,36 @@ async function _carregarMaisFamilias() {
   const html = _renderFamLista(lista, nb, _famPage + 1);
   const container = document.getElementById('famLista');
   if (container) container.innerHTML = html;
+}
+
+function _toggleFamFiltros() {
+  const p = document.getElementById('famfPanel'), t = document.getElementById('famfTrigger');
+  if (!p || !t) return;
+  const open = p.hasAttribute('hidden');
+  open ? p.removeAttribute('hidden') : p.setAttribute('hidden','');
+  t.setAttribute('aria-expanded', open ? 'true' : 'false');
+  t.classList.toggle('open', open);
+}
+function _limparFamFiltros() {
+  ['famBairro','famEas','famZona'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  filtrarFamilias();
+}
+// Reflete os valores escolhidos nos rótulos dos submenus + contador no botão
+function _syncFamFiltroLabels() {
+  const pairs = [['famBairro','famfValBairro','Todos'],['famEas','famfValEas','Todas'],['famZona','famfValZona','Todas']];
+  let ativos = 0;
+  pairs.forEach(([sel,lbl,pad]) => {
+    const el = document.getElementById(sel), out = document.getElementById(lbl);
+    if (!el) return;
+    if (el.value) ativos++;
+    if (out) {
+      const txt = el.value ? (el.selectedOptions[0]?.textContent || el.value) : pad;
+      out.textContent = txt.length > 22 ? txt.slice(0,22) + '…' : txt;
+      out.classList.toggle('on', !!el.value);
+    }
+  });
+  const b = document.getElementById('famfBadge');
+  if (b) { b.textContent = ativos ? ativos : ''; b.style.display = ativos ? '' : 'none'; }
 }
 
 async function filtrarFamilias() {
@@ -3518,6 +3621,7 @@ async function filtrarFamilias() {
   const nb = await IDB.count('beneficiarios');
   const lista = $('#famLista');
   if (lista) lista.innerHTML = _renderFamLista(fams, nb, 1); // reseta para página 1
+  _syncFamFiltroLabels();
 }
 
 async function renderAcomp() {
@@ -3545,7 +3649,7 @@ async function renderAcomp() {
     const _avc = a.acompanhado===false?'background:var(--warn-soft);color:var(--warn)':'background:var(--violet-soft);color:var(--accent)';
     return `<div class="card nh">
       <div class="flex aic" style="gap:11px;margin-bottom:8px">
-        <div class="pr-icon" style="${_avc};border-radius:50%;font-weight:800;font-size:13px;width:40px;height:40px">${_ini}</div>
+        <div class="pr-icon" style="${_avc};width:40px;height:40px">${avatarPad(22)}</div>
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;font-size:14px;${podeComp?'cursor:pointer;color:var(--text);display:inline-flex;align-items:center;gap:5px':''}" ${podeComp?`role="button" tabindex="0" aria-label="Emitir comprovante de acompanhamento" onclick="comprovanteAcompBenef('${esc(a.nis)}')" title="Emitir comprovante de acompanhamento"`:''}>${esc(b?.nome||'NIS: '+a.nis)}${podeComp?` <span style="color:var(--accent)">${fi('file-text',12)}</span>`:''}${a.cadastro_avulso?' <span class="pchip pchip-w" style="font-size:10px">AVULSO</span>':''}</div>
           <div class="small muted">NIS: ${esc(a.nis)}${a.conta_sync?' · via '+esc(a.conta_sync.split('@')[0]):''} ${a.synced_at?'':'<span class="pchip pchip-w" style="font-size:10px">Pendente</span>'}</div>
@@ -3570,7 +3674,7 @@ async function renderAcomp() {
           <div class="flex" style="gap:6px;margin-top:8px;flex-wrap:wrap">
             ${can('acomp.edit')?`<button class="btn btn-s btn-g" onclick="editAcomp('${a.id}')" style="display:inline-flex;align-items:center;gap:4px">${fi('edit',13)} Editar</button>`:''}
             ${can('acomp.delete')?`<button class="btn btn-s btn-g" onclick="deleteAcomp('${a.id}')" style="display:inline-flex;align-items:center;gap:4px;color:var(--err)">${fi('x-circle',13)} Excluir</button>`:''}
-            ${podeComp?`<button class="btn btn-s btn-g" onclick="event.stopPropagation();comprovanteBuscaAtiva('${esc(a.nis)}')" title="Comprovante de busca ativa" style="display:inline-flex;align-items:center;gap:4px;white-space:nowrap;margin-left:auto">${fi('file-text',13)} Busca ativa</button>`:''}
+            ${podeComp?`<button class="btn btn-s btn-g" onclick="event.stopPropagation();comprovanteBuscaAtiva('${esc(a.nis)}')" title="Gerar comprovante de realização de busca ativa" style="display:inline-flex;align-items:center;gap:4px;white-space:nowrap;margin-left:auto">${fi('file-text',13)} Gerar comprovante de busca ativa</button>`:''}
           </div>
         </div>
       </details>
@@ -3648,6 +3752,30 @@ async function renderAcomp() {
     acomps.map(a => _renderAcompCard(a, bMap, canEdit)).join('')}
     ${total > 50 ? `<div class="card card-sub nh muted small" style="text-align:center;padding:10px">Mostrando 50 de ${total}. Use a busca para filtrar.</div>` : ''}
     </div></div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// REGISTROS — tela unificada (Buscar beneficiário + Acompanhamentos)
+// ═══════════════════════════════════════════════════════
+async function renderRegistros(tab) {
+  const t = (tab === 'busca' || tab === 'acomp') ? tab : (window._regTab || 'acomp');
+  window._regTab = t;
+  const body = t === 'busca' ? await renderSearch() : await renderAcomp();
+  return `<div class="reg-seg" role="tablist" aria-label="Registros">
+      <button class="rseg ${t==='acomp'?'active':''}" role="tab" aria-selected="${t==='acomp'}" onclick="setRegTab('acomp')">${fi('clipboard',14)} Acompanhamentos</button>
+      <button class="rseg ${t==='busca'?'active':''}" role="tab" aria-selected="${t==='busca'}" onclick="setRegTab('busca')">${fi('search',14)} Buscar beneficiário</button>
+    </div>${body}`;
+}
+
+async function setRegTab(t) {
+  window._regTab = t;
+  const mc = $('#mc');
+  if (!mc) return;
+  mc.innerHTML = await renderRegistros(t);
+  mc.dataset.page = 'acomp';
+  window.scrollTo(0,0);
+  if (typeof _animateCounters === 'function') _animateCounters();
+  if (t === 'busca') { const i = document.getElementById('sI'); if (i) i.focus(); }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -3816,7 +3944,7 @@ function filtrarAcomps(q) {
     const _avc = a.acompanhado===false?'background:var(--warn-soft);color:var(--warn)':'background:var(--violet-soft);color:var(--accent)';
     return `<div class="card nh">
       <div class="flex aic" style="gap:11px;margin-bottom:8px">
-        <div class="pr-icon" style="${_avc};border-radius:50%;font-weight:800;font-size:13px;width:40px;height:40px">${_ini}</div>
+        <div class="pr-icon" style="${_avc};width:40px;height:40px">${avatarPad(22)}</div>
         <div style="flex:1;min-width:0">
           <div style="font-weight:700;font-size:14px;${podeComp?'cursor:pointer;color:var(--text);display:inline-flex;align-items:center;gap:5px':''}" ${podeComp?`role="button" tabindex="0" aria-label="Emitir comprovante de acompanhamento" onclick="comprovanteAcompBenef('${esc(a.nis)}')" title="Emitir comprovante de acompanhamento"`:''}>${esc(b?.nome||'NIS: '+a.nis)}${podeComp?` <span style="color:var(--accent)">${fi('file-text',12)}</span>`:''}${a.cadastro_avulso?' <span class="pchip pchip-w" style="font-size:10px">AVULSO</span>':''}</div>
           <div class="small muted">NIS: ${esc(a.nis)}${a.conta_sync?' · via '+esc(a.conta_sync.split('@')[0]):''} ${a.synced_at?'':'<span class="pchip pchip-w" style="font-size:10px">Pendente</span>'}</div>
@@ -3841,7 +3969,7 @@ function filtrarAcomps(q) {
           <div class="flex" style="gap:6px;margin-top:8px;flex-wrap:wrap">
             ${can('acomp.edit')?`<button class="btn btn-s btn-g" onclick="editAcomp('${a.id}')" style="display:inline-flex;align-items:center;gap:4px">${fi('edit',13)} Editar</button>`:''}
             ${can('acomp.delete')?`<button class="btn btn-s btn-g" onclick="deleteAcomp('${a.id}')" style="display:inline-flex;align-items:center;gap:4px;color:var(--err)">${fi('x-circle',13)} Excluir</button>`:''}
-            ${podeComp?`<button class="btn btn-s btn-g" onclick="event.stopPropagation();comprovanteBuscaAtiva('${esc(a.nis)}')" title="Comprovante de busca ativa" style="display:inline-flex;align-items:center;gap:4px;white-space:nowrap;margin-left:auto">${fi('file-text',13)} Busca ativa</button>`:''}
+            ${podeComp?`<button class="btn btn-s btn-g" onclick="event.stopPropagation();comprovanteBuscaAtiva('${esc(a.nis)}')" title="Gerar comprovante de realização de busca ativa" style="display:inline-flex;align-items:center;gap:4px;white-space:nowrap;margin-left:auto">${fi('file-text',13)} Gerar comprovante de busca ativa</button>`:''}
           </div>
         </div>
       </details>
@@ -4513,10 +4641,10 @@ async function nav(page, _fromPop) {
   let html = '';
   switch(page) {
     case 'home':     html = await renderHome(); break;
-    case 'search':   html = await renderSearch(); break;
+    case 'search':   html = await renderRegistros('busca'); break;
     case 'families': html = await renderFamilies(); break;
     case 'agenda':   html = await renderAgenda(); break;
-    case 'acomp':    window._acompFiltros = { periodo:'todos', tria:'todos', situacao:[], dataInicio:'', dataFim:'' }; html = await renderAcomp(); break;
+    case 'acomp':    window._acompFiltros = { periodo:'todos', tria:'todos', situacao:[], dataInicio:'', dataFim:'' }; html = await renderRegistros('acomp'); break;
     case 'config':   html = await renderConfig(); break;
     default: mc.classList.remove('loading'); return;
   }
@@ -4538,7 +4666,8 @@ async function nav(page, _fromPop) {
     if (ME?.role !== 'admin' && ['sync', 'usuarios'].includes(t)) t = 'aparencia';
     setCfgTab(t);
   }
-  $$('nav.bottom .nav-icon').forEach(b => { b.dataset.p===page ? b.setAttribute('aria-current','page') : b.removeAttribute('aria-current'); });
+  const _navP = (page === 'search') ? 'acomp' : page;
+  $$('nav.bottom .nav-icon').forEach(b => { b.dataset.p===_navP ? b.setAttribute('aria-current','page') : b.removeAttribute('aria-current'); });
   // Auto-atualização do painel do admin na Home (envelhecimento do "online")
   if (window._homeRefreshTid) { clearInterval(window._homeRefreshTid); window._homeRefreshTid = null; }
   if (page === 'home' && ME?.role === 'admin') {
@@ -4688,7 +4817,7 @@ async function doSearch(q) {
                : `<span class="pchip pchip-ok">${fi('check-circle',11)} Acompanhado</span>`)
       : `<span class="pchip pchip-d">Pendente</span>`;
     return `<div class="plum-row" role="button" tabindex="0" aria-label="Abrir beneficiário ${esc(b.nome||'')}" onclick="showBenef('${b.nis}')">
-      <div class="pr-icon" style="${avStyle};border-radius:50%;font-weight:800;font-size:14px">${_ini}</div>
+      <div class="pr-icon" style="${avStyle}">${avatarPad(22)}</div>
       <div class="pr-body">
         <div class="pr-title" style="white-space:normal">${esc(b.nome)}
           ${b.gestante?'<span class="pchip pchip-w" style="font-size:10px">Gestante</span>':''}
@@ -5589,7 +5718,7 @@ async function showFamily(fid) {
     : `<span class="pchip pchip-w">${_nOk}/${members.length} acompanhados</span>`;
   openSheet(`Família ${codLabel}`,`<div class="s3">
     <div class="benef-head">
-      <div class="pr-icon" style="background:var(--violet-soft);color:var(--violet);width:56px;height:56px;border-radius:15px">${fi('home',24)}</div>
+      <div class="pr-icon" style="background:var(--violet-soft);color:var(--violet);width:56px;height:56px">${fi('family',28)}</div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:800;font-size:17px;letter-spacing:-.02em">Família ${esc(codLabel)}</div>
         <div class="small muted" style="margin-top:2px">${esc(f.endereco||'Sem endereço')}${f.bairro?` · ${esc(f.bairro)}`:''}${f.zona?' · '+esc(f.zona):''}</div>
@@ -5606,7 +5735,7 @@ async function showFamily(fid) {
           const _av = ac ? 'background:var(--ok-soft);color:var(--ok)' : 'background:var(--violet-soft);color:var(--violet)';
           return `
           <div class="plum-row">
-            <div class="pr-icon" style="${_av};border-radius:50%;font-weight:800;font-size:13px" role="button" tabindex="0" aria-label="Abrir ${esc(m.nome||'')}" onclick="showBenef('${esc(m.nis)}')">${_mi}</div>
+            <div class="pr-icon" style="${_av}" role="button" tabindex="0" aria-label="Abrir ${esc(m.nome||'')}" onclick="showBenef('${esc(m.nis)}')">${avatarPad(22)}</div>
             <div class="pr-body" role="button" tabindex="0" onclick="showBenef('${esc(m.nis)}')">
               <div class="pr-title">${esc(m.nome)}</div>
               <div class="pr-sub">NIS ${esc(m.nis)}${m.idade?' · '+m.idade+' anos':''}${m.gestante?' · Gestante':''}</div>
@@ -5641,7 +5770,7 @@ async function showBenef(nis) {
   openSheet(b.nome,`<div class="s3">
     ${avulsoTag}
     <div class="benef-head">
-      <div class="pr-icon" style="${_avStyle};border-radius:50%;font-weight:800;font-size:18px;width:56px;height:56px">${_ini}</div>
+      <div class="pr-icon" style="${_avStyle};width:56px;height:56px">${avatarPad(30)}</div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:800;font-size:17px;letter-spacing:-.02em;line-height:1.15">${esc(b.nome)}</div>
         <div class="small muted" style="margin-top:2px">NIS ${esc(b.nis)}${b.idade?' · '+b.idade+' anos':''}</div>
@@ -5659,7 +5788,7 @@ async function showBenef(nis) {
       ${can('acomp.create')?`<button class="btn btn-p" onclick="showAcompForm('${b.nis}')" style="display:inline-flex;align-items:center;gap:6px;flex:1">${fi('edit',15)} Acompanhar</button>`:''}
       ${can('benef.edit')?`<button class="btn btn-g" onclick="editBenef('${b.nis}')" style="display:inline-flex;align-items:center;gap:6px;flex:1">${fi('user-plus',15)} Editar dados</button>`:''}
     </div>`:''}
-    <button class="btn btn-g btn-b" onclick="comprovanteBuscaAtiva('${b.nis}')" style="display:inline-flex;align-items:center;justify-content:center;gap:6px">${fi('file-text',15)} Comprovante de busca ativa</button>
+    <button class="btn btn-g btn-b" onclick="comprovanteBuscaAtiva('${b.nis}')" style="display:inline-flex;align-items:center;justify-content:center;gap:6px">${fi('file-text',15)} Gerar comprovante de busca ativa</button>
     ${_evoChart(acomps)}
     ${acomps.length?`<div><div class="mb-section-title">${fi('clock',12)} Histórico <span style="margin-left:auto;font-weight:600;text-transform:none;letter-spacing:0">${acomps.length}</span></div>${acomps.slice(0,15).map(a=>`<div class="card card-sub nh" style="padding:12px">
       <div class="flex aic jcb" style="margin-bottom:8px"><span class="pchip pchip-ok">${new Date(a.data).toLocaleDateString()}</span><div style="display:flex;gap:4px">${a.gestante?'<span class="pchip pchip-w">Gestante</span>':''}${a.synced_at?'':'<span class="pchip pchip-w">Pendente</span>'}</div></div>
@@ -5683,6 +5812,21 @@ async function showBenef(nis) {
 async function comprovanteBuscaAtiva(nis) {
   const b = await IDB.get('beneficiarios', nis);
   if (!b) { showToast('Beneficiário não encontrado', 'err'); return; }
+
+  // Antes de emitir: registrar o resultado da busca ativa
+  const _res = await uiChoice(
+    'Antes de gerar o comprovante, informe o resultado da busca ativa realizada para ' + (b.nome || 'este beneficiário') + '.',
+    [
+      { value: 'representante', label: 'Encontrei um representante familiar', hint: 'Alguém da família foi localizado e atendeu a busca' },
+      { value: 'notificado',    label: 'Não encontrei, mas notifiquei a busca', hint: 'Deixei notificação/recado no endereço ou por contato' },
+      { value: 'nao_localizado',label: 'Não localizei ninguém',               hint: 'Nenhum contato ou representante foi encontrado' },
+    ],
+    { title: 'Comprovante de busca ativa' }
+  );
+  if (!_res) return; // cancelado
+  const _resLabel = { representante: 'Representante familiar encontrado',
+                      notificado:    'Não encontrado — busca notificada',
+                      nao_localizado:'Não localizado — nenhum contato encontrado' }[_res];
   showToast('Gerando comprovante…', '');
   const hoje  = new Date().toLocaleDateString('pt-BR');
   const fmtBRd = d => { const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? `${m[3]}/${m[2]}/${m[1]}` : '—'; };
@@ -5714,6 +5858,7 @@ async function comprovanteBuscaAtiva(nis) {
       <tr><th>Código Familiar</th><td>${esc((b.cod_fam || '').replace(/^FAM_/, '') || '—')}</td></tr>
       <tr><th>Endereço</th><td>${esc(b.endereco || '—')}${b.bairro ? ` — ${esc(b.bairro)}` : ''}</td></tr>
       <tr><th>Estabelecimento de Saúde (EAS)</th><td>${esc(eas || '—')}</td></tr>
+      <tr><th>Resultado da busca ativa</th><td><b>${esc(_resLabel)}</b></td></tr>
     </table>
 
     <h2>Declaração</h2>
@@ -5833,7 +5978,7 @@ async function showAcompForm(nis) {
   openSheet(`Acompanhamento`,`<div class="s3">
 
     <div class="benef-head" style="padding:2px">
-      <div class="pr-icon" style="background:var(--violet-soft);color:var(--violet);border-radius:50%;font-weight:800;font-size:15px;width:48px;height:48px">${(function(){const p=String(CURB.nome||'?').trim().split(/\s+/);return (p[0][0]+(p[1]?.[0]||'')).toUpperCase();})()}</div>
+      <div class="pr-icon" style="background:var(--violet-soft);color:var(--violet);width:48px;height:48px">${avatarPad(26)}</div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:800;font-size:16px;letter-spacing:-.02em">${esc(CURB.nome)}</div>
         <div class="small muted" style="margin-top:2px">NIS ${esc(CURB.nis)}${codFamLabel?` · Fam ${esc(codFamLabel)}`:''}${CURB.gestante?' · Gestante':''}</div>
@@ -7634,6 +7779,33 @@ function uiConfirm(message, opts) {
     ov.querySelector('.ui-confirm-ok').onclick = function(){ done(true); };
     ov.querySelector('.ui-confirm-cancel').onclick = function(){ done(false); };
     ov.onclick = function(e){ if (e.target === ov) done(false); };
+  });
+}
+
+// Diálogo de escolha (uma opção entre várias). Resolve com o value ou null.
+function uiChoice(message, options, opts) {
+  opts = opts || {};
+  const title = opts.title || 'Selecione';
+  return new Promise(function(resolve) {
+    const ov = document.createElement('div');
+    ov.className = 'ui-confirm-ov';
+    ov.innerHTML = `<div class="ui-confirm" role="dialog" aria-modal="true">
+      <div class="ui-confirm-title">${esc(title)}</div>
+      <div class="ui-confirm-msg">${esc(message).replace(/\n/g,'<br>')}</div>
+      <div class="ui-choice-list">
+        ${options.map((o,i)=>`<button class="ui-choice" data-v="${esc(o.value)}">
+          <span class="uc-t">${esc(o.label)}</span>
+          ${o.hint?`<span class="uc-h">${esc(o.hint)}</span>`:''}
+        </button>`).join('')}
+      </div>
+      <div class="ui-confirm-btns"><button class="btn btn-g ui-confirm-cancel" style="width:100%">Cancelar</button></div>
+    </div>`;
+    document.body.appendChild(ov);
+    requestAnimationFrame(function(){ ov.classList.add('show'); });
+    const done = function(v){ ov.classList.remove('show'); setTimeout(function(){ ov.remove(); }, 180); resolve(v); };
+    ov.querySelectorAll('.ui-choice').forEach(function(b){ b.onclick = function(){ done(b.dataset.v); }; });
+    ov.querySelector('.ui-confirm-cancel').onclick = function(){ done(null); };
+    ov.onclick = function(e){ if (e.target === ov) done(null); };
   });
 }
 
