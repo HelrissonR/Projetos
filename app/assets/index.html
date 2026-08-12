@@ -21,14 +21,15 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Bolsa Família — v3 PRO</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%23ffc400%22/%3E%3Ctext x=%2232%22 y=%2242%22 font-size=%2230%22 font-family=%22Arial%22 font-weight=%22bold%22 text-anchor=%22middle%22 fill=%22%23111%22%3EBF%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2214%22 fill=%22%237226d9%22/%3E%3Ctext x=%2232%22 y=%2242%22 font-size=%2230%22 font-family=%22Arial%22 font-weight=%22bold%22 text-anchor=%22middle%22 fill=%22%23fff%22%3EBF%3C/text%3E%3C/svg%3E">
 <script src="xlsx.full.min.js" onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';document.head.appendChild(s);"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--bg:#f5f6f8;--panel:#ffffff;--panel-2:#f2f3f6;--text:#1a1d24;--muted:#5b6270;--border:#edeef2;--accent:#16181d;--accent-hi:#000000;--accent-soft:#f2f3f5;--accent-text:#ffffff;--accent-2:#16181d;--accent-2-soft:#f2f3f5;--brand-blue:#1351b4;--accent-rgb:22,24,29;--ok:#16a34a;--ok-soft:#f0fdf4;--warn:#d97706;--warn-soft:#fffbeb;--err:#dc2626;--err-soft:#fef2f2;--r:10px;--r-lg:16px;--shadow-sm:none;--shadow-md:none;--shadow-lg:none}
-[data-theme="dark"]{--bg:#0e0f12;--panel:#17191e;--panel-2:#212430;--text:#f0f1f5;--muted:#9aa0ac;--border:#2c2f38;--accent:#f0f1f5;--accent-hi:#ffffff;--accent-soft:#20232b;--accent-text:#0e0f12;--accent-2:#f0f1f5;--accent-2-soft:#20232b;--brand-blue:#5b8def;--accent-rgb:240,241,245;--ok:#30d158;--ok-soft:#0d3320;--warn:#ff9f0a;--warn-soft:#3d2100;--err:#ff453a;--err-soft:#3d0c00;--shadow-sm:none;--shadow-md:none;--shadow-lg:none}
+:root{--bg:#f7f6f8;--panel:#ffffff;--panel-2:#f2eff6;--text:#241b2c;--muted:#736b7b;--border:#e8e4eb;--accent:#7226d9;--accent-hi:#5f1fb8;--accent-soft:#f0e7fb;--accent-text:#ffffff;--accent-2:#35104f;--accent-2-soft:#f0e7fb;--brand-blue:#7226d9;--plum:#35104f;--plum2:#280b3d;--violet:#7226d9;--violet-soft:#f0e7fb;--accent-rgb:114,38,217;--ok:#27704b;--ok-soft:#e6f4ec;--warn:#986019;--warn-soft:#fff1dc;--err:#a92942;--err-soft:#fde9ed;--r:12px;--r-lg:16px;--shadow-sm:none;--shadow-md:none;--shadow-lg:none}
+[data-theme="dark"]{--bg:#0e0f12;--panel:#17191e;--panel-2:#212430;--text:#f0f1f5;--muted:#9aa0ac;--border:#2c2f38;--accent:#f0f1f5;--accent-hi:#ffffff;--accent-soft:#20232b;--accent-text:#0e0f12;--accent-2:#f0f1f5;--accent-2-soft:#20232b;--brand-blue:#9c62e9;--plum:#2a0f40;--plum2:#1f0a30;--violet:#9c62e9;--violet-soft:#241633;--accent-rgb:240,241,245;--ok:#30d158;--ok-soft:#0d3320;--warn:#ff9f0a;--warn-soft:#3d2100;--err:#ff453a;--err-soft:#3d0c00;--shadow-sm:none;--shadow-md:none;--shadow-lg:none}
+@font-face{font-family:'Inter var';font-style:normal;font-weight:100 900;font-display:swap;src:url('fonts/inter.woff2') format('woff2')}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font-family,system-ui,-apple-system,sans-serif);font-size:var(--font-size-base,15px);line-height:1.5;color:var(--text);background:var(--bg);min-height:100vh}
+body{font-family:var(--font-family,'Inter var','Inter',system-ui,-apple-system,"Segoe UI",Roboto,sans-serif);font-size:var(--font-size-base,15px);line-height:1.5;color:var(--text);background:var(--bg);min-height:100vh;font-feature-settings:'cv02','cv03','cv04','cv11';-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
 button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer;background:none;border:none}
 .app{max-width:640px;margin:0 auto;min-height:100vh;padding-bottom:100px}
@@ -37,7 +38,7 @@ header.top{position:sticky;top:0;z-index:10;background:var(--panel);border-botto
 header.top h1{color:#191d24}
 header.top .btn-icon{color:#191d24}
 header.top .btn-icon:hover{background:rgba(0,0,0,.10);color:#000}
-header.top .ss{background:rgba(255,255,255,.92);box-shadow:0 1px 3px rgba(0,0,0,.12);font-weight:600}
+header.top .ss{background:var(--panel-2);font-weight:600}
 [data-theme="dark"] header.top h1,[data-theme="dark"] header.top .btn-icon{color:var(--text)}
 /* Fundo em gradiente (igual ao login) nas demais telas do app */
 #pageApp.active{background:linear-gradient(180deg,var(--accent-soft) 0%,var(--bg) 32%,var(--bg) 100%);background-attachment:fixed;min-height:100vh}
@@ -349,10 +350,15 @@ body.anim-none #mc.enter>div>*{opacity:1!important}
 .search-wrap input{padding-left:40px!important}
 .search-wrap .s-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none;display:flex;align-items:center}
 .form-sep{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;padding-bottom:6px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;margin-top:4px}
-.cfg-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:16px}
+.cfg-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-bottom:14px}
 body:not(.role-admin) .cfg-admin-only{display:none!important}
-.cfg-card-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;background:var(--panel-2)}
+.cfg-card-head{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px;color:var(--text);background:var(--panel)}
+.cfg-card-head>svg:first-child{width:32px;height:32px;flex-shrink:0;padding:7px;border-radius:9px;background:var(--violet-soft);color:var(--accent);box-sizing:border-box}
 .cfg-card-body{padding:16px}
+/* Barra de abas do Config: segmentada, rolável e fixa no topo */
+#cfgTabs{position:sticky;top:0;z-index:5;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:10px 2px;margin:8px -2px 2px;background:var(--bg);scrollbar-width:none}
+#cfgTabs::-webkit-scrollbar{display:none}
+#cfgTabs .afchip{flex:0 0 auto;padding:8px 14px;font-size:12.5px}
 .cfg-card-body .s3>*+*{margin-top:14px}
 [data-theme="dark"] .tag-i{background:var(--accent-soft);color:var(--accent)}
 [data-theme="dark"] .fb{background:var(--accent-soft);color:var(--accent)}
@@ -468,6 +474,62 @@ body:not(.role-admin) .cfg-admin-only{display:none!important}
 .home-cta:hover{filter:brightness(1.08)}
 .home-cta:active{transform:scale(.98)}
 @media(max-width:640px){.home-hero{grid-template-columns:1fr}}
+/* ── Plum hero (Home) ── */
+.plum-hero{background:linear-gradient(160deg,#3d1258 0%,#2b0c42 100%);color:#fff;border-radius:22px;padding:20px 18px 18px;margin-bottom:14px}
+.plum-hero .ph-kicker{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.62)}
+.plum-hero .ph-name{font-size:26px;font-weight:800;letter-spacing:-.5px;margin-top:2px}
+.plum-hero .ph-sub{font-size:13px;color:rgba(255,255,255,.7);margin-top:2px}
+.plum-hero .ph-avatar{width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex-shrink:0}
+.plum-hero .ph-bell{width:46px;height:46px;border-radius:13px;background:transparent;border:1px solid rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;cursor:pointer}
+.plum-hero .ph-cov{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px;margin-top:16px;display:flex;align-items:center;gap:14px}
+.plum-hero .ph-cov-num{font-size:38px;font-weight:800;line-height:1;letter-spacing:-1px}
+.plum-hero .ph-donut{width:104px;height:104px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative}
+.plum-hero .ph-donut::after{content:'';position:absolute;inset:16px;border-radius:50%;background:#2b0c42}
+.plum-hero .ph-donut span{position:relative;z-index:1;font-weight:800;font-size:19px;color:#fff}
+.plum-hero .ph-kpis{display:flex;align-items:flex-start;margin-top:16px}
+.plum-hero .ph-kpi{flex:1;min-width:0}
+.plum-hero .ph-kpi+.ph-kpi{border-left:1px solid rgba(255,255,255,.12);padding-left:12px}
+.plum-hero .ph-kpi-num{font-size:19px;font-weight:800;line-height:1}
+.plum-hero .ph-kpi-lbl{font-size:11px;color:rgba(255,255,255,.65);margin-top:3px}
+.plum-hero .ph-search{margin-top:16px;background:#fff;border-radius:13px;display:flex;align-items:center;gap:10px;padding:13px 15px;color:var(--muted);cursor:pointer}
+.plum-hero .ph-search svg{color:var(--accent)}
+/* ── Plum list rows / strip / chips ── */
+.plum-strip{display:flex;background:var(--accent-soft);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.plum-strip .ps-item{flex:1}
+.plum-strip .ps-item+.ps-item{border-left:1px solid var(--border);padding-left:16px}
+.plum-strip .ps-num{font-size:24px;font-weight:800;line-height:1;color:var(--plum)}
+.plum-strip .ps-lbl{font-size:12px;color:var(--muted);margin-top:3px}
+.plum-row{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:border-color .12s}
+.plum-row:hover{border-color:var(--accent)}
+.plum-row .pr-icon{width:44px;height:44px;border-radius:12px;background:var(--violet-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.plum-row .pr-body{flex:1;min-width:0}
+.plum-row .pr-title{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plum-row .pr-mem{font-weight:500;color:var(--muted);font-size:12px}
+.plum-row .pr-sub{font-size:12px;color:var(--text);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plum-row .pr-meta{font-size:11px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plum-row .pr-right{display:flex;align-items:center;gap:8px;flex-shrink:0;color:var(--muted)}
+.pchip{font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.pchip-ok{background:var(--ok-soft);color:var(--ok)}
+.pchip-w{background:var(--warn-soft);color:var(--warn)}
+.pchip-d{background:var(--err-soft);color:var(--err)}
+/* Registros: chips compactos + detalhes colapsáveis */
+.ac-chips{display:flex;flex-wrap:wrap;gap:6px}
+.ac-more{margin-top:8px}
+.ac-more>summary{list-style:none;cursor:pointer;font-size:12px;font-weight:600;color:var(--accent);display:inline-flex;align-items:center;gap:5px;user-select:none;padding:2px 0}
+.ac-more>summary::-webkit-details-marker{display:none}
+.ac-more>summary>svg{transition:transform .18s}
+.ac-more[open]>summary>svg{transform:rotate(180deg)}
+.ac-more-body{margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:5px}
+/* Agenda: rótulos de grupo */
+.grp-lbl-plum{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--text);margin:16px 0 9px}
+.grp-lbl-plum .dotc{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+/* Config: accordion de seções longas */
+.cfg-accordion{border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.cfg-accordion>summary{list-style:none;cursor:pointer;padding:12px 14px;font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;background:var(--panel-2);user-select:none}
+.cfg-accordion>summary::-webkit-details-marker{display:none}
+.cfg-accordion>summary::after{content:'▾';margin-left:auto;color:var(--muted);transition:transform .18s}
+.cfg-accordion[open]>summary::after{transform:rotate(180deg)}
+.cfg-accordion-body{padding:14px;display:flex;flex-direction:column;gap:16px}
 .mb-stat{padding:11px 10px;text-align:center;border:1px solid var(--border);background:var(--panel);border-radius:var(--r-lg);box-shadow:var(--shadow-sm)}
 .mb-stat-num{font-size:22px;font-weight:800;line-height:1;letter-spacing:-.5px}
 .mb-stat-lbl{font-size:10.5px;color:var(--muted);margin-top:4px;font-weight:600;line-height:1.15}
@@ -592,26 +654,36 @@ body.navind-pill .nav-icon[aria-current="page"]{background:var(--accent-soft);co
   body:not(.desk-bottom) #appFooter{grid-area:foot}
   body:not(.desk-bottom) nav.bottom{
     grid-area:side;position:sticky;top:0;align-self:start;height:100vh;
-    left:auto;right:auto;bottom:auto;padding:16px 12px;z-index:5;
+    left:auto;right:auto;bottom:auto;padding:20px 14px;z-index:5;
     display:flex;flex-direction:column;
-    background:var(--panel);border-right:1px solid var(--border);
+    background:#280b3d;border-right:none;
   }
+  [data-theme="dark"] body:not(.desk-bottom) nav.bottom{background:#1f0a30}
   body:not(.desk-bottom) nav.bottom .inner{
     display:flex;flex-direction:column;grid-template-columns:none;
     gap:4px;padding:8px 4px;border-radius:0;width:100%;
-    background:transparent;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;
+    background:transparent;border:none;backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none;
   }
   body:not(.desk-bottom) nav.bottom .inner::before{
-    content:'Menu';display:block;font-size:10px;font-weight:800;letter-spacing:.1em;
-    text-transform:uppercase;color:var(--muted);padding:4px 12px 8px;
+    content:'Bolsa Família';display:block;font-size:15px;font-weight:800;letter-spacing:-.01em;
+    text-transform:none;color:#fff;padding:4px 12px 4px;order:-2;
+  }
+  body:not(.desk-bottom) nav.bottom .inner::after{
+    content:'Saúde · Condicionalidades';display:block;font-size:11px;font-weight:600;
+    color:rgba(255,255,255,.5);padding:0 12px 14px;margin-top:-2px;order:-1;
   }
   body:not(.desk-bottom) nav.bottom button,
   body:not(.desk-bottom) nav.bottom .nav-icon{
     flex-direction:row;justify-content:flex-start;gap:13px;width:100%;
     padding:12px 14px;font-size:14px;border-radius:12px;font-weight:600;
+    color:rgba(255,255,255,.72);
   }
-  body:not(.desk-bottom) nav.bottom button[aria-current="page"]{background:var(--accent);color:var(--accent-text)}
-  body:not(.desk-bottom) nav.bottom button[aria-current="page"] svg{color:var(--accent-text)}
+  body:not(.desk-bottom) nav.bottom button:hover,
+  body:not(.desk-bottom) nav.bottom .nav-icon:hover{background:rgba(255,255,255,.07);color:#fff}
+  body:not(.desk-bottom) nav.bottom button svg,
+  body:not(.desk-bottom) nav.bottom .nav-icon svg{color:rgba(255,255,255,.72)}
+  body:not(.desk-bottom) nav.bottom button[aria-current="page"]{background:var(--accent);color:#fff}
+  body:not(.desk-bottom) nav.bottom button[aria-current="page"] svg{color:#fff}
   body:not(.desk-bottom) nav.bottom button[aria-current="page"]::before,
   body:not(.desk-bottom) nav.bottom .nav-icon[aria-current="page"]::before{display:none}
   body:not(.desk-bottom) nav.bottom svg{width:21px;height:21px}
@@ -657,6 +729,43 @@ body.navind-pill .nav-icon[aria-current="page"]{background:var(--accent-soft);co
 
 /* h2 refinement */
 h2{font-size:21px;font-weight:700;margin-bottom:4px;letter-spacing:-.02em}
+
+/* ═══ REFINO MINIMALISTA (Plum) ═══════════════════════════
+   Menos ruído de fundo, tipografia com mais caráter, bordas
+   mais discretas e números em display. */
+/* 1) Fundo limpo e plano — remove a lavagem roxa e o tint animado */
+#pageApp.active{background:var(--bg)}
+#scrollTint{display:none}
+/* 2) Tipografia — títulos mais firmes, números tabulares */
+body{letter-spacing:-.005em}
+h2{font-size:22px;font-weight:800;letter-spacing:-.03em}
+.mb-section-title{font-size:11px;letter-spacing:.1em;color:var(--muted);font-weight:800}
+.mb-stat-num,.ps-num,.ph-cov-num,.ph-kpi-num,.pr-title{font-variant-numeric:tabular-nums}
+.ps-num,.mb-stat-num{letter-spacing:-.03em}
+/* 3) Cartões — borda-fio discreta, sem sombra (profundidade por borda) */
+.card{border-color:color-mix(in srgb,var(--border) 70%,transparent);box-shadow:none;border-radius:16px}
+.card:hover{border-color:var(--accent);box-shadow:none}
+.plum-row{border-color:color-mix(in srgb,var(--border) 70%,transparent)}
+.cfg-card{border-color:color-mix(in srgb,var(--border) 70%,transparent);box-shadow:none}
+/* 4) Botões — peso um pouco maior, cantos coerentes */
+.btn{font-weight:600;border-radius:11px}
+.btn-p{letter-spacing:-.01em}
+/* 5) Chips — tracking levemente negativo para não parecerem 'default' */
+.pchip,.afchip{letter-spacing:-.01em}
+/* 6) Campos de formulário — foco violeta suave, borda-fio */
+input,select,textarea{border-radius:11px}
+/* 7) Cartões de seção — brancos com borda-fio (adeus pilha de caixas cinza) */
+.card-sub{background:var(--panel);border:1px solid color-mix(in srgb,var(--border) 60%,transparent)}
+.card-sub.nh{background:var(--panel)}
+/* 8) Rótulo de seção com marca (tick violeta) — mais editorial */
+.mb-section-title{position:relative;padding-left:12px}
+.mb-section-title::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:12px;border-radius:2px;background:var(--accent)}
+.mb-section-title svg{margin-left:0}
+/* 9) Mais respiro entre blocos da tela */
+.s4>*+*{margin-top:22px}
+/* 10) Ilustrações originais nos estados vazios */
+.illus{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:6px}
+.illus-credit{font-size:10px;color:var(--muted);opacity:.65;letter-spacing:.02em}
 
 /* ── Relatório (PDF / impressão) — refino preto & branco ── */
 #printArea{display:none}
@@ -1128,6 +1237,7 @@ const ICONS = {
   target:         `<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>`,
   'trending-up':  `<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>`,
   heart:          `<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>`,
+  bell:           `<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>`,
   droplet:        `<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>`,
   cloud:          `<path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>`,
   phone:          `<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>`,
@@ -1145,7 +1255,46 @@ const ICONS = {
 // Retorna SVG Feather inline pronto para usar em innerHTML
 function fi(name, size = 16) {
   const d = ICONS[name] || ICONS['x-circle'];
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0">${d}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;flex-shrink:0">${d}</svg>`;
+}
+
+// ── Ilustrações originais (SVG inline, tema Plum) ──────────
+// Autoria própria do app — desenhadas para os estados vazios.
+// Uso de currentColor + tokens; sem dependências externas (CSP-safe).
+const ILLUS = {
+  // Base de dados vazia — pasta + planilha subindo
+  empty: `<svg viewBox="0 0 200 150" width="180" height="135" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustração: importar base de dados">
+    <ellipse cx="100" cy="132" rx="66" ry="9" fill="var(--violet-soft)"/>
+    <rect x="46" y="58" width="108" height="62" rx="12" fill="var(--violet-soft)" stroke="var(--accent)" stroke-width="2"/>
+    <path d="M46 70c0-6.6 5.4-12 12-12h24l10 10h50c6.6 0 12 5.4 12 12" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
+    <rect x="74" y="20" width="52" height="60" rx="8" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
+    <line x1="84" y1="34" x2="116" y2="34" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="84" y1="44" x2="116" y2="44" stroke="var(--border)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="84" y1="54" x2="104" y2="54" stroke="var(--border)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M100 8v14m0-14l-7 7m7-7l7 7" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`,
+  // Tudo em dia — escudo com check + raios
+  done: `<svg viewBox="0 0 200 150" width="170" height="128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustração: tudo em dia">
+    <ellipse cx="100" cy="134" rx="54" ry="8" fill="var(--ok-soft)"/>
+    <path d="M100 26l40 14v28c0 26-17 44-40 52-23-8-40-26-40-52V40l40-14z" fill="var(--ok-soft)" stroke="var(--ok)" stroke-width="2"/>
+    <path d="M84 74l11 11 22-24" stroke="var(--ok)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <g stroke="var(--ok)" stroke-width="2.2" stroke-linecap="round" opacity=".6">
+      <line x1="150" y1="34" x2="160" y2="28"/><line x1="156" y1="52" x2="168" y2="50"/><line x1="50" y1="34" x2="40" y2="28"/><line x1="44" y1="52" x2="32" y2="50"/>
+    </g>
+  </svg>`,
+  // Sem resultados — lupa sobre cartões
+  search: `<svg viewBox="0 0 200 150" width="170" height="128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustração: nenhum resultado">
+    <ellipse cx="100" cy="132" rx="60" ry="8" fill="var(--violet-soft)"/>
+    <rect x="52" y="40" width="70" height="16" rx="8" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
+    <rect x="52" y="66" width="70" height="16" rx="8" fill="var(--violet-soft)" stroke="var(--accent)" stroke-width="2"/>
+    <rect x="52" y="92" width="46" height="16" rx="8" fill="#fff" stroke="var(--border)" stroke-width="2"/>
+    <circle cx="132" cy="86" r="24" fill="#fff" stroke="var(--accent)" stroke-width="2.6"/>
+    <line x1="149" y1="103" x2="166" y2="120" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round"/>
+  </svg>`,
+};
+function illus(name, credit) {
+  const svg = ILLUS[name] || ILLUS.empty;
+  return `<div class="illus">${svg}${credit!==false?`<div class="illus-credit">Ilustração original · Bolsa Família Saúde</div>`:''}</div>`;
 }
 
 // ─── Sanitização HTML (previne XSS) ─────────────────────
@@ -3049,7 +3198,7 @@ async function renderHome() {
       </div>
       ${bannerHtml}
       <div class="empty-state">
-        <div class="ei">${fi('clipboard',44)}</div>
+        ${illus('empty')}
         <strong>Nenhum dado importado</strong>
         <p>Importe a planilha da base de dados para começar a usar o sistema.</p>
         ${can('data.import')?`<button class="btn btn-p" onclick="showImportMapaModal()" style="display:inline-flex;align-items:center;gap:6px">${fi('upload',15)} Importar agora</button>`:''}
@@ -3060,11 +3209,38 @@ async function renderHome() {
   // ── Moodboard dashboard ──────────────────────────────
   return `<div class="s4">
 
-    <!-- Cabeçalho -->
-    <div class="flex aic jcb">
-      <div>
-        <h2 style="font-size:20px">Olá, ${esc(ME.nome.split(' ')[0])}</h2>
-        <p class="small muted">${esc(inst)} &middot; <span style="text-transform:capitalize">${hoje}</span></p>
+    <!-- ── Plum hero: saudação + cobertura + KPIs + busca ── -->
+    <div class="plum-hero">
+      <div class="flex aic jcb" style="gap:12px">
+        <div style="min-width:0">
+          <div class="ph-kicker">Bolsa Família &middot; Saúde</div>
+          <div class="ph-name">Olá, ${esc(ME.nome.split(' ')[0])}</div>
+          <div class="ph-sub" style="text-transform:capitalize">${hoje}</div>
+        </div>
+        <div class="flex aic" style="gap:8px;flex-shrink:0">
+          <div class="ph-avatar">${(function(){const p=ME.nome.trim().split(/\s+/);return (p[0][0]+(p[1]?.[0]||'')).toUpperCase();})()}</div>
+          <div class="ph-bell" role="button" tabindex="0" aria-label="Notificações" onclick="nav('config')">${fi('bell',20)}</div>
+        </div>
+      </div>
+
+      <div class="ph-search" role="button" tabindex="0" aria-label="Buscar beneficiário" onclick="nav('search')">
+        ${fi('search',18)}<span style="flex:1">Buscar por nome, NIS ou CPF</span>
+      </div>
+
+      <div class="ph-cov" role="button" tabindex="0" aria-label="Ver detalhes da cobertura" onclick="nav('map')" style="cursor:pointer">
+        <div style="flex:1;min-width:0">
+          <div class="flex aic" style="gap:7px;color:rgba(255,255,255,.8);font-size:13px;font-weight:600">${fi('heart',15)} Acompanhamento na vigência</div>
+          <div class="ph-cov-num" style="margin-top:6px">${vigPct}%</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:4px">${vigDone.toLocaleString('pt-BR')} de ${nb.toLocaleString('pt-BR')} pessoas acompanhadas</div>
+        </div>
+        <div class="ph-donut" style="background:conic-gradient(#a56cf0 0 ${vigPct}%,rgba(255,255,255,.16) ${vigPct}% 100%)"><span>${vigPct}%</span></div>
+      </div>
+
+      <div class="ph-kpis">
+        <div class="ph-kpi"><div class="ph-kpi-num">${nb.toLocaleString('pt-BR')}</div><div class="ph-kpi-lbl">Beneficiários</div></div>
+        <div class="ph-kpi"><div class="ph-kpi-num">${nf.toLocaleString('pt-BR')}</div><div class="ph-kpi-lbl">Famílias</div></div>
+        <div class="ph-kpi"><div class="ph-kpi-num">${acHoje.toLocaleString('pt-BR')}</div><div class="ph-kpi-lbl">Acomp. hoje</div></div>
+        <div class="ph-kpi"><div class="ph-kpi-num">${acMes.toLocaleString('pt-BR')}</div><div class="ph-kpi-lbl">No mês</div></div>
       </div>
     </div>
 
@@ -3075,44 +3251,18 @@ async function renderHome() {
 
     ${adminPanel}
 
-    <!-- ── Destaque: acompanhamentos de hoje + ação principal (lado a lado) ── -->
-    <div class="home-hero">
-      <div class="card nh mb-today" role="button" tabindex="0" aria-label="Ver acompanhamentos em Registros" onclick="nav('acomp')" style="cursor:pointer;padding:16px;display:flex;align-items:center;gap:14px;background:var(--accent);color:var(--accent-text);border:none">
-        <div style="font-size:32px;font-weight:800;line-height:1;min-width:48px;text-align:center">${acHoje.toLocaleString('pt-BR')}</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-weight:700;font-size:15px">Acompanhamentos realizados hoje</div>
-          <div style="font-size:12px;opacity:.9;text-transform:capitalize">${hoje}</div>
-        </div>
-        <div style="opacity:.9">${fi('check-circle',26)}</div>
-      </div>
+    ${can('acomp.create') ? `<button class="home-cta" role="button" tabindex="0" aria-label="Registrar acompanhamento" onclick="nav('search')" style="margin-bottom:4px">
+      ${fi('plus-circle',19)} Registrar acompanhamento
+    </button>` : ''}
 
-      ${can('acomp.create') ? `<div class="home-cta-col">
-        <button class="home-cta" role="button" tabindex="0" aria-label="Registrar acompanhamento" onclick="nav('search')">
-          ${fi('plus-circle',19)} Registrar acompanhamento
-        </button>
-        <div class="small muted" style="text-align:center">Busque o beneficiário e toque em <b>Acompanhar</b>.</div>
-      </div>` : ''}
-    </div>
-
-    <!-- ── Métricas principais (compactas) ── -->
-    <div class="mb-stat-grid">
-      <div class="mb-stat">
-        <div class="mb-stat-num" style="color:var(--accent)"><span data-cnt="${nb}">${nb.toLocaleString('pt-BR')}</span></div>
-        <div class="mb-stat-lbl">Beneficiários</div>
+    <!-- ── Agenda de prioridades (atalho) ── -->
+    <div class="plum-row" role="button" tabindex="0" aria-label="Abrir agenda de prioridades" onclick="nav('agenda')" style="padding:14px">
+      <div class="pr-icon" style="background:${vencidosN>0?'var(--err-soft)':'var(--ok-soft)'};color:${vencidosN>0?'var(--err)':'var(--ok)'}">${fi('calendar',20)}</div>
+      <div class="pr-body">
+        <div class="pr-title">Agenda de prioridades</div>
+        <div class="pr-sub">${vencidosN>0?`${vencidosN.toLocaleString('pt-BR')} pendente${vencidosN>1?'s':''} no semestre — toque para ver`:'Tudo em dia no semestre atual'}</div>
       </div>
-      <div class="mb-stat">
-        <div class="mb-stat-num" style="color:var(--ok)"><span data-cnt="${nf}">${nf.toLocaleString('pt-BR')}</span></div>
-        <div class="mb-stat-lbl">Famílias</div>
-      </div>
-      <div class="mb-stat">
-        <div class="mb-stat-num"><span data-cnt="${na}">${na.toLocaleString('pt-BR')}</span></div>
-        <div class="mb-stat-lbl">Acompanham.</div>
-      </div>
-      <div class="mb-stat">
-        <div class="mb-stat-num" style="color:var(--ok)">${coveragePct}<span style="font-size:14px">%</span></div>
-        <div class="mb-stat-lbl">Cobertura mês</div>
-        <div class="mb-cov-bar" style="margin-top:6px"><div class="mb-cov-fill" style="width:${coveragePct}%"></div></div>
-      </div>
+      <div class="pr-right">${vencidosN>0?`<span class="pchip pchip-d">${vencidosN}</span>`:`<span class="pchip pchip-ok">✓</span>`}${fi('chevron-right',18)}</div>
     </div>
 
     <!-- ── KPIs de atenção (Gestantes / Vac. pend. / Sem acomp.) ocultos por padrão ── -->
@@ -3294,7 +3444,7 @@ async function renderSearch() {
       </div>
     </div>
 
-    <div id="sR"><div class="empty-state" style="padding:28px 16px"><div class="ei">${fi('search',40)}</div><strong>Encontre um beneficiário</strong><p>Busque por NIS, nome ou use os filtros — ou toque no microfone para falar.</p></div></div>
+    <div id="sR"><div class="empty-state" style="padding:28px 16px">${illus('search',false)}<strong>Encontre um beneficiário</strong><p>Busque por NIS, nome ou use os filtros — ou toque no microfone para falar.</p></div></div>
   </div>`;
 }
 
@@ -3319,11 +3469,7 @@ async function renderFamilies() {
     ${bannerHtml}
     <div class="flex aic jcb">
       <div><h2>Famílias</h2><p class="muted">${familias.length} famílias · ${nb} beneficiários</p></div>
-      <div style="display:flex;gap:6px">
-        ${can('data.export')?`<button class="btn btn-s btn-g" onclick="exportXLSX()" style="display:inline-flex;align-items:center;gap:5px">${fi('file',13)} XLSX</button>`:''}
-        ${can('data.export')?`<button class="btn btn-s btn-g" onclick="exportCSV('beneficiarios')" style="display:inline-flex;align-items:center;gap:5px">${fi('download',13)} CSV</button>`:''}
-        ${can('data.export')?`<button class="btn btn-s btn-g" onclick="exportEgestor()" title="Mapa de digitação no padrão do Sistema PBF na Saúde (e-Gestor AB)" style="display:inline-flex;align-items:center;gap:5px">${fi('file',13)} Mapa e-Gestor</button>`:''}
-      </div>
+      ${can('data.export')?`<button class="btn btn-s btn-g" onclick="nav('config').then(()=>setCfgTab('dados'))" title="Exportações em Configurações → Dados" style="display:inline-flex;align-items:center;gap:5px">${fi('download',13)} Exportar</button>`:''}
     </div>
     <div class="s3">
       <input type="text" id="famBusca" placeholder="Buscar por endereço, bairro ou nome..." oninput="filtrarFamilias()">
@@ -3364,13 +3510,12 @@ function _renderFamLista(familias, nb, page) {
     return c.startsWith('FAM_IND_') ? '(individual)' : c.replace(/^FAM_/,'');
   };
 
-  if (total === 0) return `<div class="empty-state"><div class="ei">${fi('home',44)}</div><strong>Nenhuma família encontrada</strong><p>Ajuste os filtros ou importe a base de dados.</p></div>`;
+  if (total === 0) return `<div class="empty-state">${illus('search',false)}<strong>Nenhuma família encontrada</strong><p>Ajuste os filtros ou importe a base de dados.</p></div>`;
 
-  return `<div class="card nh" style="background:var(--accent-soft);border-color:var(--accent)">
-      <div class="flex aic jcb">
-        <div><div style="font-size:30px;font-weight:700;line-height:1">${total.toLocaleString('pt-BR')}</div><div class="small muted">Famílias</div></div>
-        <div style="text-align:right"><div style="font-size:22px;font-weight:600;line-height:1">${nb.toLocaleString('pt-BR')}</div><div class="small muted">Beneficiários</div></div>
-      </div></div>
+  return `<div class="plum-strip">
+      <div class="ps-item"><div class="ps-num">${total.toLocaleString('pt-BR')}</div><div class="ps-lbl">Famílias</div></div>
+      <div class="ps-item"><div class="ps-num">${nb.toLocaleString('pt-BR')}</div><div class="ps-lbl">Beneficiários</div></div>
+    </div>
     ${slice.map(f=>{
       const set = window._acompSemSet || new Set();
       const mem = f.membros || [];
@@ -3378,13 +3523,17 @@ function _renderFamLista(familias, nb, page) {
       const nOk = mem.filter(m => set.has(typeof m==='string'?m:m.nis)).length;
       const todosOk = nMem > 0 && nOk === nMem;
       const acTag = nMem === 0 ? ''
-        : todosOk ? `<span class="tag tag-ok" style="font-size:10px">${fi('check-circle',11)} Em dia</span>`
-        : nOk > 0 ? `<span class="tag tag-w" style="font-size:10px">${nOk}/${nMem} acomp.</span>` : '';
-      const st = todosOk ? 'border-left:4px solid var(--ok);' : '';
-      return `<div class="card" role="button" tabindex="0" aria-label="Abrir família" style="${st}" onclick="showFamily('${esc(f.familyId)}')">
-      <div class="flex aic jcb" style="margin-bottom:6px"><div class="fb">${esc(codDisplay(f))}</div><div style="display:flex;gap:4px;align-items:center">${acTag}<span class="tag tag-i">${nMem} membro${nMem!==1?'s':''}</span></div></div>
-      <div style="font-weight:500;font-size:14px">${esc((f.endereco||'').substring(0,80))}</div>
-      <div class="res-card-meta" style="margin-top:4px">${esc(f.bairro||'')}${f.bairro&&f.eas?'<span class="dot"></span>':''}${f.eas?esc(f.eas.substring(0,35)):''}</div></div>`;}).join('')}
+        : todosOk ? `<span class="pchip pchip-ok">${fi('check-circle',11)} Em dia</span>`
+        : nOk > 0 ? `<span class="pchip pchip-w">${nOk}/${nMem} acomp.</span>`
+        : `<span class="pchip pchip-d">Pendente</span>`;
+      return `<div class="plum-row" role="button" tabindex="0" aria-label="Abrir família" onclick="showFamily('${esc(f.familyId)}')">
+      <div class="pr-icon">${fi('home',20)}</div>
+      <div class="pr-body">
+        <div class="pr-title">Família ${esc(codDisplay(f))} <span class="pr-mem">· ${nMem} membro${nMem!==1?'s':''}</span></div>
+        <div class="pr-sub">${esc((f.endereco||'').substring(0,60)) || 'Sem endereço'}</div>
+        <div class="pr-meta">${esc(f.bairro||'')}${f.bairro&&f.eas?' · ':''}${f.eas?esc(f.eas.substring(0,30)):''}</div>
+      </div>
+      <div class="pr-right">${acTag}${fi('chevron-right',18)}</div></div>`;}).join('')}
     ${temMais ? `<button class="btn btn-g btn-b" id="btnMaisFams" onclick="_carregarMaisFamilias()"
       style="margin-top:8px;display:inline-flex;align-items:center;justify-content:center;gap:6px">
       ${fi('chevron-down',14)} Carregar mais (${total - slice.length} restantes)</button>` : ''}`;
@@ -3440,29 +3589,40 @@ async function renderAcomp() {
   const _renderAcompCard = (a, bMap, canEdit) => {
     const b = bMap.get(a.nis);
     const podeComp = a.acompanhado !== false; // comprovante só p/ acompanhamento realizado
+    const _nm = b?.nome||('NIS '+a.nis);
+    const _ini = (function(){const p=String(_nm).trim().split(/\s+/);return (p[0][0]+(p[1]?.[0]||'')).toUpperCase();})();
+    const _avc = a.acompanhado===false?'background:var(--warn-soft);color:var(--warn)':'background:var(--violet-soft);color:var(--accent)';
     return `<div class="card nh">
-      <div class="flex aic jcb" style="margin-bottom:6px">
-        <div style="font-weight:500;${podeComp?'cursor:pointer;color:var(--accent-2,var(--accent));display:inline-flex;align-items:center;gap:5px':''}" ${podeComp?`role="button" tabindex="0" aria-label="Emitir comprovante de acompanhamento" onclick="comprovanteAcompBenef('${esc(a.nis)}')" title="Emitir comprovante de acompanhamento"`:''}>${esc(b?.nome||'NIS: '+a.nis)}${podeComp?` ${fi('file-text',12)}`:''}${a.cadastro_avulso?' <span class="tag tag-w">AVULSO</span>':''}</div>
-        <span class="tag tag-ok">${new Date(a.data).toLocaleDateString()}</span>
+      <div class="flex aic" style="gap:11px;margin-bottom:8px">
+        <div class="pr-icon" style="${_avc};border-radius:50%;font-weight:800;font-size:13px;width:40px;height:40px">${_ini}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:14px;${podeComp?'cursor:pointer;color:var(--text);display:inline-flex;align-items:center;gap:5px':''}" ${podeComp?`role="button" tabindex="0" aria-label="Emitir comprovante de acompanhamento" onclick="comprovanteAcompBenef('${esc(a.nis)}')" title="Emitir comprovante de acompanhamento"`:''}>${esc(b?.nome||'NIS: '+a.nis)}${podeComp?` <span style="color:var(--accent)">${fi('file-text',12)}</span>`:''}${a.cadastro_avulso?' <span class="pchip pchip-w" style="font-size:10px">AVULSO</span>':''}</div>
+          <div class="small muted">NIS: ${esc(a.nis)}${a.conta_sync?' · via '+esc(a.conta_sync.split('@')[0]):''} ${a.synced_at?'':'<span class="pchip pchip-w" style="font-size:10px">Pendente</span>'}</div>
+        </div>
+        <span class="pchip pchip-ok">${new Date(a.data).toLocaleDateString()}</span>
       </div>
-      <div class="small muted">NIS: ${esc(a.nis)}${a.conta_sync?' · via '+esc(a.conta_sync.split('@')[0]):''} ${a.synced_at?'':'<span class="tag tag-w">Pendente</span>'}</div>
-      ${(a.tecnico||a.estabelecimento)?`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:5px">
-        ${a.tecnico?`<span class="tag tag-i" style="font-size:10px">${fi('users',11)} ${esc(a.tecnico)}</span>`:''}
-        ${a.estabelecimento?`<span class="small muted" style="display:inline-flex;align-items:center;gap:3px">${fi('map-pin',11)} ${esc(a.estabelecimento)}</span>`:''}
-      </div>`:''}
-      ${a.acompanhado===false?`<div class="small" style="color:var(--warn);font-weight:600">✗ Não acompanhado${a.motivo_na?` — ${esc(a.motivo_na)}`:''}</div>`:''}
-      ${a.peso?`<div class="small">Peso: ${a.peso}kg | Altura: ${a.altura}cm | IMC: ${a.imc}</div>`:''}
-      ${a.vacina_ok!=null?`<div class="small">Vacina: ${a.vacina_ok?'✓ Em dia':'✗ Pendente'}</div>`:''}
-      ${a.gestante?`<div class="small">Gestante ${a.dum?`(DUM: ${new Date(a.dum).toLocaleDateString()})`:''}</div>`:''}
-      ${a.tria_risco?`<div class="small" style="margin-top:4px">TRIA: ${_triaLabel(a.tria_risco)}</div>`:''}
-      ${a.observacoes?`<div class="small muted" style="font-style:italic;margin-bottom:6px">"${esc(a.observacoes)}"</div>`:''}
-      ${(can('acomp.edit')||can('acomp.delete'))?`<div class="flex" style="gap:6px;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
-        ${can('acomp.edit')?`<button class="btn btn-s btn-g" onclick="editAcomp('${a.id}')" style="display:inline-flex;align-items:center;gap:4px">${fi('edit',13)} Editar</button>`:''}
-        ${can('acomp.delete')?`<button class="btn btn-s btn-g" onclick="deleteAcomp('${a.id}')" style="display:inline-flex;align-items:center;gap:4px;color:var(--err)">${fi('x-circle',13)} Excluir</button>`:''}
-      </div>`:''}
-      ${podeComp?`<div class="flex" style="justify-content:flex-end;margin-top:8px">
-        <button class="btn btn-s btn-g" onclick="event.stopPropagation();comprovanteBuscaAtiva('${esc(a.nis)}')" title="Comprovante de busca ativa" style="display:inline-flex;align-items:center;gap:4px;white-space:nowrap">${fi('file-text',13)} Busca ativa</button>
-      </div>`:''}
+      <div class="ac-chips">
+        ${a.acompanhado===false?`<span class="pchip pchip-w">${fi('alert-triangle',11)} Não acompanhado</span>`:''}
+        ${a.vacina_ok!=null?`<span class="pchip ${a.vacina_ok?'pchip-ok':'pchip-d'}">Vacina ${a.vacina_ok?'em dia':'pendente'}</span>`:''}
+        ${a.gestante?`<span class="pchip pchip-w">Gestante</span>`:''}
+        ${a.tria_risco?`<span class="pchip" style="background:var(--violet-soft);color:var(--accent)">TRIA: ${_triaLabel(a.tria_risco).replace(/<[^>]*>/g,'').trim()}</span>`:''}
+        ${a.tecnico?`<span class="pchip" style="background:var(--panel-2);color:var(--muted)">${fi('users',11)} ${esc(a.tecnico)}</span>`:''}
+      </div>
+      <details class="ac-more">
+        <summary>${fi('chevron-down',13)} Ver detalhes</summary>
+        <div class="ac-more-body">
+          ${a.estabelecimento?`<div class="small muted" style="display:inline-flex;align-items:center;gap:3px">${fi('map-pin',11)} ${esc(a.estabelecimento)}</div>`:''}
+          ${a.acompanhado===false&&a.motivo_na?`<div class="small" style="color:var(--warn);font-weight:600">Motivo: ${esc(a.motivo_na)}</div>`:''}
+          ${a.peso?`<div class="small">Peso: ${a.peso}kg | Altura: ${a.altura}cm | IMC: ${a.imc}</div>`:''}
+          ${a.gestante&&a.dum?`<div class="small">DUM: ${new Date(a.dum).toLocaleDateString()}</div>`:''}
+          ${a.observacoes?`<div class="small muted" style="font-style:italic">"${esc(a.observacoes)}"</div>`:''}
+          <div class="flex" style="gap:6px;margin-top:8px;flex-wrap:wrap">
+            ${can('acomp.edit')?`<button class="btn btn-s btn-g" onclick="editAcomp('${a.id}')" style="display:inline-flex;align-items:center;gap:4px">${fi('edit',13)} Editar</button>`:''}
+            ${can('acomp.delete')?`<button class="btn btn-s btn-g" onclick="deleteAcomp('${a.id}')" style="display:inline-flex;align-items:center;gap:4px;color:var(--err)">${fi('x-circle',13)} Excluir</button>`:''}
+            ${podeComp?`<button class="btn btn-s btn-g" onclick="event.stopPropagation();comprovanteBuscaAtiva('${esc(a.nis)}')" title="Comprovante de busca ativa" style="display:inline-flex;align-items:center;gap:4px;white-space:nowrap;margin-left:auto">${fi('file-text',13)} Busca ativa</button>`:''}
+          </div>
+        </div>
+      </details>
     </div>`;
   };
 
@@ -3480,10 +3640,7 @@ async function renderAcomp() {
     ${bannerHtml}
     <div class="flex aic jcb">
       <div><h2>Acompanhamentos</h2><p class="muted" id="acompCount">${total} registros</p></div>
-      <div style="display:flex;gap:6px">
-        ${can('data.export')?`<button class="btn btn-s btn-g" onclick="exportXLSX()" style="display:inline-flex;align-items:center;gap:5px">${fi('file',13)} XLSX</button>`:''}
-        ${can('data.export')?`<button class="btn btn-s btn-g" onclick="exportCSV('acompanhamentos')" style="display:inline-flex;align-items:center;gap:5px">${fi('download',13)} CSV</button>`:''}
-      </div>
+      ${can('data.export')?`<button class="btn btn-s btn-g" onclick="nav('config').then(()=>setCfgTab('dados'))" title="Exportações em Configurações → Dados" style="display:inline-flex;align-items:center;gap:5px">${fi('download',13)} Exportar</button>`:''}
     </div>
 
     <div class="af-bar">
@@ -3536,10 +3693,90 @@ async function renderAcomp() {
     </div>
 
     <div id="acompLista">
-    ${!acomps.length?`<div class="empty-state"><div class="ei">${fi('clipboard',44)}</div><strong>Nenhum acompanhamento ainda</strong><p>Busque um beneficiário, selecione e clique em <b>Acompanhar</b>.</p></div>`:
+    ${!acomps.length?`<div class="empty-state">${illus('empty')}<strong>Nenhum acompanhamento ainda</strong><p>Busque um beneficiário, selecione e clique em <b>Acompanhar</b>.</p></div>`:
     acomps.map(a => _renderAcompCard(a, bMap, canEdit)).join('')}
     ${total > 50 ? `<div class="card card-sub nh muted small" style="text-align:center;padding:10px">Mostrando 50 de ${total}. Use a busca para filtrar.</div>` : ''}
     </div></div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// AGENDA — prioridades de acompanhamento (por semestre)
+// ═══════════════════════════════════════════════════════
+async function renderAgenda() {
+  const benefs = await getBenefCache();
+  const acomps = await getAcompCache();
+  const nb = benefs.length;
+
+  // Último acompanhamento por NIS
+  const ultimo = new Map();
+  acomps.forEach(a => {
+    const p = ultimo.get(a.nis);
+    if (!p || new Date(a.data) > new Date(p.data)) ultimo.set(a.nis, a);
+  });
+
+  // Pendentes do semestre atual (reaproveita a regra oficial do app)
+  const pend = _calcVencidos(benefs, ultimo);
+
+  // Prazo do semestre: S1 termina 30/jun · S2 termina 31/dez
+  const now = new Date();
+  const ano = now.getFullYear();
+  const fimSem = now.getMonth() < 6 ? new Date(ano, 5, 30, 23, 59) : new Date(ano, 11, 31, 23, 59);
+  const iniSem = now.getMonth() < 6 ? new Date(ano, 0, 1) : new Date(ano, 6, 1);
+  const diasRest = Math.max(0, Math.ceil((fimSem - now) / 864e5));
+  const feito = nb - pend.length;
+  const pctFeito = nb > 0 ? Math.round(feito / nb * 100) : 0;
+
+  // Gestantes pendentes (a partir do último acompanhamento marcado como gestante)
+  const gestNis = new Set([...ultimo.values()].filter(a => a.gestante).map(a => a.nis));
+  const pendNunca = pend.filter(x => x.ultimaData == null);
+  const pendGest  = pend.filter(x => x.ultimaData != null && gestNis.has(x.b.nis));
+  const gestSet   = new Set(pendGest.map(x => x.b.nis));
+  const pendVenc  = pend.filter(x => x.ultimaData != null && !gestSet.has(x.b.nis));
+
+  const _ini = n => { const p = String(n||'?').trim().split(/\s+/); return (p[0][0]+(p[1]?.[0]||'')).toUpperCase(); };
+  const _linha = (x, chip, av) => {
+    const codFam = x.b.cod_fam && !x.b.cod_fam.startsWith('FAM_IND_') ? ' · Fam '+esc(x.b.cod_fam.replace(/^FAM_/,'')) : '';
+    const meta = x.ultimaData
+      ? `NIS ${esc(x.b.nis)} · último há ${x.diasDesde} dias`
+      : `NIS ${esc(x.b.nis)}${codFam}${x.b.bairro?' · '+esc(x.b.bairro):''}`;
+    return `<div class="plum-row" role="button" tabindex="0" aria-label="Abrir ${esc(x.b.nome||'')}" onclick="showBenef('${esc(x.b.nis)}')">
+      <div class="pr-icon" style="${av};border-radius:50%;font-weight:800;font-size:14px">${_ini(x.b.nome)}</div>
+      <div class="pr-body"><div class="pr-title">${esc(x.b.nome)}</div><div class="pr-sub">${meta}</div></div>
+      <div class="pr-right">${chip}${fi('chevron-right',18)}</div></div>`;
+  };
+  const _grupo = (lbl, cor, arr, chipFn, av, max) => arr.length ? `
+    <div class="grp-lbl-plum"><span class="dotc" style="background:${cor}"></span>${lbl}<span style="margin-left:auto;font-weight:700;color:var(--muted);font-size:12px">${arr.length}</span></div>
+    ${arr.slice(0, max).map(x => _linha(x, chipFn(x), av)).join('')}
+    ${arr.length > max ? `<div class="small muted" style="text-align:center;padding:4px 0 10px">+${arr.length-max} — use Buscar para o restante</div>` : ''}` : '';
+
+  const semLbl = semestreLabel(semestreAtualRef());
+  const bannerHtml = await renderBanner('home');
+
+  if (nb === 0) return `<div class="s4">${bannerHtml}<div class="empty-state">${illus('empty',false)}<strong>Sem dados</strong><p>Importe a base para ver as prioridades de acompanhamento.</p></div></div>`;
+
+  return `<div class="s4">
+    <div class="plum-hero">
+      <div class="ph-kicker">Bolsa Família &middot; Saúde</div>
+      <div class="ph-name" style="font-size:23px">Agenda de prioridades</div>
+      <div class="ph-cov" style="display:block">
+        <div style="display:flex;align-items:baseline;gap:9px">
+          <span style="font-size:30px;font-weight:800;line-height:1">${diasRest}</span>
+          <span style="font-size:13px;color:rgba(255,255,255,.82);font-weight:600">dias p/ fechar o semestre</span>
+        </div>
+        <div style="font-size:12px;color:rgba(255,255,255,.72);margin-top:5px">${semLbl} &middot; ${pend.length.toLocaleString('pt-BR')} pendentes de ${nb.toLocaleString('pt-BR')}</div>
+        <div style="height:8px;border-radius:5px;background:rgba(255,255,255,.16);overflow:hidden;margin-top:10px"><div style="height:100%;background:#a56cf0;border-radius:5px;width:${pctFeito}%"></div></div>
+      </div>
+    </div>
+
+    ${bannerHtml}
+
+    ${pend.length === 0
+      ? `<div class="empty-state">${illus('done',false)}<strong>Tudo em dia!</strong><p>Nenhum acompanhamento pendente no semestre ${semLbl}.</p></div>`
+      : `<div class="mb-section-title" style="margin-top:2px">${fi('bell',12)} Prioridades para hoje <span style="margin-left:auto;color:var(--accent);background:var(--violet-soft);border-radius:999px;padding:2px 9px;font-weight:800">${pend.length}</span></div>
+        ${_grupo('Nunca acompanhados · crítico', 'var(--err)', pendNunca, ()=>`<span class="pchip pchip-d">nunca</span>`, 'background:var(--err-soft);color:var(--err)', 20)}
+        ${_grupo('Gestantes pendentes · pré-natal', 'var(--warn)', pendGest, ()=>`<span class="pchip pchip-w">gestante</span>`, 'background:var(--warn-soft);color:var(--warn)', 20)}
+        ${_grupo('Vencidos do semestre', 'var(--accent)', pendVenc, x=>`<span class="pchip" style="background:var(--violet-soft);color:var(--accent)">${x.diasDesde} d</span>`, 'background:var(--violet-soft);color:var(--accent)', 40)}`}
+  </div>`;
 }
 
 // ── Controle do painel de filtros ──────────────────────
@@ -3623,29 +3860,40 @@ function filtrarAcomps(q) {
   const _card = (a) => {
     const b = bMap.get(a.nis);
     const podeComp = a.acompanhado !== false; // comprovante só p/ acompanhamento realizado
+    const _nm = b?.nome||('NIS '+a.nis);
+    const _ini = (function(){const p=String(_nm).trim().split(/\s+/);return (p[0][0]+(p[1]?.[0]||'')).toUpperCase();})();
+    const _avc = a.acompanhado===false?'background:var(--warn-soft);color:var(--warn)':'background:var(--violet-soft);color:var(--accent)';
     return `<div class="card nh">
-      <div class="flex aic jcb" style="margin-bottom:6px">
-        <div style="font-weight:500;${podeComp?'cursor:pointer;color:var(--accent-2,var(--accent));display:inline-flex;align-items:center;gap:5px':''}" ${podeComp?`role="button" tabindex="0" aria-label="Emitir comprovante de acompanhamento" onclick="comprovanteAcompBenef('${esc(a.nis)}')" title="Emitir comprovante de acompanhamento"`:''}>${esc(b?.nome||'NIS: '+a.nis)}${podeComp?` ${fi('file-text',12)}`:''}${a.cadastro_avulso?' <span class="tag tag-w">AVULSO</span>':''}</div>
-        <span class="tag tag-ok">${new Date(a.data).toLocaleDateString()}</span>
+      <div class="flex aic" style="gap:11px;margin-bottom:8px">
+        <div class="pr-icon" style="${_avc};border-radius:50%;font-weight:800;font-size:13px;width:40px;height:40px">${_ini}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:14px;${podeComp?'cursor:pointer;color:var(--text);display:inline-flex;align-items:center;gap:5px':''}" ${podeComp?`role="button" tabindex="0" aria-label="Emitir comprovante de acompanhamento" onclick="comprovanteAcompBenef('${esc(a.nis)}')" title="Emitir comprovante de acompanhamento"`:''}>${esc(b?.nome||'NIS: '+a.nis)}${podeComp?` <span style="color:var(--accent)">${fi('file-text',12)}</span>`:''}${a.cadastro_avulso?' <span class="pchip pchip-w" style="font-size:10px">AVULSO</span>':''}</div>
+          <div class="small muted">NIS: ${esc(a.nis)}${a.conta_sync?' · via '+esc(a.conta_sync.split('@')[0]):''} ${a.synced_at?'':'<span class="pchip pchip-w" style="font-size:10px">Pendente</span>'}</div>
+        </div>
+        <span class="pchip pchip-ok">${new Date(a.data).toLocaleDateString()}</span>
       </div>
-      <div class="small muted">NIS: ${esc(a.nis)}${a.conta_sync?' · via '+esc(a.conta_sync.split('@')[0]):''} ${a.synced_at?'':'<span class="tag tag-w">Pendente</span>'}</div>
-      ${(a.tecnico||a.estabelecimento)?`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:5px">
-        ${a.tecnico?`<span class="tag tag-i" style="font-size:10px">${fi('users',11)} ${esc(a.tecnico)}</span>`:''}
-        ${a.estabelecimento?`<span class="small muted" style="display:inline-flex;align-items:center;gap:3px">${fi('map-pin',11)} ${esc(a.estabelecimento)}</span>`:''}
-      </div>`:''}
-      ${a.acompanhado===false?`<div class="small" style="color:var(--warn);font-weight:600">✗ Não acompanhado${a.motivo_na?` — ${esc(a.motivo_na)}`:''}</div>`:''}
-      ${a.peso?`<div class="small">Peso: ${a.peso}kg | Altura: ${a.altura}cm | IMC: ${a.imc}</div>`:''}
-      ${a.vacina_ok!=null?`<div class="small">Vacina: ${a.vacina_ok?'✓ Em dia':'✗ Pendente'}</div>`:''}
-      ${a.gestante?`<div class="small">Gestante ${a.dum?`(DUM: ${new Date(a.dum).toLocaleDateString()})`:''}</div>`:''}
-      ${a.tria_risco?`<div class="small" style="margin-top:4px">TRIA: ${_triaLabel(a.tria_risco)}</div>`:''}
-      ${a.observacoes?`<div class="small muted" style="font-style:italic;margin-bottom:6px">"${esc(a.observacoes)}"</div>`:''}
-      ${(can('acomp.edit')||can('acomp.delete'))?`<div class="flex" style="gap:6px;margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
-        ${can('acomp.edit')?`<button class="btn btn-s btn-g" onclick="editAcomp('${a.id}')" style="display:inline-flex;align-items:center;gap:4px">${fi('edit',13)} Editar</button>`:''}
-        ${can('acomp.delete')?`<button class="btn btn-s btn-g" onclick="deleteAcomp('${a.id}')" style="display:inline-flex;align-items:center;gap:4px;color:var(--err)">${fi('x-circle',13)} Excluir</button>`:''}
-      </div>`:''}
-      ${podeComp?`<div class="flex" style="justify-content:flex-end;margin-top:8px">
-        <button class="btn btn-s btn-g" onclick="event.stopPropagation();comprovanteBuscaAtiva('${esc(a.nis)}')" title="Comprovante de busca ativa" style="display:inline-flex;align-items:center;gap:4px;white-space:nowrap">${fi('file-text',13)} Busca ativa</button>
-      </div>`:''}
+      <div class="ac-chips">
+        ${a.acompanhado===false?`<span class="pchip pchip-w">${fi('alert-triangle',11)} Não acompanhado</span>`:''}
+        ${a.vacina_ok!=null?`<span class="pchip ${a.vacina_ok?'pchip-ok':'pchip-d'}">Vacina ${a.vacina_ok?'em dia':'pendente'}</span>`:''}
+        ${a.gestante?`<span class="pchip pchip-w">Gestante</span>`:''}
+        ${a.tria_risco?`<span class="pchip" style="background:var(--violet-soft);color:var(--accent)">TRIA: ${_triaLabel(a.tria_risco).replace(/<[^>]*>/g,'').trim()}</span>`:''}
+        ${a.tecnico?`<span class="pchip" style="background:var(--panel-2);color:var(--muted)">${fi('users',11)} ${esc(a.tecnico)}</span>`:''}
+      </div>
+      <details class="ac-more">
+        <summary>${fi('chevron-down',13)} Ver detalhes</summary>
+        <div class="ac-more-body">
+          ${a.estabelecimento?`<div class="small muted" style="display:inline-flex;align-items:center;gap:3px">${fi('map-pin',11)} ${esc(a.estabelecimento)}</div>`:''}
+          ${a.acompanhado===false&&a.motivo_na?`<div class="small" style="color:var(--warn);font-weight:600">Motivo: ${esc(a.motivo_na)}</div>`:''}
+          ${a.peso?`<div class="small">Peso: ${a.peso}kg | Altura: ${a.altura}cm | IMC: ${a.imc}</div>`:''}
+          ${a.gestante&&a.dum?`<div class="small">DUM: ${new Date(a.dum).toLocaleDateString()}</div>`:''}
+          ${a.observacoes?`<div class="small muted" style="font-style:italic">"${esc(a.observacoes)}"</div>`:''}
+          <div class="flex" style="gap:6px;margin-top:8px;flex-wrap:wrap">
+            ${can('acomp.edit')?`<button class="btn btn-s btn-g" onclick="editAcomp('${a.id}')" style="display:inline-flex;align-items:center;gap:4px">${fi('edit',13)} Editar</button>`:''}
+            ${can('acomp.delete')?`<button class="btn btn-s btn-g" onclick="deleteAcomp('${a.id}')" style="display:inline-flex;align-items:center;gap:4px;color:var(--err)">${fi('x-circle',13)} Excluir</button>`:''}
+            ${podeComp?`<button class="btn btn-s btn-g" onclick="event.stopPropagation();comprovanteBuscaAtiva('${esc(a.nis)}')" title="Comprovante de busca ativa" style="display:inline-flex;align-items:center;gap:4px;white-space:nowrap;margin-left:auto">${fi('file-text',13)} Busca ativa</button>`:''}
+          </div>
+        </div>
+      </details>
     </div>`;
   };
 
@@ -3715,7 +3963,7 @@ async function renderConfig() {
   const na = await IDB.count('acompanhamentos');
   const inst = await IDB.getMeta('instituicao') || 'Prefeitura Municipal';
   const logo = await IDB.getMeta('logoApp');
-  const cor = await IDB.getMeta('corPrimaria') || '#ffc400';
+  const cor = await IDB.getMeta('corPrimaria') || '#7226d9';
   const vi = await IDB.getMeta('vigenciaInicio') || '2026-01-01';
   const vf = await IDB.getMeta('vigenciaFim') || '2026-12-31';
   const tema = await IDB.getMeta('tema') || 'light';
@@ -3802,19 +4050,10 @@ async function renderConfig() {
       <div class="cfg-card-body"><div class="s3">
 
         <!-- Painel de status -->
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-          <div class="card card-sub nh" style="text-align:center;padding:10px">
-            <div style="font-weight:700;color:${SB?(window._sbAuthed?'var(--ok)':'var(--warn)'):'var(--err)'};font-size:13px">${SB?(window._sbAuthed?'Autenticado':'Sem auth'):'Offline'}</div>
-            <div class="small muted" style="font-size:10px">Conexão</div>
-          </div>
-          <div class="card card-sub nh" style="text-align:center;padding:10px">
-            <div style="font-weight:700;color:${pendAc>0?'var(--warn)':'var(--ok)'};font-size:13px">${pendAc}</div>
-            <div class="small muted" style="font-size:10px">Acomp. pendentes</div>
-          </div>
-          <div class="card card-sub nh" style="text-align:center;padding:10px">
-            <div style="font-weight:700;color:${settingsDirty?'var(--warn)':'var(--ok)'};font-size:13px">${settingsDirty?'Pendente':'Em dia'}</div>
-            <div class="small muted" style="font-size:10px">Configurações</div>
-          </div>
+        <div class="plum-strip" style="margin-bottom:0">
+          <div class="ps-item"><div class="ps-num" style="font-size:15px;color:${SB?(window._sbAuthed?'var(--ok)':'var(--warn)'):'var(--err)'}">${SB?(window._sbAuthed?'Autenticado':'Sem auth'):'Offline'}</div><div class="ps-lbl">Conexão</div></div>
+          <div class="ps-item"><div class="ps-num" style="font-size:15px;color:${pendAc>0?'var(--warn)':'var(--ok)'}">${pendAc}</div><div class="ps-lbl">Acomp. pendentes</div></div>
+          <div class="ps-item"><div class="ps-num" style="font-size:15px;color:${settingsDirty?'var(--warn)':'var(--ok)'}">${settingsDirty?'Pendente':'Em dia'}</div><div class="ps-lbl">Configurações</div></div>
         </div>
         ${window._sbAccount?`<div class="small muted" style="text-align:center">Conta deste aparelho: <b>${esc(window._sbAccount)}</b></div>`:''}
         ${dl||ul?`<div class="small muted" style="text-align:center">${ul?'Último envio: '+new Date(ul).toLocaleString('pt-BR'):''}${dl&&ul?' · ':''}${dl?'Recebido: '+new Date(dl).toLocaleString('pt-BR'):''}</div>`:''}
@@ -3995,7 +4234,9 @@ async function renderConfig() {
             onchange="saveDesign('designLoginSubtitle',this.value)">
         </div>
 
-        <div class="form-sep">${fi('image',12)} Imagens</div>
+        <details class="cfg-accordion">
+        <summary>${fi('image',13)} Imagens (ícone, logo e fundos)</summary>
+        <div class="cfg-accordion-body">
         <div>
           <label class="small muted" style="display:block;margin-bottom:8px">Ícone do aplicativo <span style="color:var(--muted)">(login e atalho na tela inicial)</span></label>
           <div style="position:relative;display:inline-block;margin-bottom:8px">
@@ -4054,6 +4295,8 @@ async function renderConfig() {
           <input type="file" id="loginHeroBgFile" accept="image/*" style="display:none" onchange="uploadLoginHeroBg(this.files[0])">
           <div class="small muted" style="margin-top:6px">Substitui o fundo do bloco onde fica a logo. Recomendado: 1200×500px (faixa horizontal). Sem imagem, fica um fundo branco limpo.</div>
         </div>
+        </div>
+        </details>
 
         <button class="btn btn-g btn-b" onclick="resetDesign()" style="display:inline-flex;align-items:center;gap:5px;color:var(--err);border-color:var(--err)">${fi('rotate-ccw',13)} Restaurar padrões</button>
       </div></div>
@@ -4107,19 +4350,10 @@ async function renderConfig() {
       <div class="cfg-card-body"><div class="s3">
 
         <!-- Contadores -->
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-          <div class="card card-sub nh" style="text-align:center;padding:12px">
-            <div style="font-size:22px;font-weight:700;color:var(--accent)">${nb.toLocaleString('pt-BR')}</div>
-            <div class="small muted">Beneficiários</div>
-          </div>
-          <div class="card card-sub nh" style="text-align:center;padding:12px">
-            <div style="font-size:22px;font-weight:700;color:var(--ok)">${nf.toLocaleString('pt-BR')}</div>
-            <div class="small muted">Famílias</div>
-          </div>
-          <div class="card card-sub nh" style="text-align:center;padding:12px">
-            <div style="font-size:22px;font-weight:700">${na.toLocaleString('pt-BR')}</div>
-            <div class="small muted">Acomp.</div>
-          </div>
+        <div class="plum-strip" style="margin-bottom:0">
+          <div class="ps-item"><div class="ps-num">${nb.toLocaleString('pt-BR')}</div><div class="ps-lbl">Beneficiários</div></div>
+          <div class="ps-item"><div class="ps-num">${nf.toLocaleString('pt-BR')}</div><div class="ps-lbl">Famílias</div></div>
+          <div class="ps-item"><div class="ps-num">${na.toLocaleString('pt-BR')}</div><div class="ps-lbl">Acomp.</div></div>
         </div>
 
         <!-- Informações editáveis -->
@@ -4330,6 +4564,7 @@ async function nav(page, _fromPop) {
     case 'home':     html = await renderHome(); break;
     case 'search':   html = await renderSearch(); break;
     case 'families': html = await renderFamilies(); break;
+    case 'agenda':   html = await renderAgenda(); break;
     case 'acomp':    window._acompFiltros = { periodo:'todos', tria:'todos', situacao:[], dataInicio:'', dataFim:'' }; html = await renderAcomp(); break;
     case 'config':   html = await renderConfig(); break;
     default: mc.classList.remove('loading'); return;
@@ -4393,7 +4628,7 @@ async function doSearch(q) {
   const temFiltro = f.eas||f.bairro||f.zona||f.gestante||f.vacPend||f.semAcomp;
 
   if(!q && !temFiltro){
-    c.innerHTML=`<div class="empty-state" style="padding:28px 16px"><div class="ei">${fi('search',40)}</div><strong>Encontre um beneficiário</strong><p>Busque por NIS, nome ou use os filtros — ou toque no microfone para falar.</p></div>`;
+    c.innerHTML=`<div class="empty-state" style="padding:28px 16px">${illus('search',false)}<strong>Encontre um beneficiário</strong><p>Busque por NIS, nome ou use os filtros — ou toque no microfone para falar.</p></div>`;
     return;
   }
 
@@ -4493,34 +4728,26 @@ async function doSearch(q) {
     const naoAc = acSem?.acompanhado === false;
     const dataAcomp = acSem ? new Date(acSem.data + 'T12:00:00').toLocaleDateString('pt-BR') : '';
     // Diferença visual FORTE: verde sólido = acompanhado · laranja = não localizado · neutro c/ selo = pendente
-    const cardStyle = acSem
-      ? (naoAc ? 'border-left:5px solid var(--warn);background:var(--warn-soft)'
-               : 'border-left:5px solid var(--ok);background:var(--ok-soft)')
-      : 'border-left:5px solid var(--border)';
-    const statusIcon = acSem
-      ? `<span style="flex-shrink:0;display:flex;align-items:center;color:var(--${naoAc?'warn':'ok'})">${fi(naoAc?'alert-triangle':'check-circle',26)}</span>`
-      : `<span style="flex-shrink:0;display:flex;align-items:center;color:var(--muted);opacity:.45">${fi('clock',24)}</span>`;
-    return `<div class="card" role="button" tabindex="0" aria-label="Abrir beneficiário ${esc(b.nome||'')}" style="${cardStyle};display:flex;align-items:center;gap:12px" onclick="showBenef('${b.nis}')">
-      <div style="flex:1;min-width:0">
-      <div class="res-card-name">
-        ${esc(b.nome)}
-        ${acSem?(naoAc
-          ?`<span class="tag tag-w" style="font-size:10px">${fi('alert-triangle',11)} Não localizado · ${semestreLabel(refSem)}</span>`
-          :`<span class="tag tag-ok" style="font-size:10px">${fi('check-circle',11)} Acompanhado · ${semestreLabel(refSem)}</span>`)
-          :`<span class="tag" style="font-size:10px;background:var(--panel-2);color:var(--muted);border:1px dashed var(--border)">Pendente na vigência</span>`}
-        ${b.gestante?'<span class="tag tag-w" style="font-size:10px">Gestante</span>':''}
-        ${b.cadastro_avulso?'<span class="tag tag-w" style="font-size:10px">Avulso</span>':''}
-        ${b.cadastro_manual?'<span class="tag tag-i" style="font-size:10px">Manual</span>':''}
+    const _ini = (function(){const p=String(b.nome||'?').trim().split(/\s+/);return (p[0][0]+(p[1]?.[0]||'')).toUpperCase();})();
+    const avStyle = acSem
+      ? (naoAc ? 'background:var(--warn-soft);color:var(--warn)' : 'background:var(--ok-soft);color:var(--ok)')
+      : 'background:var(--violet-soft);color:var(--accent)';
+    const statusChip = acSem
+      ? (naoAc ? `<span class="pchip pchip-w">${fi('alert-triangle',11)} Não localizado</span>`
+               : `<span class="pchip pchip-ok">${fi('check-circle',11)} Acompanhado</span>`)
+      : `<span class="pchip pchip-d">Pendente</span>`;
+    return `<div class="plum-row" role="button" tabindex="0" aria-label="Abrir beneficiário ${esc(b.nome||'')}" onclick="showBenef('${b.nis}')">
+      <div class="pr-icon" style="${avStyle};border-radius:50%;font-weight:800;font-size:14px">${_ini}</div>
+      <div class="pr-body">
+        <div class="pr-title" style="white-space:normal">${esc(b.nome)}
+          ${b.gestante?'<span class="pchip pchip-w" style="font-size:10px">Gestante</span>':''}
+          ${b.cadastro_avulso?'<span class="pchip pchip-w" style="font-size:10px">Avulso</span>':''}
+          ${b.cadastro_manual?'<span class="pchip" style="font-size:10px;background:var(--violet-soft);color:var(--accent)">Manual</span>':''}
+        </div>
+        <div class="pr-sub" style="white-space:normal">NIS: ${esc(b.nis)}${idadeStr?' · '+idadeStr:''}${codFamDisplay?' · Fam '+esc(codFamDisplay):''}${b.bairro?' · '+esc(b.bairro):''}</div>
+        ${acSem?`<div class="pr-meta" style="color:var(--${naoAc?'warn':'ok'});font-weight:600">${naoAc?'não localizado':'acompanhado'} em ${dataAcomp} · ${semestreLabel(refSem)}</div>`:''}
       </div>
-      <div class="res-card-meta">
-        <span>NIS: ${esc(b.nis)}</span>
-        ${idadeStr?`<span class="dot"></span><span>${idadeStr}</span>`:''}
-        ${codFamDisplay?`<span class="dot"></span><span>Fam: ${esc(codFamDisplay)}</span>`:''}
-        ${b.bairro?`<span class="dot"></span><span>${esc(b.bairro)}</span>`:''}
-        ${acSem?`<span class="dot"></span><span style="color:var(--${naoAc?'warn':'ok'});font-weight:600">${naoAc?'não localizado':'acompanhado'} em ${dataAcomp}</span>`:''}
-      </div>
-      </div>
-      ${statusIcon}
+      <div class="pr-right">${statusChip}${fi('chevron-right',18)}</div>
     </div>`;
   }).join('');
 }
@@ -5357,7 +5584,7 @@ async function showVencidos() {
   });
   const v = _calcVencidos(benefs, ultimo);
   openSheet(`Acompanhamentos vencidos (${v.length})`, v.length === 0
-    ? `<div class="empty-state"><div class="ei">${fi('award',44)}</div><strong>Tudo em dia</strong><p>Nenhum acompanhamento vencido pelas regras de periodicidade.</p></div>`
+    ? `<div class="empty-state">${illus('done',false)}<strong>Tudo em dia</strong><p>Nenhum acompanhamento vencido pelas regras de periodicidade.</p></div>`
     : `<div class="s3">
         <div class="small muted">Regra: 1 acompanhamento por semestre (S1 jan–jun · S2 jul–dez). Pendentes do semestre ${semestreLabel(semestreAtualRef())}. Toque para abrir o beneficiário.</div>
         ${v.slice(0, 100).map(x => `<div class="card" role="button" tabindex="0" aria-label="Abrir beneficiário ${esc(x.b.nome||'')}" onclick="showBenef('${esc(x.b.nis)}')">
@@ -7478,7 +7705,7 @@ function showUndoToast(msg, onUndo, seconds = 8) {
 // ═══════════════════════════════════════════════════════
 
 const FONT_STACKS = {
-  system:  'system-ui, -apple-system, sans-serif',
+  system:  "'Inter var', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
   rounded: '"Trebuchet MS", Tahoma, Arial, sans-serif',
   humanist:'Optima, Candara, "Noto Sans", sans-serif',
   serif:   'Georgia, "Times New Roman", Times, serif',
@@ -8268,7 +8495,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const man = {
       name: inst, short_name: 'Bolsa Família',
       start_url: location.href, scope: location.href.replace(/[^/]*$/, ''),
-      display: 'standalone', background_color: '#ffffff', theme_color: '#ffc400',
+      display: 'standalone', background_color: '#ffffff', theme_color: '#7226d9',
       icons: [{ src: icon, sizes: '512x512', type: iconType, purpose: 'any' }]
     };
     const l = document.createElement('link');
