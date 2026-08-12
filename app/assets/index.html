@@ -910,6 +910,12 @@ input:focus,select:focus,textarea:focus,.plogin .plc-input:focus{outline:2px sol
 #printArea table.mapa2 th.c,#printArea table.mapa2 td.c{text-align:center}
 #printArea table.mapa2 td.mk,#printArea table.mapa2 th.mk{text-align:center;font-weight:800;border-left:2px solid #111}
 #printArea table.mapa2 td.nome{font-weight:600}
+/* Fichas (comprovantes): rotulo a esquerda, largura fixa, sem desalinhamento */
+#printArea table.ficha,#printArea table.acoes{table-layout:fixed;width:100%}
+#printArea table.ficha th{text-align:left;vertical-align:middle;background:#f4f4f4}
+#printArea table.ficha td{vertical-align:middle;word-wrap:break-word;overflow-wrap:anywhere}
+#printArea table.acoes th.c,#printArea table.acoes td.c{text-align:center}
+#printArea table.acoes td{word-wrap:break-word;overflow-wrap:anywhere}
 /* O relatorio nominal injeta @page landscape no proprio documento impresso */
 #printArea .rpt-sign{margin-top:34px;text-align:center;page-break-inside:avoid}
 #printArea .rpt-sign .sign-line{width:230px;border-top:1px solid #111;margin:0 auto 5px}
@@ -5854,7 +5860,7 @@ async function comprovanteBuscaAtiva(nis) {
   const naos = (acs || []).filter(a => a && a.acompanhado === false)
     .sort((a, b) => String(a.data).localeCompare(String(b.data)));
   const rowsReg = naos.map(a => `<tr class="no-break">
-      <td style="text-align:center">${fmtBRd(a.data)}</td>
+      <td class="c">${fmtBRd(a.data)}</td>
       <td>${esc(a.observacoes || 'Registro de não acompanhamento')}</td>
       <td>${esc(a.motivo_na || '—')}</td>
     </tr>`).join('');
@@ -5864,15 +5870,24 @@ async function comprovanteBuscaAtiva(nis) {
 
   const eas = b.eas || await IDB.getMeta('instituicao') || '';
 
+  // Nascimento: usa a data quando houver; senao recorre a idade do cadastro
+  const _dtNasc = fmtBRd(b.dob);
+  const _idadeCad = (b.idade != null && b.idade !== '') ? b.idade
+                    : (b.dob ? Math.floor((Date.now() - new Date(b.dob)) / 31557600000) : null);
+  const _nascTxt = (_dtNasc !== '—')
+    ? `${_dtNasc}${_idadeCad != null ? ` · ${_idadeCad} anos` : ''}`
+    : (_idadeCad != null ? `Não informada · ${_idadeCad} anos` : 'Não informada');
+
   const html = `<div class="rpt">
     ${await _reportHeader('Comprovante de Busca Ativa — Programa Bolsa Família',
       `Emitido em ${hoje} · Responsável pela emissão: ${esc(ME?.nome || '—')}`)}
 
     <h2>Identificação do beneficiário</h2>
-    <table>
-      <tr><th style="width:32%">Nome</th><td>${esc(b.nome || '—')}</td></tr>
+    <table class="ficha">
+      <colgroup><col style="width:30%"><col style="width:70%"></colgroup>
+      <tr><th>Nome</th><td>${esc(b.nome || '—')}</td></tr>
       <tr><th>NIS</th><td>${esc(b.nis || '—')}</td></tr>
-      <tr><th>Data de nascimento</th><td>${fmtBRd(b.dob)}${b.idade ? ` · ${b.idade} anos` : ''}</td></tr>
+      <tr><th>Data de nascimento</th><td>${_nascTxt}</td></tr>
       <tr><th>Código Familiar</th><td>${esc((b.cod_fam || '').replace(/^FAM_/, '') || '—')}</td></tr>
       <tr><th>Endereço</th><td>${esc(b.endereco || '—')}${b.bairro ? ` — ${esc(b.bairro)}` : ''}</td></tr>
       <tr><th>Estabelecimento de Saúde (EAS)</th><td>${esc(eas || '—')}</td></tr>
@@ -5886,9 +5901,10 @@ async function comprovanteBuscaAtiva(nis) {
     conforme as ações registradas abaixo.</p>
 
     <h2>Ações de busca ativa realizadas</h2>
-    <table>
-      <tr><th style="width:18%">Data</th><th>Ação / meio (visita domiciliar, telefone, ACS, etc.)</th><th style="width:34%">Resultado / motivo</th></tr>
-      ${rowsReg}${rowsBlank}
+    <table class="acoes">
+      <colgroup><col style="width:18%"><col style="width:48%"><col style="width:34%"></colgroup>
+      <thead><tr><th class="c">Data</th><th>Ação / meio (visita domiciliar, telefone, ACS, etc.)</th><th>Resultado / motivo</th></tr></thead>
+      <tbody>${rowsReg}${rowsBlank}</tbody>
     </table>
 
     <div class="rpt-sign" style="margin-top:52px">
@@ -5920,23 +5936,33 @@ async function comprovanteAcompBenef(nis) {
   const eas = b.eas || (acs[0] && acs[0].estabelecimento) || await IDB.getMeta('instituicao') || '';
 
   const rows = acs.map(a => `<tr class="no-break">
-      <td style="text-align:center">${fmtBRd(a.data)}</td>
-      <td style="text-align:center">${a.peso != null ? esc(String(a.peso)) : '—'}</td>
-      <td style="text-align:center">${a.altura != null ? esc(String(a.altura)) : '—'}</td>
-      <td style="text-align:center">${a.imc != null ? esc(String(a.imc)) : '—'}</td>
-      <td style="text-align:center">${vac(a.vacina_ok)}</td>
-      <td style="text-align:center">${a.gestante ? 'Sim' : '—'}</td>
+      <td class="c">${fmtBRd(a.data)}</td>
+      <td class="c">${a.peso != null ? esc(String(a.peso)) : '—'}</td>
+      <td class="c">${a.altura != null ? esc(String(a.altura)) : '—'}</td>
+      <td class="c">${a.imc != null ? esc(String(a.imc)) : '—'}</td>
+      <td class="c">${vac(a.vacina_ok)}</td>
+      <td class="c">${a.gestante ? 'Sim' : '—'}</td>
+      <td class="c">${a.gestante ? fmtBRd(a.dum) : '—'}</td>
     </tr>`).join('');
+
+  // Nascimento: usa a data quando houver; senao recorre a idade do cadastro
+  const _dt2 = fmtBRd(b.dob);
+  const _id2 = (b.idade != null && b.idade !== '') ? b.idade
+               : (b.dob ? Math.floor((Date.now() - new Date(b.dob)) / 31557600000) : null);
+  const _nascTxt2 = (_dt2 !== '—')
+    ? `${_dt2}${_id2 != null ? ` · ${_id2} anos` : ''}`
+    : (_id2 != null ? `Não informada · ${_id2} anos` : 'Não informada');
 
   const html = `<div class="rpt">
     ${await _reportHeader('Comprovante de Acompanhamento — Programa Bolsa Família',
       `Estabelecimento: <strong>${esc(eas || '—')}</strong> · Emitido em ${hoje}`)}
 
     <h2>Identificação do beneficiário</h2>
-    <table>
-      <tr><th style="width:32%">Nome</th><td>${esc(b.nome || '—')}</td></tr>
+    <table class="ficha">
+      <colgroup><col style="width:30%"><col style="width:70%"></colgroup>
+      <tr><th>Nome</th><td>${esc(b.nome || '—')}</td></tr>
       <tr><th>NIS</th><td>${esc(b.nis || '—')}</td></tr>
-      <tr><th>Data de nascimento</th><td>${fmtBRd(b.dob)}${b.idade ? ` · ${b.idade} anos` : ''}</td></tr>
+      <tr><th>Data de nascimento</th><td>${_nascTxt2}</td></tr>
       <tr><th>Código Familiar</th><td>${esc((b.cod_fam || '').replace(/^FAM_/, '') || '—')}</td></tr>
     </table>
 
@@ -5947,8 +5973,9 @@ async function comprovanteAcompBenef(nis) {
 
     <h2>Acompanhamentos registrados (${acs.length})</h2>
     <table class="mapa2">
-      <tr><th>Data</th><th>Peso (kg)</th><th>Estatura (cm)</th><th>IMC</th><th>Vacina</th><th>Gestante</th></tr>
-      ${rows}
+      <colgroup><col style="width:16%"><col style="width:14%"><col style="width:16%"><col style="width:12%"><col style="width:14%"><col style="width:12%"><col style="width:16%"></colgroup>
+      <thead><tr><th class="c">Data</th><th class="c">Peso (kg)</th><th class="c">Estatura (cm)</th><th class="c">IMC</th><th class="c">Vacina</th><th class="c">Gestante</th><th class="c">DUM</th></tr></thead>
+      <tbody>${rows}</tbody>
     </table>
 
     <div class="rpt-sign" style="margin-top:52px">
@@ -8377,6 +8404,7 @@ async function gerarRelatorioAcomp(opts) {
       imc: a.imc,
       vacina: a.vacina_ok,
       gestante: a.gestante,
+      dum: a.dum || '',
       prenatal: a.prenatal,
       tria_risco: a.tria_risco,
       obs: a.observacoes
@@ -8395,11 +8423,11 @@ async function gerarRelatorioAcomp(opts) {
   const preN = p => p==='sim'?'Sim':(p==='nao'?'Não':'—');
   const triaTxt = r => r==='sem_risco'?'Sem risco':(r==='risco'?'Risco':(r==='risco_alto'?'Risco alto':'—'));
   const colgrp = `<colgroup>
-      <col style="width:2.5%"><col style="width:10%"><col style="width:20%"><col style="width:8%">
-      <col style="width:4.5%"><col style="width:15%"><col style="width:8%"><col style="width:5.5%">
-      <col style="width:6%"><col style="width:5%"><col style="width:5.5%"><col style="width:5.5%">
-      <col style="width:6%"><col style="width:8.5%"></colgroup>`;
-  const cabTab = `<thead><tr><th class="mk">✓</th><th>NIS</th><th>Nome</th><th class="c">Nascimento</th><th class="c">Idade</th><th>EAS</th><th class="c">Data acomp.</th><th class="c">Peso (kg)</th><th class="c">Estatura (cm)</th><th class="c">IMC</th><th class="c">Vacina</th><th class="c">Gestante</th><th class="c">Pré-natal</th><th>Observações</th></tr></thead>`;
+      <col style="width:2.5%"><col style="width:9%"><col style="width:15%"><col style="width:7%">
+      <col style="width:4%"><col style="width:12%"><col style="width:7%"><col style="width:5%">
+      <col style="width:5.5%"><col style="width:4.5%"><col style="width:5%"><col style="width:5%">
+      <col style="width:7%"><col style="width:5.5%"><col style="width:6%"></colgroup>`;
+  const cabTab = `<thead><tr><th class="mk">✓</th><th>NIS</th><th>Nome</th><th class="c">Nascimento</th><th class="c">Idade</th><th>EAS</th><th class="c">Data acomp.</th><th class="c">Peso (kg)</th><th class="c">Estatura (cm)</th><th class="c">IMC</th><th class="c">Vacina</th><th class="c">Gestante</th><th class="c">DUM</th><th class="c">Pré-natal</th><th>Observações</th></tr></thead>`;
   const linhaHtml = r => `<tr class="no-break">
       <td class="mk">✓</td>
       <td>${esc(r.nis)}</td>
@@ -8413,6 +8441,7 @@ async function gerarRelatorioAcomp(opts) {
       <td class="c">${r.imc!=null?esc(String(r.imc)):'—'}</td>
       <td class="c">${vac(r.vacina)}</td>
       <td class="c">${r.gestante?'Sim':'—'}</td>
+      <td class="c">${r.gestante?fmtD(r.dum):'—'}</td>
       <td class="c">${preN(r.prenatal)}</td>
       <td>${r.obs?esc(String(r.obs)):'—'}</td>
     </tr>`;
