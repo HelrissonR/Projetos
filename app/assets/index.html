@@ -903,9 +903,14 @@ input:focus,select:focus,textarea:focus,.plogin .plc-input:focus{outline:2px sol
 .ui-confirm .btn-danger{background:var(--err,#c62828);color:#fff;border-color:transparent}
 #printArea .rpt-selo{display:inline-block;border:1.5px solid #111;border-radius:4px;padding:3px 9px;font-size:8.5px;font-weight:800;text-transform:uppercase;letter-spacing:.10em;margin-top:6px}
 #printArea .rpt-selo-nota{font-size:8.5px;color:#555;margin:4px 0 10px}
-#printArea table.mapa2 th,#printArea table.mapa2 td{font-size:8.6px;padding:3px 4px}
-#printArea table.mapa2 td.mk{width:12px;text-align:center;font-weight:800;border-left:2px solid #111}
-#printArea table.mapa2 th.mk{width:12px;border-left:2px solid #111}
+#printArea table.mapa2{table-layout:fixed;width:100%}
+#printArea table.mapa2 th,#printArea table.mapa2 td{font-size:8.4px;padding:4px 5px;word-wrap:break-word;overflow-wrap:anywhere;hyphens:auto;vertical-align:middle;line-height:1.3}
+#printArea table.mapa2 th{text-align:left;font-size:8px;letter-spacing:.03em}
+/* Colunas centradas: o cabecalho acompanha o alinhamento da celula */
+#printArea table.mapa2 th.c,#printArea table.mapa2 td.c{text-align:center}
+#printArea table.mapa2 td.mk,#printArea table.mapa2 th.mk{text-align:center;font-weight:800;border-left:2px solid #111}
+#printArea table.mapa2 td.nome{font-weight:600}
+/* O relatorio nominal injeta @page landscape no proprio documento impresso */
 #printArea .rpt-sign{margin-top:34px;text-align:center;page-break-inside:avoid}
 #printArea .rpt-sign .sign-line{width:230px;border-top:1px solid #111;margin:0 auto 5px}
 #printArea .rpt-sign .sign-name{font-size:10.5px;font-weight:700}
@@ -2548,7 +2553,7 @@ async function parseImportFile(file) {
           nis:        hdrNorm.findIndex(h => h === 'nis' || (h.includes('nis') && !h.includes('ocorr'))),
           cns:        hdrNorm.findIndex(h => h === 'cns' || (h.includes('cns') && !h.includes('ocorr'))),
           nome:       hdrNorm.findIndex(h => h === 'nome'),
-          dob:        hdrNorm.findIndex(h => h.includes('nascimento')),
+          dob:        hdrNorm.findIndex(h => h.includes('nascimento') || h.includes('nasc')),
           data_acomp: hdrNorm.findIndex(h => h.includes('data') && h.includes('acompanhamento')),
           peso:       hdrNorm.findIndex(h => h.includes('peso')),
           estatura:   hdrNorm.findIndex(h => h.includes('estatura') || h.includes('altura')),
@@ -8360,10 +8365,11 @@ async function gerarRelatorioAcomp(opts) {
     const eas = (b.eas || a.estabelecimento || '').trim();
     if (easFiltro && eas !== easFiltro) return;
     linhas.push({
-      cod_fam: b.cod_fam || '',
+      cod_fam: b.cod_fam || '',   // nao e exibido; usado no KPI de familias atendidas
       nis: nis,
       nome: b.nome || '',
       dob: b.dob || '',
+      idade: (b.idade != null ? b.idade : null),
       eas: eas || '(sem EAS)',
       data: a.data,
       peso: a.peso,
@@ -8385,25 +8391,29 @@ async function gerarRelatorioAcomp(opts) {
 
   const fmtD = d => { if(!d) return '—'; const m=String(d).match(/^(\d{4})-(\d{2})-(\d{2})/); return m?`${m[3]}/${m[2]}/${m[1]}`:esc(String(d)); };
   const vac = v => v===true?'Sim':(v===false?'Não':'—');
-  const idadeDe = dob => { const m=String(dob||'').match(/^(\d{4})-(\d{2})-(\d{2})/); if(!m) return '—'; const n=new Date(+m[1],+m[2]-1,+m[3]); if(isNaN(n)) return '—'; const h=new Date(); let a=h.getFullYear()-n.getFullYear(); if(h.getMonth()<n.getMonth()||(h.getMonth()===n.getMonth()&&h.getDate()<n.getDate())) a--; return a>=0?String(a):'—'; };
+  const idadeDe = (dob, idadeCad) => { const m=String(dob||'').match(/^(\d{4})-(\d{2})-(\d{2})/); if(m){ const n=new Date(+m[1],+m[2]-1,+m[3]); if(!isNaN(n)){ const h=new Date(); let a=h.getFullYear()-n.getFullYear(); if(h.getMonth()<n.getMonth()||(h.getMonth()===n.getMonth()&&h.getDate()<n.getDate())) a--; if(a>=0) return String(a); } } return (idadeCad!=null && idadeCad!=='') ? String(idadeCad) : '—'; };
   const preN = p => p==='sim'?'Sim':(p==='nao'?'Não':'—');
   const triaTxt = r => r==='sem_risco'?'Sem risco':(r==='risco'?'Risco':(r==='risco_alto'?'Risco alto':'—'));
-  const cabTab = `<tr><th class="mk">✓</th><th>Cód. Familiar</th><th>NIS</th><th>Nome</th><th>Nascimento</th><th>Idade</th><th>EAS</th><th>Data acomp.</th><th>Peso (kg)</th><th>Estatura (cm)</th><th>IMC</th><th>Vacina</th><th>Gestante</th><th>Pré-natal</th><th>Observações</th></tr>`;
+  const colgrp = `<colgroup>
+      <col style="width:2.5%"><col style="width:10%"><col style="width:20%"><col style="width:8%">
+      <col style="width:4.5%"><col style="width:15%"><col style="width:8%"><col style="width:5.5%">
+      <col style="width:6%"><col style="width:5%"><col style="width:5.5%"><col style="width:5.5%">
+      <col style="width:6%"><col style="width:8.5%"></colgroup>`;
+  const cabTab = `<thead><tr><th class="mk">✓</th><th>NIS</th><th>Nome</th><th class="c">Nascimento</th><th class="c">Idade</th><th>EAS</th><th class="c">Data acomp.</th><th class="c">Peso (kg)</th><th class="c">Estatura (cm)</th><th class="c">IMC</th><th class="c">Vacina</th><th class="c">Gestante</th><th class="c">Pré-natal</th><th>Observações</th></tr></thead>`;
   const linhaHtml = r => `<tr class="no-break">
       <td class="mk">✓</td>
-      <td>${esc(r.cod_fam)}</td>
       <td>${esc(r.nis)}</td>
-      <td>${esc(r.nome)}</td>
-      <td style="text-align:center">${fmtD(r.dob)}</td>
-      <td style="text-align:center">${idadeDe(r.dob)}</td>
+      <td class="nome">${esc(r.nome)}</td>
+      <td class="c">${fmtD(r.dob)}</td>
+      <td class="c">${idadeDe(r.dob, r.idade)}</td>
       <td>${esc(r.eas)}</td>
-      <td style="text-align:center">${fmtD(r.data)}</td>
-      <td style="text-align:center">${r.peso!=null?esc(String(r.peso)):'—'}</td>
-      <td style="text-align:center">${r.altura!=null?esc(String(r.altura)):'—'}</td>
-      <td style="text-align:center">${r.imc!=null?esc(String(r.imc)):'—'}</td>
-      <td style="text-align:center">${vac(r.vacina)}</td>
-      <td style="text-align:center">${r.gestante?'Sim':'—'}</td>
-      <td style="text-align:center">${preN(r.prenatal)}</td>
+      <td class="c">${fmtD(r.data)}</td>
+      <td class="c">${r.peso!=null?esc(String(r.peso)):'—'}</td>
+      <td class="c">${r.altura!=null?esc(String(r.altura)):'—'}</td>
+      <td class="c">${r.imc!=null?esc(String(r.imc)):'—'}</td>
+      <td class="c">${vac(r.vacina)}</td>
+      <td class="c">${r.gestante?'Sim':'—'}</td>
+      <td class="c">${preN(r.prenatal)}</td>
       <td>${r.obs?esc(String(r.obs)):'—'}</td>
     </tr>`;
 
@@ -8415,10 +8425,10 @@ async function gerarRelatorioAcomp(opts) {
     [...grupos.keys()].sort((a,b)=>a.localeCompare(b,'pt')).forEach(k => {
       const g = grupos.get(k);
       corpo += `<div class="rpt-eas-sub">${esc(k)} — ${g.length} acompanhamento${g.length===1?'':'s'}</div>
-        <table class="mapa2">${cabTab}${g.map(linhaHtml).join('')}</table>`;
+        <table class="mapa2">${colgrp}${cabTab}<tbody>${g.map(linhaHtml).join('')}</tbody></table>`;
     });
   } else {
-    corpo = `<table class="mapa2">${cabTab}${linhas.map(linhaHtml).join('')}</table>`;
+    corpo = `<table class="mapa2">${colgrp}${cabTab}<tbody>${linhas.map(linhaHtml).join('')}</tbody></table>`;
   }
 
   const escopo = easFiltro ? esc(easFiltro) : 'Todos os estabelecimentos';
