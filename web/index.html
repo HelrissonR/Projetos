@@ -683,6 +683,9 @@ body.navind-pill .nav-icon[aria-current="page"]{background:var(--accent-soft);co
     padding:12px 14px;font-size:14px;border-radius:12px;font-weight:600;
     color:rgba(255,255,255,.72);
   }
+  /* Especificidade acima da regra acima, para o modo flat continuar valendo */
+  body.flat:not(.desk-bottom) nav.bottom button,
+  body.flat:not(.desk-bottom) nav.bottom .nav-icon{border-radius:0}
   body:not(.desk-bottom) nav.bottom button:hover,
   body:not(.desk-bottom) nav.bottom .nav-icon:hover{background:rgba(255,255,255,.07);color:#fff}
   body:not(.desk-bottom) nav.bottom button svg,
@@ -786,21 +789,28 @@ input,select,textarea{border-radius:11px}
 .fam-prog-bar>div{background:var(--violet)}
 
 /* ══ FLAT — sem cantos arredondados e sem bordas visíveis ══
+   Escopo em body.flat (ligado por padrão) para que o Editor Visual possa
+   desligar o modo ou sobrepor propriedades sem guerra de !important.
    Exceção: o hero plum (.plum-hero) mantém raio e detalhes. */
-*:not(.plum-hero):not(.plum-hero *){border-radius:0!important}
-.card,.card-sub,.cfg-card,.plum-row,.plum-strip,.benef-facts,.cbf,.af-panel,
+body.flat *:not(.plum-hero):not(.plum-hero *){border-radius:0}
+body.flat :is(.card,.card-sub,.cfg-card,.plum-row,.plum-strip,.benef-facts,.cbf,.af-panel,
 .btn,.btn-g,.btn-p,.btn-s,.afchip,.pchip,.mb-stat,.fam-prog,.cfg-accordion,
 input,select,textarea,.search-wrap,.af-bar,.home-cta,.plc-input,.plc-submit,
-.empty-state,.home-banner,.sync-pend,.alert-action,.ur,#sheet,.illus{border:none!important}
+.empty-state,.home-banner,.sync-pend,.alert-action,.ur,#sheet,.illus){border:none}
+/* Alvos que o seletor universal não alcança: IDs (especificidade maior) e
+   pseudo-elementos (não casam com `*`). */
+body.flat #sheet{border-top-left-radius:0;border-top-right-radius:0}
+body.flat #toast{border-radius:0!important;border:none}
+body.flat #sheetB .card{border-radius:0}
+body.flat .mb-section-title::before{border-radius:0}
 /* Separação por superfície e por linha-fina apenas onde é estrutural */
 .card,.card-sub,.cfg-card,.plum-row,.benef-facts,.plum-strip{background:var(--panel)}
 .plum-row+.plum-row,.benef-facts .bf-item+.bf-item,.ur+.ur{box-shadow:inset 0 1px 0 var(--border)}
-.cfg-card-head{border-bottom:1px solid var(--border)!important}
-.ac-more-body{border-top:1px solid var(--border)!important}
-.mb-section-title::before{border-radius:0}
+body.flat .cfg-card-head{border-bottom:1px solid var(--border)}
+body.flat .ac-more-body{border-top:1px solid var(--border)}
 /* Controles de formulário: fundo levemente distinto no lugar da borda */
 input,select,textarea,.plogin .plc-input{background:var(--panel-2)}
-input:focus,select:focus,textarea:focus,.plogin .plc-input:focus{outline:2px solid var(--violet);outline-offset:-2px;box-shadow:none!important}
+input:focus,select:focus,textarea:focus,.plogin .plc-input:focus{outline:2px solid var(--violet);outline-offset:-2px;box-shadow:none}
 .cbf{background:var(--panel-2)}
 .cbf:has(input:checked){background:var(--violet-soft);box-shadow:inset 0 0 0 2px var(--violet)}
 /* Diálogo de escolha */
@@ -956,7 +966,7 @@ header.top{padding:12px 16px}
 .wiz-seg{height:4px}
 </style>
 </head>
-<body>
+<body class="flat">
 <div id="scrollTint"></div>
 <div id="toast"></div>
 <div id="printArea"></div>
@@ -967,10 +977,10 @@ header.top{padding:12px 16px}
 <div class="plogin">
 
   <!-- ═══ HERO PLUM ═══ -->
-  <aside class="plogin-hero">
-    <div class="plh-kicker">Bolsa Família · Saúde</div>
-    <div class="plh-title">Acompanhamento de Condicionalidades</div>
-    <div class="plh-sub">Gestão e busca ativa dos beneficiários do Bolsa Família nas condicionalidades de saúde — online e offline.</div>
+  <aside class="plogin-hero" data-blk="hero">
+    <div class="plh-kicker" data-txt="login.kicker">Bolsa Família · Saúde</div>
+    <div class="plh-title" data-txt="login.heroTitulo">Acompanhamento de Condicionalidades</div>
+    <div class="plh-sub" data-txt="login.heroSub">Gestão e busca ativa dos beneficiários do Bolsa Família nas condicionalidades de saúde — online e offline.</div>
     <div class="plh-illus">
       <svg viewBox="0 0 240 200" width="260" height="216" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustração de acompanhamento de saúde">
         <ellipse cx="120" cy="176" rx="86" ry="12" fill="rgba(255,255,255,.06)"/>
@@ -992,14 +1002,14 @@ header.top{padding:12px 16px}
   <!-- ═══ CARTÃO DE ACESSO ═══ -->
   <main class="plogin-card">
     <div class="plc-inner">
-      <div class="plc-brand">
-        <strong>Bolsa Família</strong><small>Saúde · Condicionalidades</small>
+      <div class="plc-brand" data-blk="marca">
+        <strong data-txt="login.marca">Bolsa Família</strong><small data-txt="login.marcaSub">Saúde · Condicionalidades</small>
       </div>
 
-      <h1 class="plc-h">Acesse sua conta</h1>
-      <p class="plc-sub">Entre com seu usuário ou e-mail para continuar.</p>
+      <h1 class="plc-h" data-blk="titulo" data-txt="login.titulo">Acesse sua conta</h1>
+      <p class="plc-sub" data-txt="login.subtitulo">Entre com seu usuário ou e-mail para continuar.</p>
 
-      <form class="plc-form" onsubmit="_doLoginSafe();return false" novalidate>
+      <form class="plc-form" data-blk="formulario" onsubmit="_doLoginSafe();return false" novalidate>
         <label for="loginUser" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Usuário ou e-mail</label>
         <div class="plc-field">
           <span class="plc-ico"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
@@ -1020,10 +1030,10 @@ header.top{padding:12px 16px}
         <div id="loginErr" class="nl-err" role="alert"></div>
         <div id="loginBlocksArea"></div>
 
-        <button type="submit" class="plc-submit">Entrar</button>
+        <button type="submit" class="plc-submit" data-txt="login.botao">Entrar</button>
       </form>
 
-      <div class="plc-help">
+      <div class="plc-help" data-blk="ajuda">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
         Precisa de ajuda? Fale com o administrador.
       </div>
@@ -1759,7 +1769,9 @@ const SYNC_SETTINGS_KEYS = [
   'designAppTitle', 'designLoginSubtitle', 'corPrimaria',
   'logoApp', 'appIcon', 'designLoginHeroBg', 'designAppBg',
   'sobreDescricao', 'sobreResponsavel', 'sobreCargo', 'sobreEndereco',
-  'sobreTelefone', 'sobreEmail', 'sobreSite', 'sobreInfo'
+  'sobreTelefone', 'sobreEmail', 'sobreSite', 'sobreInfo',
+  // Editor Visual — decisões de marca do município, valem para todos os aparelhos
+  'vdTokens', 'vdStyles', 'vdText', 'vdLayout', 'vdFlat'
 ];
 window._applyingSettings = false;
 
@@ -3147,8 +3159,8 @@ async function renderHome() {
   const ringOff = (ringC * (1 - vigPct / 100)).toFixed(1);
   const ringColor = vigPct >= 100 ? 'var(--ok)' : 'var(--accent)';
   const vigCard = nb > 0 ? `
-    <div class="card card-sub nh" style="padding:16px">
-      <div class="mb-section-title">${fi('target', 12)} Meta da vigência
+    <div class="card card-sub nh" data-blk="meta" style="padding:16px">
+      <div class="mb-section-title">${fi('target', 12)} <span data-txt="home.secMeta">Meta da vigência</span>
         <span class="tag ${diasRest <= 30 ? 'tag-w' : 'tag-i'}" style="margin-left:auto">${diasRest} dias restantes</span></div>
       <div style="display:flex;align-items:center;gap:16px">
         <svg viewBox="0 0 84 84" style="width:84px;height:84px;flex-shrink:0">
@@ -3182,7 +3194,7 @@ async function renderHome() {
     const dias = last ? Math.floor((Date.now() - new Date(last)) / 864e5) : null;
     if (dias === null || dias >= 7) {
       backupBanner = `
-      <div class="sync-pend" style="background:var(--accent-soft);border-color:var(--accent);color:var(--text)"
+      <div class="sync-pend" data-blk="backup" style="background:var(--accent-soft);border-color:var(--accent);color:var(--text)"
         onclick="exportBackup().then(()=>_softRefreshHome(true))" title="Baixa o backup completo (JSON) e zera o lembrete">
         ${fi('save',15)}
         <span style="flex:1">Backup semanal ${dias===null?'nunca feito':'há '+dias+' dias'} — toque para baixar agora</span>
@@ -3194,7 +3206,7 @@ async function renderHome() {
   // ── Registros aguardando sincronização ───────────────
   const pendSync = acomps.filter(a => !a.synced_at).length;
   const syncBanner = (SB && pendSync > 0) ? `
-    <div class="sync-pend" role="button" tabindex="0" aria-label="Sincronizar agora" onclick="if(MANUAL_OFF){toggleManualOffline()}else{Sync.upload();showToast('Sincronizando...','ok')}" title="Toque para sincronizar agora">
+    <div class="sync-pend" data-blk="sync" role="button" tabindex="0" aria-label="Sincronizar agora" onclick="if(MANUAL_OFF){toggleManualOffline()}else{Sync.upload();showToast('Sincronizando...','ok')}" title="Toque para sincronizar agora">
       ${fi('refresh-cw',15)}
       <span style="flex:1">${pendSync} registro${pendSync>1?'s':''} aguardando sincronização${MANUAL_OFF?' — modo offline ativado':navigator.onLine?'':' — sem internet, será enviado ao reconectar'}</span>
       ${MANUAL_OFF?`<span style="text-decoration:underline">Reativar</span>`:navigator.onLine?`<span style="text-decoration:underline">Sincronizar</span>`:''}
@@ -3235,8 +3247,8 @@ async function renderHome() {
         </div>
       </div>`;
     }).join('');
-    adminPanel = `<div class="card card-sub nh" style="padding:14px">
-      <div class="mb-section-title">${fi('users',12)} Operadores
+    adminPanel = `<div class="card card-sub nh" data-blk="operadores" style="padding:14px">
+      <div class="mb-section-title">${fi('users',12)} <span data-txt="home.secOperadores">Operadores</span>
         <span class="tag tag-ok" style="margin-left:auto">${nOnline} online</span></div>
       <div class="mb-ops-grid" style="margin-top:8px">${rows || '<div class="small muted">Nenhum operador cadastrado.</div>'}</div>
       <div class="small muted" style="font-size:10px;margin-top:8px;text-align:center">Atualiza em tempo real conforme os operadores acessam e registram acompanhamentos.</div>
@@ -3263,10 +3275,10 @@ async function renderHome() {
   return `<div class="s4">
 
     <!-- ── Plum hero: saudação + cobertura + KPIs + busca ── -->
-    <div class="plum-hero">
+    <div class="plum-hero" data-blk="hero">
       <div class="flex aic jcb" style="gap:12px">
         <div style="min-width:0">
-          <div class="ph-kicker">Bolsa Família &middot; Saúde</div>
+          <div class="ph-kicker" data-txt="home.kicker">Bolsa Família &middot; Saúde</div>
           <div class="ph-name">Olá, ${esc(ME.nome.split(' ')[0])}</div>
           <div class="ph-sub" style="text-transform:capitalize">${hoje}</div>
         </div>
@@ -3282,18 +3294,18 @@ async function renderHome() {
 
       <div class="ph-cov" role="button" tabindex="0" aria-label="Ver detalhes da cobertura" onclick="nav('map')" style="cursor:pointer">
         <div style="flex:1;min-width:0">
-          <div class="flex aic" style="gap:7px;color:rgba(255,255,255,.8);font-size:13px;font-weight:600">${fi('heart',15)} Acompanhamento na vigência</div>
+          <div class="flex aic" style="gap:7px;color:rgba(255,255,255,.8);font-size:13px;font-weight:600">${fi('heart',15)} <span data-txt="home.coberturaLabel">Acompanhamento na vigência</span></div>
           <div class="ph-cov-num" style="margin-top:6px">${vigPct}%</div>
-          <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:4px">${vigDone.toLocaleString('pt-BR')} de ${nb.toLocaleString('pt-BR')} pessoas acompanhadas</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:4px">${vigDone.toLocaleString('pt-BR')} de ${nb.toLocaleString('pt-BR')} <span data-txt="home.coberturaSufixo">pessoas acompanhadas</span></div>
         </div>
         <div class="ph-donut" style="background:conic-gradient(#a56cf0 0 ${vigPct}%,rgba(255,255,255,.16) ${vigPct}% 100%)"><span>${vigPct}%</span></div>
       </div>
 
       <div class="ph-kpis">
-        <div class="ph-kpi"><div class="ph-kpi-num">${nb.toLocaleString('pt-BR')}</div><div class="ph-kpi-lbl">Beneficiários</div></div>
-        <div class="ph-kpi"><div class="ph-kpi-num">${nf.toLocaleString('pt-BR')}</div><div class="ph-kpi-lbl">Famílias</div></div>
-        <div class="ph-kpi"><div class="ph-kpi-num">${acHoje.toLocaleString('pt-BR')}</div><div class="ph-kpi-lbl">Acomp. hoje</div></div>
-        <div class="ph-kpi"><div class="ph-kpi-num">${acMes.toLocaleString('pt-BR')}</div><div class="ph-kpi-lbl">No mês</div></div>
+        <div class="ph-kpi"><div class="ph-kpi-num">${nb.toLocaleString('pt-BR')}</div><div class="ph-kpi-lbl" data-txt="home.kpiBenef">Beneficiários</div></div>
+        <div class="ph-kpi"><div class="ph-kpi-num">${nf.toLocaleString('pt-BR')}</div><div class="ph-kpi-lbl" data-txt="home.kpiFam">Famílias</div></div>
+        <div class="ph-kpi"><div class="ph-kpi-num">${acHoje.toLocaleString('pt-BR')}</div><div class="ph-kpi-lbl" data-txt="home.kpiHoje">Acomp. hoje</div></div>
+        <div class="ph-kpi"><div class="ph-kpi-num">${acMes.toLocaleString('pt-BR')}</div><div class="ph-kpi-lbl" data-txt="home.kpiMes">No mês</div></div>
       </div>
     </div>
 
@@ -3304,15 +3316,15 @@ async function renderHome() {
 
     ${adminPanel}
 
-    ${can('acomp.create') ? `<button class="home-cta" role="button" tabindex="0" aria-label="Registrar acompanhamento" onclick="nav('search')" style="margin-bottom:4px">
-      Registrar acompanhamento
+    ${can('acomp.create') ? `<button class="home-cta" data-blk="cta" role="button" tabindex="0" aria-label="Registrar acompanhamento" onclick="nav('search')" style="margin-bottom:4px">
+      <span data-txt="home.cta">Registrar acompanhamento</span>
     </button>` : ''}
 
     <!-- ── Agenda de prioridades (atalho) ── -->
-    <div class="plum-row" role="button" tabindex="0" aria-label="Abrir agenda de prioridades" onclick="nav('agenda')" style="padding:14px">
+    <div class="plum-row" data-blk="agenda" role="button" tabindex="0" aria-label="Abrir agenda de prioridades" onclick="nav('agenda')" style="padding:14px">
       <div class="pr-icon" style="background:${vencidosN>0?'var(--err-soft)':'var(--ok-soft)'};color:${vencidosN>0?'var(--err)':'var(--ok)'}">${fi('calendar',20)}</div>
       <div class="pr-body">
-        <div class="pr-title">Agenda de prioridades</div>
+        <div class="pr-title" data-txt="home.agendaTitulo">Agenda de prioridades</div>
         <div class="pr-sub">${vencidosN>0?`${vencidosN.toLocaleString('pt-BR')} pendente${vencidosN>1?'s':''} no semestre — toque para ver`:'Tudo em dia no semestre atual'}</div>
       </div>
       <div class="pr-right">${vencidosN>0?`<span class="pchip pchip-d">${vencidosN}</span>`:`<span class="pchip pchip-ok">✓</span>`}${fi('chevron-right',18)}</div>
@@ -3324,8 +3336,8 @@ async function renderHome() {
     ${vigCard}
 
     <!-- ── Gráfico: últimos 6 meses ── -->
-    <div class="card card-sub nh" style="padding:16px">
-      <div class="mb-section-title">${fi('bar-chart-2',12)} Últimos 6 meses <span style="margin-left:auto;font-size:10px;font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0">${na} total</span></div>
+    <div class="card card-sub nh" data-blk="grafico" style="padding:16px">
+      <div class="mb-section-title">${fi('bar-chart-2',12)} <span data-txt="home.secGrafico">Últimos 6 meses</span> <span style="margin-left:auto;font-size:10px;font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0">${na} total</span></div>
       <div style="height:64px;display:flex;align-items:flex-end;gap:4px">
         ${monthData.map(m => `<div style="flex:1;border-radius:5px 5px 0 0;background:${m.isCur?'var(--accent)':m.count>0?'color-mix(in srgb,var(--accent) 25%,var(--border))':'var(--border)'};height:${Math.max(4,Math.round((m.count/maxCount)*60))}px;transition:height .4s cubic-bezier(.34,1.56,.64,1)" title="${m.lbl}: ${m.count} acomp."></div>`).join('')}
       </div>
@@ -3338,7 +3350,7 @@ async function renderHome() {
     </div>
 
     <!-- ── TRIA — Segurança Alimentar ── -->
-    ${triaOn && triaTotal > 0 ? `<div class="card card-sub nh" style="padding:16px">
+    ${triaOn && triaTotal > 0 ? `<div class="card card-sub nh" data-blk="tria" style="padding:16px">
       <div class="mb-section-title">
         ${fi('alert-triangle',12)} TRIA — Segurança Alimentar
         <span class="tag tag-i" style="margin-left:auto">${triaTotal} avaliados</span>
@@ -3365,8 +3377,8 @@ async function renderHome() {
     </div>` : ''}
 
     <!-- ── Atividade recente ── -->
-    ${recent.length > 0 ? `<div class="card card-sub nh" style="padding:16px">
-      <div class="mb-section-title">${fi('clock',12)} Atividade recente</div>
+    ${recent.length > 0 ? `<div class="card card-sub nh" data-blk="recentes" style="padding:16px">
+      <div class="mb-section-title">${fi('clock',12)} <span data-txt="home.secRecentes">Atividade recente</span></div>
       <div class="mb-feed">
         ${recent.map(a => {
           const nome = nisToNome[a.nis] || a.nis || '—';
@@ -3384,21 +3396,21 @@ async function renderHome() {
 
     <!-- ── Alertas ── -->
     ${showAlerts ? `
-    ${vencidosN > 0 ? `<div class="card alert-action" role="button" tabindex="0" style="background:var(--err-soft);border-color:var(--err)" onclick="showVencidos()" title="Ver acompanhamentos vencidos" aria-label="Ver acompanhamentos vencidos">
+    ${vencidosN > 0 ? `<div class="card alert-action" data-blk="alerta-vencidos" role="button" tabindex="0" style="background:var(--err-soft);border-color:var(--err)" onclick="showVencidos()" title="Ver acompanhamentos vencidos" aria-label="Ver acompanhamentos vencidos">
       <div class="flex aic jcb">
         <div class="flex aic" style="gap:8px"><span style="color:var(--err)">${fi('clock',16)}</span>
         <div><div style="font-weight:600;color:var(--err)">${vencidosN} acompanhamento${vencidosN>1?'s':''} vencido${vencidosN>1?'s':''}</div>
         <div class="small muted">Sem acompanhamento no semestre atual</div></div></div>
         <span style="color:var(--err);opacity:.6">${fi('chevron-right',16)}</span>
       </div></div>` : ''}
-    ${famSemAcomp > 0 ? `<div class="card alert-action" role="button" tabindex="0" style="background:var(--warn-soft);border-color:var(--warn)" onclick="_filtroRapido('semAcomp')" title="Ver famílias sem acompanhamento" aria-label="Ver famílias sem acompanhamento">
+    ${famSemAcomp > 0 ? `<div class="card alert-action" data-blk="alerta-familias" role="button" tabindex="0" style="background:var(--warn-soft);border-color:var(--warn)" onclick="_filtroRapido('semAcomp')" title="Ver famílias sem acompanhamento" aria-label="Ver famílias sem acompanhamento">
       <div class="flex aic jcb">
         <div class="flex aic" style="gap:8px"><span style="color:var(--warn)">${fi('alert-triangle',16)}</span>
         <div><div style="font-weight:600;color:var(--warn)">${famSemAcomp} famílias sem acompanhamento</div>
         <div class="small muted">Nenhum membro foi acompanhado ainda</div></div></div>
         <span style="color:var(--warn);opacity:.6">${fi('chevron-right',16)}</span>
       </div></div>` : ''}
-    ${vacPendente > 0 ? `<div class="card alert-action" role="button" tabindex="0" style="background:var(--err-soft);border-color:var(--err)" onclick="_filtroRapido('vacPend')" title="Ver beneficiários com vacinação pendente" aria-label="Ver beneficiários com vacinação pendente">
+    ${vacPendente > 0 ? `<div class="card alert-action" data-blk="alerta-vacina" role="button" tabindex="0" style="background:var(--err-soft);border-color:var(--err)" onclick="_filtroRapido('vacPend')" title="Ver beneficiários com vacinação pendente" aria-label="Ver beneficiários com vacinação pendente">
       <div class="flex aic jcb">
         <div class="flex aic" style="gap:8px"><span style="color:var(--err)">${fi('x-circle',16)}</span>
         <div><div style="font-weight:600;color:var(--err)">${vacPendente} com vacinação pendente</div>
@@ -3414,7 +3426,7 @@ async function renderHome() {
       </div></div>` : ''}` : ''}
 
     <!-- ── Ações rápidas ── -->
-    <div>
+    <div data-blk="acoes">
       <div class="mb-section-title">${fi('zap',12)} Ações rápidas</div>
       <div class="mb-quick">
         ${can('data.import') ? `<button class="mb-quick-btn" onclick="showImportMapaModal()">
@@ -3448,18 +3460,18 @@ async function renderSearch() {
   return `<div class="s3">
     ${bannerHtml}
     <div class="flex aic jcb">
-      <div><h2>Buscar</h2><p class="muted">Clique para acompanhar</p></div>
+      <div data-blk="titulo"><h2 data-txt="busca.titulo">Buscar</h2><p class="muted" data-txt="busca.subtitulo">Clique para acompanhar</p></div>
       <div style="display:flex;gap:6px">
         ${can('acomp.avulso')?`<button class="btn btn-s btn-g" onclick="_avulsoNome='';showAcompAvulso()" style="display:inline-flex;align-items:center;gap:4px">${fi('plus',13)} Avulso</button>`:''}
       </div>
     </div>
 
-    <div class="search-wrap" style="position:relative">
+    <div class="search-wrap" data-blk="busca" style="position:relative">
       <span class="s-icon">${fi('search',16)}</span>
       <input type="text" id="sI" placeholder="NIS, nome, CPF..." oninput="debouncedDoSearch(this.value)" style="padding-right:42px" aria-label="Buscar benefici&aacute;rio por NIS, nome ou CPF">
       ${(window.SpeechRecognition||window.webkitSpeechRecognition)?`<button class="mic-btn" id="micBtn" onclick="_voiceSearch()" title="Buscar por voz">${fi('mic',17)}</button>`:''}
     </div>
-    <div class="recent-chips" id="recentChips">${_recentChipsHtml()}</div>
+    <div class="recent-chips" id="recentChips" data-blk="recentes">${_recentChipsHtml()}</div>
 
     <div>
       <button class="btn btn-s btn-g ${temFiltro?'pend':''}" id="btnFiltros" onclick="toggleFiltrosBusca()"
@@ -3497,7 +3509,7 @@ async function renderSearch() {
       </div>
     </div>
 
-    <div id="sR"><div class="empty-state" style="padding:28px 16px">${illus('search',false)}<strong>Encontre um beneficiário</strong><p>Busque por NIS, nome ou use os filtros — ou toque no microfone para falar.</p></div></div>
+    <div id="sR" data-blk="resultados"><div class="empty-state" style="padding:28px 16px">${illus('search',false)}<strong>Encontre um beneficiário</strong><p>Busque por NIS, nome ou use os filtros — ou toque no microfone para falar.</p></div></div>
   </div>`;
 }
 
@@ -3520,15 +3532,15 @@ async function renderFamilies() {
 
   return `<div class="s4">
     ${bannerHtml}
-    <div class="flex aic jcb">
-      <div><h2>Famílias</h2><p class="muted">${familias.length} famílias · ${nb} beneficiários</p></div>
+    <div class="flex aic jcb" data-blk="cabecalho">
+      <div><h2 data-txt="familias.titulo">Famílias</h2><p class="muted">${familias.length} famílias · ${nb} beneficiários</p></div>
       ${can('data.export')?`<button class="btn btn-s btn-g" onclick="nav('config').then(()=>setCfgTab('dados'))" title="Exportações em Configurações → Dados" style="display:inline-flex;align-items:center;gap:5px">${fi('download',13)} Exportar</button>`:''}
     </div>
     <div class="s3">
-      <input type="text" id="famBusca" placeholder="Buscar por endereço, bairro ou nome..." oninput="filtrarFamilias()">
+      <input type="text" id="famBusca" data-blk="busca" placeholder="Buscar por endereço, bairro ou nome..." oninput="filtrarFamilias()">
 
       <!-- Filtros unificados: um único acesso que abre os submenus -->
-      <div class="famf">
+      <div class="famf" data-blk="filtros">
         <button class="famf-trigger" id="famfTrigger" onclick="_toggleFamFiltros()" aria-expanded="false">
           ${fi('sliders',15)} <span style="flex:1;text-align:left">Filtros</span>
           <span class="famf-badge" id="famfBadge"></span>
@@ -3560,7 +3572,7 @@ async function renderFamilies() {
         </div>
       </div>
     </div>
-    <div id="famLista">${_renderFamLista(familias, nb, 1)}</div>
+    <div id="famLista" data-blk="lista">${_renderFamLista(familias, nb, 1)}</div>
   </div>`;
 }
 
@@ -3742,11 +3754,11 @@ async function renderAcomp() {
   return `<div class="s4">
     ${bannerHtml}
     <div class="flex aic jcb">
-      <div><h2>Acompanhamentos</h2><p class="muted" id="acompCount">${total} registros</p></div>
+      <div data-blk="titulo"><h2 data-txt="registros.titulo">Acompanhamentos</h2><p class="muted" id="acompCount">${total} registros</p></div>
       ${can('data.export')?`<button class="btn btn-s btn-g" onclick="nav('config').then(()=>setCfgTab('dados'))" title="Exportações em Configurações → Dados" style="display:inline-flex;align-items:center;gap:5px">${fi('download',13)} Exportar</button>`:''}
     </div>
 
-    <div class="af-bar">
+    <div class="af-bar" data-blk="busca">
       <input type="text" id="acompBusca" placeholder="Buscar por nome ou NIS..." oninput="filtrarAcomps(this.value)" style="margin:0">
       <button class="af-btn" id="afToggleBtn" onclick="toggleAcompFiltros()" title="Filtros">
         ${fi('sliders',14)} Filtrar
@@ -3754,7 +3766,7 @@ async function renderAcomp() {
       </button>
     </div>
 
-    <div class="af-panel" id="acompFiltroPanel">
+    <div class="af-panel" id="acompFiltroPanel" data-blk="filtros">
       <div>
         <div class="af-group-lbl">${fi('calendar',11)} Período</div>
         <div class="af-chips">
@@ -3795,7 +3807,7 @@ async function renderAcomp() {
       </div>
     </div>
 
-    <div id="acompLista">
+    <div id="acompLista" data-blk="lista">
     ${!acomps.length?`<div class="empty-state">${illus('empty')}<strong>Nenhum acompanhamento ainda</strong><p>Busque um beneficiário, selecione e clique em <b>Acompanhar</b>.</p></div>`:
     acomps.map(a => _renderAcompCard(a, bMap, canEdit)).join('')}
     ${total > 50 ? `<div class="card card-sub nh muted small" style="text-align:center;padding:10px">Mostrando 50 de ${total}. Use a busca para filtrar.</div>` : ''}
@@ -3809,7 +3821,7 @@ async function renderRegistros(tab) {
   const t = (tab === 'busca' || tab === 'acomp') ? tab : (window._regTab || 'acomp');
   window._regTab = t;
   const body = t === 'busca' ? await renderSearch() : await renderAcomp();
-  return `<div class="reg-seg" role="tablist" aria-label="Registros">
+  return `<div class="reg-seg" data-blk="abas" role="tablist" aria-label="Registros">
       <button class="rseg ${t==='acomp'?'active':''}" role="tab" aria-selected="${t==='acomp'}" onclick="setRegTab('acomp')">${fi('clipboard',14)} Acompanhamentos</button>
       <button class="rseg ${t==='busca'?'active':''}" role="tab" aria-selected="${t==='busca'}" onclick="setRegTab('busca')">${fi('search',14)} Buscar beneficiário</button>
     </div>${body}`;
@@ -3820,6 +3832,7 @@ async function setRegTab(t) {
   const mc = $('#mc');
   if (!mc) return;
   mc.innerHTML = await renderRegistros(t);
+  _vdDecorateScreen(t === 'busca' ? 'search' : 'acomp', mc);
   mc.dataset.page = 'acomp';
   window.scrollTo(0,0);
   if (typeof _animateCounters === 'function') _animateCounters();
@@ -3882,9 +3895,9 @@ async function renderAgenda() {
   if (nb === 0) return `<div class="s4">${bannerHtml}<div class="empty-state">${illus('empty',false)}<strong>Sem dados</strong><p>Importe a base para ver as prioridades de acompanhamento.</p></div></div>`;
 
   return `<div class="s4">
-    <div class="plum-hero">
+    <div class="plum-hero" data-blk="hero">
       <div class="ph-kicker">Bolsa Família &middot; Saúde</div>
-      <div class="ph-name" style="font-size:23px">Agenda de prioridades</div>
+      <div class="ph-name" style="font-size:23px" data-txt="agenda.titulo">Agenda de prioridades</div>
       <div class="ph-cov" style="display:block">
         <div style="display:flex;align-items:baseline;gap:9px">
           <span style="font-size:30px;font-weight:800;line-height:1">${diasRest}</span>
@@ -3899,7 +3912,7 @@ async function renderAgenda() {
 
     ${pend.length === 0
       ? `<div class="empty-state">${illus('done',false)}<strong>Tudo em dia!</strong><p>Nenhum acompanhamento pendente no semestre ${semLbl}.</p></div>`
-      : `<div class="mb-section-title" style="margin-top:2px">${fi('bell',12)} Prioridades para hoje <span style="margin-left:auto;color:var(--accent);background:var(--violet-soft);border-radius:999px;padding:2px 9px;font-weight:800">${pend.length}</span></div>
+      : `<div class="mb-section-title" style="margin-top:2px">${fi('bell',12)} <span data-txt="agenda.secPrioridades">Prioridades para hoje</span> <span style="margin-left:auto;color:var(--accent);background:var(--violet-soft);border-radius:999px;padding:2px 9px;font-weight:800">${pend.length}</span></div>
         ${_grupo('Nunca acompanhados · crítico', 'var(--err)', pendNunca, ()=>`<span class="pchip pchip-d">nunca</span>`, 'background:var(--err-soft);color:var(--err)', 20)}
         ${_grupo('Gestantes pendentes · pré-natal', 'var(--warn)', pendGest, ()=>`<span class="pchip pchip-w">gestante</span>`, 'background:var(--warn-soft);color:var(--warn)', 20)}
         ${_grupo('Vencidos do semestre', 'var(--accent)', pendVenc, x=>`<span class="pchip" style="background:var(--violet-soft);color:var(--accent)">${x.diasDesde} d</span>`, 'background:var(--violet-soft);color:var(--accent)', 40)}`}
@@ -4709,6 +4722,7 @@ async function nav(page, _fromPop) {
     default: mc.classList.remove('loading'); return;
   }
   mc.innerHTML = html;
+  _vdDecorateScreen(page, mc);
   mc.classList.remove('loading');
   mc.classList.remove('enter'); void mc.offsetWidth; mc.classList.add('enter');
   mc.dataset.page = page;
@@ -5506,7 +5520,7 @@ async function renderBanner(currentPage) {
        </div>`
     : '';
 
-  return `<div class="home-banner type-${esc(cfg.type)}">${editBtn}${slides}${txtBlock}</div>`;
+  return `<div class="home-banner type-${esc(cfg.type)}" data-blk="banner">${editBtn}${slides}${txtBlock}</div>`;
 }
 
 function _startBannerSlideshow() {
@@ -8179,6 +8193,186 @@ async function applyCustomDesign() {
   const mcEl = document.getElementById('mc');
   if (appBg && mcEl) { mcEl.style.backgroundImage = `url(${appBg})`; mcEl.classList.add('has-app-bg'); }
   else if (mcEl) { mcEl.style.backgroundImage = ''; mcEl.classList.remove('has-app-bg'); }
+
+  // Editor Visual por último: vence as escritas legadas acima
+  await _vdApply();
+  _vdApplyText(document.body);   // cobre a tela de login (markup estático)
+}
+
+// ═══════════════════════════════════════════════════════
+// EDITOR VISUAL — motor de overrides (tokens, estilos, textos, layout)
+// ═══════════════════════════════════════════════════════
+// Componentes editáveis. A chave é um token — nunca um seletor cru — para que
+// um payload sincronizado não consiga injetar algo como `*{display:none}`.
+const VD_COMPONENTS = [
+  { key:'pr-title',  sel:'.pr-title',  label:'Título da linha',   props:['color','fontSize','fontWeight','letterSpacing'] },
+  { key:'pr-sub',    sel:'.pr-sub',    label:'Subtítulo da linha',props:['color','fontSize'] },
+  { key:'pchip',     sel:'.pchip',     label:'Etiqueta de status',props:['background','color','fontSize','fontWeight','padding','borderRadius'] },
+  { key:'mb-section-title', sel:'.mb-section-title', label:'Título de seção', props:['color','fontSize','fontWeight','letterSpacing'] },
+  { key:'afchip',    sel:'.afchip',    label:'Chip de filtro',    props:['background','color','fontSize','padding','borderRadius'] },
+  { key:'btn-p',     sel:'.btn-p',     label:'Botão primário',    props:['background','color','fontSize','fontWeight','padding','borderRadius','boxShadow'] },
+  { key:'btn-g',     sel:'.btn-g',     label:'Botão secundário',  props:['background','color','fontSize','fontWeight','padding','borderRadius','border'] },
+  { key:'home-cta',  sel:'.home-cta',  label:'Botão de destaque', props:['background','color','fontSize','fontWeight','padding','borderRadius','boxShadow'] },
+  { key:'plum-row',  sel:'.plum-row',  label:'Linha de lista',    props:['background','padding','borderRadius','boxShadow','minHeight'] },
+  { key:'plum-strip',sel:'.plum-strip',label:'Faixa de números',  props:['background','padding','borderRadius'] },
+  { key:'plum-hero', sel:'.plum-hero', label:'Destaque (hero)',   props:['background','color','padding','borderRadius'] },
+  { key:'card-sub',  sel:'.card-sub',  label:'Cartão interno',    props:['background','padding','borderRadius','boxShadow','border'] },
+  { key:'cfg-card',  sel:'.cfg-card',  label:'Cartão de config.', props:['background','padding','borderRadius','boxShadow'] },
+  { key:'card',      sel:'.card',      label:'Cartão',            props:['background','padding','borderRadius','boxShadow','border'] },
+];
+// Propriedades permitidas. Fora daqui é descartado — sem display/position/
+// visibility/opacity, para um design ruim não conseguir sumir com a interface.
+const VD_PROPS = {
+  background:{css:'background',type:'color'}, color:{css:'color',type:'color'},
+  borderRadius:{css:'border-radius',type:'size',min:0,max:40},
+  border:{css:'border',type:'text'}, boxShadow:{css:'box-shadow',type:'text'},
+  padding:{css:'padding',type:'size',min:0,max:40},
+  margin:{css:'margin',type:'size',min:0,max:40},
+  gap:{css:'gap',type:'size',min:0,max:32},
+  fontSize:{css:'font-size',type:'size',min:10,max:28},
+  fontWeight:{css:'font-weight',type:'select',opts:['400','500','600','700','800']},
+  letterSpacing:{css:'letter-spacing',type:'text'},
+  textAlign:{css:'text-align',type:'select',opts:['left','center','right']},
+  minHeight:{css:'min-height',type:'size',min:0,max:200},
+  width:{css:'width',type:'text'}, height:{css:'height',type:'text'},
+};
+// Nomes amigáveis dos blocos por tela (árvore de camadas do editor)
+const VD_LABELS = {
+  home:{hero:'Destaque',banner:'Banner',sync:'Aviso de sincronização',backup:'Aviso de backup',
+        operadores:'Operadores',cta:'Botão registrar',agenda:'Atalho da agenda',meta:'Meta da vigência',
+        grafico:'Gráfico 6 meses',tria:'TRIA',recentes:'Atividade recente','alerta-vencidos':'Alerta vencidos',
+        'alerta-familias':'Alerta famílias','alerta-vacina':'Alerta vacinação',acoes:'Ações rápidas'},
+  families:{banner:'Banner',cabecalho:'Cabeçalho',busca:'Busca',filtros:'Filtros',lista:'Lista de famílias'},
+  acomp:{abas:'Abas',banner:'Banner',titulo:'Título',busca:'Busca',filtros:'Filtros',lista:'Lista de registros'},
+  search:{abas:'Abas',banner:'Banner',titulo:'Título',busca:'Busca',recentes:'Buscas recentes',resultados:'Resultados'},
+  agenda:{hero:'Destaque',banner:'Banner'},
+  login:{hero:'Painel da marca',marca:'Marca',titulo:'Título',formulario:'Formulário',ajuda:'Ajuda'},
+};
+const VD_KEYS = ['vdTokens','vdStyles','vdText','vdLayout','vdFlat'];
+window._VD_CACHE = null;
+// Escotilha de emergência: abrir com #vdreset desliga os overrides nesta sessão.
+// Avaliada uma única vez, porque nav() reescreve o hash para #home logo depois.
+const VD_OFF = (typeof location !== 'undefined' && location.hash === '#vdreset');
+if (VD_OFF) { try { console.warn('[Editor Visual] overrides desligados (#vdreset)'); } catch(e){} }
+
+function _vdBlank(){ return { tokens:{light:{},dark:{}}, styles:{}, text:{}, layout:{}, flat:'on' }; }
+
+// Lê e valida o que veio do armazenamento (ou da sincronização)
+async function _vdLoad(force) {
+  if (window._VD_CACHE && !force) return window._VD_CACHE;
+  const out = _vdBlank();
+  const parse = async (k) => { try { return JSON.parse(await IDB.getMeta(k) || 'null'); } catch(e) { return null; } };
+  const tk = await parse('vdTokens'), st = await parse('vdStyles'),
+        tx = await parse('vdText'),   ly = await parse('vdLayout');
+  // tokens: só nomes que existem no :root
+  const okToken = n => typeof n === 'string' && /^--[a-z0-9-]+$/i.test(n);
+  for (const mode of ['light','dark']) {
+    const src = tk && tk[mode]; if (!src || typeof src !== 'object') continue;
+    for (const [n,v] of Object.entries(src)) if (okToken(n) && typeof v === 'string' && v.length < 60) out.tokens[mode][n] = v;
+  }
+  // estilos: componente do registro + propriedade da allowlist
+  if (st && typeof st === 'object') {
+    for (const [comp,props] of Object.entries(st)) {
+      if (!VD_COMPONENTS.some(c => c.key === comp) || !props || typeof props !== 'object') continue;
+      const clean = {};
+      for (const [p,v] of Object.entries(props)) {
+        if (!VD_PROPS[p] || typeof v !== 'string') continue;
+        if (/[{}<>;]|@import|expression\(/i.test(v)) continue;      // valor suspeito
+        if (/url\(/i.test(v) && !/url\(["']?data:/i.test(v)) continue; // só data: em imagens
+        clean[p] = v.slice(0, 120);
+      }
+      if (Object.keys(clean).length) out.styles[comp] = clean;
+    }
+  }
+  if (tx && typeof tx === 'object') {
+    for (const [k,v] of Object.entries(tx)) if (typeof v === 'string' && v.length <= 200) out.text[k] = v;
+  }
+  if (ly && typeof ly === 'object') {
+    for (const [page,cfg] of Object.entries(ly)) {
+      if (!cfg || typeof cfg !== 'object') continue;
+      out.layout[page] = {
+        order:  Array.isArray(cfg.order)  ? cfg.order.filter(x => typeof x === 'string')  : [],
+        hidden: Array.isArray(cfg.hidden) ? cfg.hidden.filter(x => typeof x === 'string') : [],
+      };
+    }
+  }
+  out.flat = (await IDB.getMeta('vdFlat')) === 'off' ? 'off' : 'on';
+  window._VD_CACHE = out;
+  return out;
+}
+
+// Monta uma regra CSS. Prefixo `body` + !important para vencer o bloco FLAT.
+function _vdCss(sel, styleObj) {
+  const decl = Object.entries(styleObj)
+    .filter(([p]) => VD_PROPS[p])
+    .map(([p,v]) => `${VD_PROPS[p].css}:${v}!important`)
+    .join(';');
+  return decl ? `body ${sel}{${decl}}` : '';
+}
+
+// Aplica tokens e estilos. Chamado no fim de applyCustomDesign().
+async function _vdApply() {
+  if (VD_OFF) {
+    document.getElementById('vdStyle')?.remove();
+    (window._VD_APPLIED_TOKENS || []).forEach(n => document.documentElement.style.removeProperty(n));
+    window._VD_APPLIED_TOKENS = [];
+    window._VD_CACHE = _vdBlank();          // impede ordem/texto de serem aplicados
+    document.body.classList.add('flat');
+    return;
+  }
+  const st = await _vdLoad(true);
+  document.body.classList.toggle('flat', st.flat !== 'off');
+
+  const root = document.documentElement;
+  const dark = root.getAttribute('data-theme') === 'dark';
+  const tokens = { ...st.tokens.light, ...(dark ? st.tokens.dark : {}) };
+  // limpa os que saíram e aplica os atuais
+  (window._VD_APPLIED_TOKENS || []).forEach(n => { if (!(n in tokens)) root.style.removeProperty(n); });
+  for (const [n,v] of Object.entries(tokens)) root.style.setProperty(n, v);
+  window._VD_APPLIED_TOKENS = Object.keys(tokens);
+
+  let el = document.getElementById('vdStyle');
+  if (!el) { el = document.createElement('style'); el.id = 'vdStyle'; document.head.appendChild(el); }
+  el.textContent = VD_COMPONENTS
+    .filter(c => st.styles[c.key])
+    .map(c => _vdCss(c.sel, st.styles[c.key]))
+    .filter(Boolean).join('\n');
+}
+
+// Reordena/oculta os blocos de uma tela já renderizada
+function _vdApplyLayout(page, root) {
+  if (VD_OFF) return;
+  const st = window._VD_CACHE; if (!st || !root) return;
+  const cfg = st.layout[page]; if (!cfg) return;
+  const host = root.querySelector('.s4') || root.firstElementChild || root;
+  if (!host) return;
+  const blocos = [...host.children].filter(el => el.hasAttribute?.('data-blk'));
+  if (!blocos.length) return;
+  const porId = new Map(blocos.map(el => [el.getAttribute('data-blk'), el]));
+  cfg.hidden.forEach(id => porId.get(id)?.style.setProperty('display','none','important'));
+  if (cfg.order.length) {
+    // primeiro os listados, depois os que a ordem não conhece (bloco novo não some)
+    const ordenados = cfg.order.map(id => porId.get(id)).filter(Boolean);
+    const resto = blocos.filter(el => !ordenados.includes(el));
+    [...ordenados, ...resto].forEach(el => host.appendChild(el));
+  }
+}
+
+// Substitui os textos marcados com data-txt
+function _vdApplyText(root) {
+  if (VD_OFF) return;
+  const st = window._VD_CACHE; if (!st || !root) return;
+  const t = st.text; if (!t || !Object.keys(t).length) return;
+  root.querySelectorAll('[data-txt]').forEach(el => {
+    const k = el.getAttribute('data-txt');
+    if (t[k] != null) el.textContent = t[k];
+  });
+}
+
+// Ponto único chamado após cada renderização de tela
+function _vdDecorateScreen(page, root) {
+  _vdApplyLayout(page, root);
+  _vdApplyText(root || document.body);
 }
 
 async function saveDesign(key, value) {
@@ -8296,6 +8490,7 @@ async function removeAppBg() {
 async function resetDesign() {
   if (!await uiConfirm('Restaurar todas as configurações de design para o padrão?', {title:'Restaurar design', okText:'Restaurar'})) return;
   const keys = [
+    'vdTokens','vdStyles','vdText','vdLayout','vdFlat',
     'designFont','designFontSize','designDensity','designRadius',
     'designShadow','designBtn','corOk','corWarn','corErr',
     'designAppTitle','designLoginSubtitle','designLoginBg',
@@ -8320,6 +8515,8 @@ async function applyTheme(t) {
   if(icon) icon.outerHTML = t==='dark'
     ? `<svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS.sun}</svg>`
     : `<svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS.moon}</svg>`;
+  // Tokens do editor podem ter variante por tema
+  if (typeof _vdApply === 'function') await _vdApply();
 }
 function toggleTheme(){const c=document.documentElement.hasAttribute('data-theme')?'light':'dark';applyTheme(c);IDB.setMeta('tema',c);}
 
