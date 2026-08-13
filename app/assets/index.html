@@ -833,6 +833,76 @@ input:focus,select:focus,textarea:focus,.plogin .plc-input:focus{outline:2px sol
 .reg-seg .rseg{display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 8px;font-size:13px;font-weight:700;color:var(--muted);background:transparent;cursor:pointer;transition:background .12s,color .12s}
 .reg-seg .rseg.active{background:var(--panel);color:var(--violet)}
 @media(max-width:400px){.reg-seg .rseg{font-size:12px;gap:5px;padding:10px 4px}}
+/* ══ EDITOR VISUAL ══════════════════════════════════════ */
+body.vd-mode header.top,body.vd-mode nav.bottom,body.vd-mode #appFooter{display:none!important}
+body.vd-mode .app{max-width:none;padding:0}
+body.vd-mode main#mc{padding:0;background:none!important}
+.vd-wrap{display:grid;grid-template-columns:224px minmax(0,1fr) 288px;grid-template-rows:auto minmax(0,1fr);
+  height:100dvh;background:var(--panel-2);color:var(--text)}
+.vd-top{grid-column:1/-1;display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--panel);
+  box-shadow:inset 0 -1px 0 var(--border);flex-wrap:wrap}
+.vd-top .vd-title{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.vd-top .vd-spacer{flex:1}
+.vd-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;font-size:13px;font-weight:600;
+  background:var(--panel-2);color:var(--text);cursor:pointer;white-space:nowrap}
+.vd-btn:hover{background:var(--violet-soft);color:var(--violet)}
+.vd-btn[disabled]{opacity:.4;pointer-events:none}
+.vd-btn.pri{background:var(--violet);color:#fff}
+.vd-btn.pri:hover{filter:brightness(1.08);color:#fff}
+.vd-pane{overflow:auto;background:var(--panel);padding:12px}
+.vd-pane h4{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);
+  margin:4px 0 8px;padding-left:9px;border-left:3px solid var(--violet)}
+.vd-pane h4+h4{margin-top:18px}
+.vd-canvas{overflow:auto;padding:18px;display:flex;justify-content:center;align-items:flex-start}
+.vd-frame{background:var(--bg);width:412px;flex:0 0 auto;transform-origin:top center;
+  box-shadow:0 2px 18px rgba(0,0,0,.14);padding:14px;min-height:200px}
+.vd-item{display:flex;align-items:center;gap:8px;width:100%;padding:9px 10px;font-size:13px;text-align:left;
+  background:transparent;color:var(--text);cursor:pointer}
+.vd-item:hover{background:var(--panel-2)}
+.vd-item.on{background:var(--violet-soft);color:var(--violet);font-weight:700}
+.vd-item .vd-grow{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vd-item .vd-mini{padding:3px;color:var(--muted);cursor:pointer;background:transparent}
+.vd-item .vd-mini:hover{color:var(--violet)}
+.vd-item.off .vd-grow{opacity:.45;text-decoration:line-through}
+.vd-scope{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--panel-2);padding:3px;margin-bottom:12px}
+.vd-scope button{padding:7px 4px;font-size:11.5px;font-weight:700;background:transparent;color:var(--muted);cursor:pointer}
+.vd-scope button.on{background:var(--panel);color:var(--violet)}
+.vd-hint{font-size:11px;color:var(--muted);line-height:1.45;background:var(--panel-2);padding:8px 10px;margin-bottom:12px}
+.vd-field{margin-bottom:11px}
+.vd-field label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:4px}
+.vd-field .vd-row{display:flex;align-items:center;gap:6px}
+.vd-field input[type="color"]{width:38px;height:32px;padding:0;flex:0 0 auto;cursor:pointer;background:var(--panel-2)}
+.vd-field input[type="range"]{flex:1;accent-color:var(--violet)}
+.vd-field .vd-val{font-size:12px;font-weight:700;color:var(--text);min-width:44px;text-align:right;font-variant-numeric:tabular-nums}
+.vd-field select,.vd-field input[type="text"],.vd-field textarea{font-size:13px;padding:8px 10px}
+.vd-field .vd-clear{font-size:11px;color:var(--muted);cursor:pointer;background:transparent;padding:2px 4px}
+.vd-field .vd-clear:hover{color:var(--err)}
+.vd-empty{font-size:12px;color:var(--muted);text-align:center;padding:22px 8px;line-height:1.5}
+/* Realce no preview */
+#vdFrame [data-vd-hover]{outline:1px dashed var(--violet);outline-offset:-1px}
+#vdFrame [data-vd-sel]{outline:2px solid var(--violet);outline-offset:-2px}
+#vdFrame [data-blk][data-vd-blk]{outline:2px dashed var(--accent-2);outline-offset:-2px}
+/* Celular: painéis viram gavetas; propriedades abrem no sheet */
+@media(max-width:899px){
+  .vd-wrap{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr) auto}
+  .vd-pane{display:none}
+  .vd-wrap[data-pane="left"] .vd-left{display:block;grid-row:2}
+  .vd-wrap[data-pane="left"] .vd-canvas{display:none}
+  .vd-right{display:none!important}
+  .vd-tabs{grid-column:1/-1;display:flex;background:var(--panel);box-shadow:inset 0 1px 0 var(--border)}
+  .vd-tabs button{flex:1;padding:12px 4px;font-size:12px;font-weight:700;background:transparent;color:var(--muted);cursor:pointer}
+  .vd-tabs button.on{color:var(--violet)}
+}
+@media(min-width:900px){ .vd-tabs{display:none} }
+@media(max-width:560px){
+  .vd-top{padding:8px 10px;gap:6px;flex-wrap:nowrap}
+  .vd-top .vd-title{display:none}
+  .vd-btn{padding:8px 9px;font-size:12px}
+  .vd-btn span,.vd-top button:not(.pri):not(:first-child) span{display:none}
+  #vdPageSel{max-width:104px}
+  .vd-canvas{padding:10px}
+  .vd-frame{width:100%;max-width:412px;padding:10px}
+}
 /* Filtros unificados de Famílias */
 .famf{background:var(--panel)}
 .famf-trigger{display:flex;align-items:center;gap:9px;width:100%;padding:13px 14px;background:var(--panel-2);color:var(--text);font-size:14px;font-weight:700;cursor:pointer}
@@ -1272,6 +1342,7 @@ const ICONS = {
   heart:          `<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>`,
   bell:           `<path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>`,
   user:           `<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>`,
+  'chevron-left':  `<polyline points="15 18 9 12 15 6"/>`,
   'rotate-ccw':   `<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>`,
   'plus-circle':  `<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>`,
   'user-circle':  `<circle cx="12" cy="12" r="10"/><circle cx="12" cy="10" r="3.2"/><path d="M6.2 18.6a6.5 6.5 0 0 1 11.6 0"/>`,
@@ -4450,6 +4521,10 @@ async function renderConfig() {
         </div>
         </details>
 
+        <div class="form-sep">${fi('sliders',12)} Editor Visual</div>
+        <button class="btn btn-p btn-b" onclick="nav('design')" style="display:inline-flex;align-items:center;justify-content:center;gap:6px">${fi('edit',14)} Abrir Editor Visual</button>
+        <div class="small muted" style="margin-top:6px">Ajuste cores, fontes, bordas, espaçamentos, textos e a ordem dos blocos tocando direto na tela. As alterações valem para todos os aparelhos após a sincronização.</div>
+
         <button class="btn btn-g btn-b" onclick="resetDesign()" style="display:inline-flex;align-items:center;gap:5px;color:var(--err);border-color:var(--err)">${fi('rotate-ccw',13)} Restaurar padrões</button>
       </div></div>
     </div>
@@ -4719,10 +4794,13 @@ async function nav(page, _fromPop) {
     case 'agenda':   html = await renderAgenda(); break;
     case 'acomp':    window._acompFiltros = { periodo:'todos', tria:'todos', situacao:[], dataInicio:'', dataFim:'' }; html = await renderRegistros('acomp'); break;
     case 'config':   html = await renderConfig(); break;
+    case 'design':   html = await renderDesignEditor(); break;
     default: mc.classList.remove('loading'); return;
   }
   mc.innerHTML = html;
-  _vdDecorateScreen(page, mc);
+  document.body.classList.toggle('vd-mode', page === 'design');
+  if (page === 'design') { _vdRenderPreview(); }
+  else _vdDecorateScreen(page, mc);
   mc.classList.remove('loading');
   mc.classList.remove('enter'); void mc.offsetWidth; mc.classList.add('enter');
   mc.dataset.page = page;
@@ -8365,7 +8443,8 @@ function _vdApplyText(root) {
   const t = st.text; if (!t || !Object.keys(t).length) return;
   root.querySelectorAll('[data-txt]').forEach(el => {
     const k = el.getAttribute('data-txt');
-    if (t[k] != null) el.textContent = t[k];
+    if (!el.hasAttribute('data-vd-orig')) el.setAttribute('data-vd-orig', el.textContent);
+    el.textContent = (t[k] != null) ? t[k] : el.getAttribute('data-vd-orig');
   });
 }
 
@@ -8373,6 +8452,381 @@ function _vdApplyText(root) {
 function _vdDecorateScreen(page, root) {
   _vdApplyLayout(page, root);
   _vdApplyText(root || document.body);
+}
+
+// ═══════════════════════════════════════════════════════
+// EDITOR VISUAL — tela (estilo, textos e ordem dos blocos)
+// ═══════════════════════════════════════════════════════
+const VD_PAGES = [
+  { key:'home',     label:'Início',    fn:() => renderHome() },
+  { key:'search',   label:'Buscar',    fn:() => renderRegistros('busca') },
+  { key:'acomp',    label:'Registros', fn:() => renderRegistros('acomp') },
+  { key:'families', label:'Famílias',  fn:() => renderFamilies() },
+  { key:'agenda',   label:'Agenda',    fn:() => renderAgenda() },
+];
+let VD_STATE = null, VD_UNDO = [], VD_REDO = [], VD_DIRTY = false;
+let VD_PAGE = 'home', VD_SEL = null, VD_SCOPE = 'comp', VD_LASTKEY = '', VD_LASTAT = 0;
+
+function _vdClone(o){ return JSON.parse(JSON.stringify(o)); }
+
+// Toda alteração passa por aqui: empilha o estado e repinta.
+// Mudanças seguidas na mesma propriedade (arrastar um slider) são agrupadas.
+function vdCommit(mut, coalesceKey) {
+  const agora = Date.now();
+  const juntar = coalesceKey && coalesceKey === VD_LASTKEY && (agora - VD_LASTAT) < 600;
+  if (!juntar) { VD_UNDO.push(JSON.stringify(VD_STATE)); if (VD_UNDO.length > 50) VD_UNDO.shift(); VD_REDO.length = 0; }
+  VD_LASTKEY = coalesceKey || ''; VD_LASTAT = agora;
+  mut(VD_STATE);
+  VD_DIRTY = true;
+  _vdRepaint();
+}
+function vdUndo(){ if(!VD_UNDO.length) return; VD_REDO.push(JSON.stringify(VD_STATE));
+  VD_STATE = JSON.parse(VD_UNDO.pop()); VD_LASTKEY=''; VD_DIRTY = true; _vdRepaint(true); }
+function vdRedo(){ if(!VD_REDO.length) return; VD_UNDO.push(JSON.stringify(VD_STATE));
+  VD_STATE = JSON.parse(VD_REDO.pop()); VD_LASTKEY=''; VD_DIRTY = true; _vdRepaint(true); }
+
+// Repinta o CSS ao vivo (sem re-renderizar o preview: resposta imediata)
+function _vdRepaint(comLayout) {
+  window._VD_CACHE = VD_STATE;
+  const root = document.documentElement;
+  const dark = root.getAttribute('data-theme') === 'dark';
+  const tokens = { ...VD_STATE.tokens.light, ...(dark ? VD_STATE.tokens.dark : {}) };
+  (window._VD_APPLIED_TOKENS || []).forEach(n => { if (!(n in tokens)) root.style.removeProperty(n); });
+  for (const [n,v] of Object.entries(tokens)) root.style.setProperty(n, v);
+  window._VD_APPLIED_TOKENS = Object.keys(tokens);
+  let el = document.getElementById('vdStyle');
+  if (!el) { el = document.createElement('style'); el.id = 'vdStyle'; document.head.appendChild(el); }
+  el.textContent = VD_COMPONENTS.filter(c => VD_STATE.styles[c.key])
+    .map(c => _vdCss(c.sel, VD_STATE.styles[c.key])).filter(Boolean).join('\n');
+  document.body.classList.toggle('flat', VD_STATE.flat !== 'off');
+  if (comLayout) _vdRenderPreview(); else _vdSyncChrome();
+}
+function _vdSyncChrome(){
+  const u = document.getElementById('vdUndo'), r = document.getElementById('vdRedo'),
+        s = document.getElementById('vdSave');
+  if (u) u.disabled = !VD_UNDO.length;
+  if (r) r.disabled = !VD_REDO.length;
+  if (s) s.textContent = VD_DIRTY ? 'Salvar •' : 'Salvar';
+  _vdRenderLayers(); _vdRenderProps();
+}
+
+async function renderDesignEditor() {
+  if (ME?.role !== 'admin') { showToast('Somente administradores', 'warn'); nav('home'); return ''; }
+  VD_STATE = _vdClone(await _vdLoad(true));
+  VD_UNDO = []; VD_REDO = []; VD_DIRTY = false; VD_SEL = null;
+  return `<div class="vd-wrap" id="vdWrap" data-pane="canvas">
+    <div class="vd-top">
+      <button class="vd-btn" onclick="vdSair()">${fi('chevron-left',15)} Voltar</button>
+      <span class="vd-title">Editor Visual</span>
+      <select id="vdPageSel" onchange="vdTrocarTela(this.value)" style="width:auto;font-size:13px;padding:7px 9px">
+        ${VD_PAGES.map(p=>`<option value="${p.key}">${p.label}</option>`).join('')}
+      </select>
+      <span class="vd-spacer"></span>
+      <button class="vd-btn" id="vdUndo" onclick="vdUndo()" title="Desfazer" disabled>${fi('rotate-ccw',15)}</button>
+      <button class="vd-btn" id="vdRedo" onclick="vdRedo()" title="Refazer" disabled>${fi('refresh-cw',15)}</button>
+      <button class="vd-btn" onclick="vdRestaurar()" title="Restaurar padrão">${fi('x-circle',15)}</button>
+      <button class="vd-btn pri" id="vdSave" onclick="vdSalvar()">Salvar</button>
+    </div>
+
+    <aside class="vd-pane vd-left">
+      <h4>Componentes</h4>
+      <div id="vdCompList">${VD_COMPONENTS.map(c=>
+        `<button class="vd-item" onclick="vdSelecionarComp('${c.key}')"><span class="vd-grow">${esc(c.label)}</span></button>`).join('')}</div>
+      <h4>Camadas</h4>
+      <div id="vdLayers"></div>
+    </aside>
+
+    <main class="vd-canvas"><div class="vd-frame" id="vdFrame"></div></main>
+
+    <aside class="vd-pane vd-right" id="vdRight"></aside>
+
+    <div class="vd-tabs">
+      <button class="on" onclick="vdPane('canvas',this)">Tela</button>
+      <button onclick="vdPane('left',this)">Componentes</button>
+      <button onclick="vdAbrirPropsSheet()">Propriedades</button>
+    </div>
+  </div>`;
+}
+
+function vdPane(p, btn){
+  const w = document.getElementById('vdWrap'); if (w) w.dataset.pane = p;
+  document.querySelectorAll('.vd-tabs button').forEach(b=>b.classList.toggle('on', b===btn));
+}
+
+// Monta o preview chamando a própria função de tela do app
+async function _vdRenderPreview() {
+  const f = document.getElementById('vdFrame'); if (!f) return;
+  const pg = VD_PAGES.find(p => p.key === VD_PAGE) || VD_PAGES[0];
+  f.innerHTML = _navSkeleton();
+  let html = '';
+  try { html = await pg.fn(); } catch(e) { html = `<div class="vd-empty">Não foi possível montar esta tela.<br>${esc(e.message||'')}</div>`; }
+  f.innerHTML = html;
+  _vdApplyLayout(VD_PAGE, f);
+  _vdApplyText(f);
+  _vdNeutralizar(f);
+  VD_SEL = null;
+  _vdSyncChrome();
+}
+
+// Desarma o comportamento do app dentro do preview: clique vira seleção
+function _vdNeutralizar(root) {
+  root.querySelectorAll('*').forEach(el => {
+    [...el.attributes].forEach(a => { if (/^on/i.test(a.name)) el.removeAttribute(a.name); });
+    if (el.hasAttribute('href')) el.setAttribute('href', 'javascript:void 0');
+    if ('disabled' in el && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA')) el.disabled = true;
+    el.setAttribute('tabindex', '-1');
+  });
+  if (root.dataset.vdWired) return;
+  root.dataset.vdWired = '1';
+  ['click','submit','change','input','keydown'].forEach(ev =>
+    root.addEventListener(ev, e => {
+      e.preventDefault(); e.stopPropagation();
+      if (ev === 'click') _vdSelecionar(e.target);
+    }, true));
+  root.addEventListener('mouseover', e => {
+    root.querySelectorAll('[data-vd-hover]').forEach(x => x.removeAttribute('data-vd-hover'));
+    const alvo = _vdResolver(e.target); if (alvo?.el) alvo.el.setAttribute('data-vd-hover','1');
+  }, true);
+  root.addEventListener('mouseleave', () =>
+    root.querySelectorAll('[data-vd-hover]').forEach(x => x.removeAttribute('data-vd-hover')));
+}
+
+// Do elemento clicado até o alvo editável: componente mais interno + bloco + texto
+function _vdResolver(el) {
+  if (!el || !el.closest) return null;
+  const frame = document.getElementById('vdFrame'); if (!frame || !frame.contains(el)) return null;
+  let melhor = null, prof = -1;
+  for (const c of VD_COMPONENTS) {
+    const m = el.closest(c.sel);
+    if (m && frame.contains(m)) {
+      let d = 0; for (let n = m; n && n !== frame; n = n.parentElement) d++;
+      if (d > prof) { prof = d; melhor = { comp: c, el: m }; }
+    }
+  }
+  const blocoEl = el.closest('[data-blk]');
+  const txtEl   = el.closest('[data-txt]');
+  return { comp: melhor?.comp || null, el: melhor?.el || blocoEl || el,
+           blk: blocoEl?.getAttribute('data-blk') || null,
+           txt: txtEl?.getAttribute('data-txt') || null, txtEl };
+}
+
+function _vdSelecionar(el) {
+  const alvo = _vdResolver(el); if (!alvo) return;
+  const frame = document.getElementById('vdFrame');
+  frame.querySelectorAll('[data-vd-sel]').forEach(x => x.removeAttribute('data-vd-sel'));
+  alvo.el?.setAttribute('data-vd-sel','1');
+  VD_SEL = alvo;
+  // O alvo mais interno manda: clicar num rótulo abre Texto; na moldura, Componente.
+  const prof = n => { let d = 0; for (let x = n; x && x.id !== 'vdFrame'; x = x.parentElement) d++; return d; };
+  if (alvo.txt && (!alvo.comp || prof(alvo.txtEl) >= prof(alvo.el))) VD_SCOPE = 'txt';
+  else if (alvo.comp) VD_SCOPE = 'comp';
+  else VD_SCOPE = 'tema';
+  _vdSyncChrome();
+  if (window.innerWidth < 900) vdAbrirPropsSheet();
+}
+function vdSelecionarComp(key) {
+  const c = VD_COMPONENTS.find(x => x.key === key); if (!c) return;
+  const frame = document.getElementById('vdFrame');
+  const alvo = frame?.querySelector(c.sel);
+  if (alvo) { _vdSelecionar(alvo); return; }
+  VD_SEL = { comp: c, el: null, blk: null, txt: null };
+  VD_SCOPE = 'comp'; _vdSyncChrome();
+  showToast('Componente não aparece nesta tela — a mudança vale mesmo assim', '');
+}
+
+// ── Camadas ──
+function _vdRenderLayers() {
+  const host = document.getElementById('vdLayers'); if (!host) return;
+  const frame = document.getElementById('vdFrame');
+  const s4 = frame?.querySelector('.s4') || frame?.firstElementChild;
+  const blocos = s4 ? [...s4.children].filter(e => e.hasAttribute?.('data-blk')) : [];
+  if (!blocos.length) { host.innerHTML = `<div class="vd-empty">Nenhum bloco nesta tela.</div>`; return; }
+  const rot = VD_LABELS[VD_PAGE] || {};
+  const cfg = VD_STATE.layout[VD_PAGE] || { order:[], hidden:[] };
+  host.innerHTML = blocos.map((el,i) => {
+    const id = el.getAttribute('data-blk');
+    const off = cfg.hidden.includes(id);
+    return `<div class="vd-item ${off?'off':''} ${VD_SEL?.blk===id?'on':''}">
+      <span class="vd-grow" onclick="vdSelecionarBloco('${esc(id)}')">${esc(rot[id] || id)}</span>
+      <button class="vd-mini" onclick="vdMover('${esc(id)}',-1)" title="Subir" ${i===0?'disabled':''}>${fi('chevron-up',14)}</button>
+      <button class="vd-mini" onclick="vdMover('${esc(id)}',1)" title="Descer" ${i===blocos.length-1?'disabled':''}>${fi('chevron-down',14)}</button>
+      <button class="vd-mini" onclick="vdOcultar('${esc(id)}')" title="${off?'Mostrar':'Ocultar'}">${fi(off?'x-circle':'check-circle',14)}</button>
+    </div>`;
+  }).join('');
+}
+function _vdOrdemAtual() {
+  const frame = document.getElementById('vdFrame');
+  const s4 = frame?.querySelector('.s4') || frame?.firstElementChild;
+  return s4 ? [...s4.children].filter(e => e.hasAttribute?.('data-blk')).map(e => e.getAttribute('data-blk')) : [];
+}
+function vdSelecionarBloco(id) {
+  const el = document.getElementById('vdFrame')?.querySelector(`[data-blk="${id}"]`);
+  if (el) _vdSelecionar(el);
+}
+function vdMover(id, dir) {
+  const ordem = _vdOrdemAtual();
+  const i = ordem.indexOf(id), j = i + dir;
+  if (i < 0 || j < 0 || j >= ordem.length) return;
+  ordem.splice(j, 0, ordem.splice(i, 1)[0]);
+  vdCommit(st => { st.layout[VD_PAGE] = { ...(st.layout[VD_PAGE]||{hidden:[]}), order: ordem,
+                                          hidden: st.layout[VD_PAGE]?.hidden || [] }; });
+  const frame = document.getElementById('vdFrame');
+  _vdApplyLayout(VD_PAGE, frame); _vdRenderLayers();
+}
+function vdOcultar(id) {
+  vdCommit(st => {
+    const cfg = st.layout[VD_PAGE] || { order:[], hidden:[] };
+    cfg.hidden = cfg.hidden.includes(id) ? cfg.hidden.filter(x => x !== id) : [...cfg.hidden, id];
+    if (!cfg.order.length) cfg.order = _vdOrdemAtual();
+    st.layout[VD_PAGE] = cfg;
+  });
+  const frame = document.getElementById('vdFrame');
+  frame?.querySelectorAll('[data-blk]').forEach(e => e.style.removeProperty('display'));
+  _vdApplyLayout(VD_PAGE, frame); _vdRenderLayers();
+}
+
+async function vdTrocarTela(k) { VD_PAGE = k; await _vdRenderPreview(); }
+
+async function vdSair() {
+  if (VD_DIRTY && !await uiConfirm('Há alterações não salvas. Descartar?', {title:'Sair do editor', okText:'Descartar', danger:true})) return;
+  document.body.classList.remove('vd-mode');
+  await applyCustomDesign();   // volta ao que está salvo
+  nav('config');
+}
+async function vdSalvar() {
+  const payload = { vdTokens: JSON.stringify(VD_STATE.tokens), vdStyles: JSON.stringify(VD_STATE.styles),
+                    vdText: JSON.stringify(VD_STATE.text), vdLayout: JSON.stringify(VD_STATE.layout),
+                    vdFlat: VD_STATE.flat };
+  const tam = Object.values(payload).join('').length;
+  if (tam > 64000) { showToast('Design muito grande para sincronizar. Simplifique as alterações.', 'err'); return; }
+  for (const [k,v] of Object.entries(payload)) await IDB.setMeta(k, v);
+  await applyCustomDesign();
+  VD_DIRTY = false; VD_UNDO = []; VD_REDO = [];
+  _vdSyncChrome();
+  showToast('✓ Design salvo e enviado na próxima sincronização', 'ok');
+}
+async function vdRestaurar() {
+  if (!await uiConfirm('Descartar todas as personalizações do editor e voltar ao design original?',
+      {title:'Restaurar design', okText:'Restaurar', danger:true})) return;
+  vdCommit(st => { st.tokens = {light:{},dark:{}}; st.styles = {}; st.text = {}; st.layout = {}; st.flat = 'on'; });
+  await _vdRenderPreview();
+}
+
+// ── Painel de propriedades ──
+const VD_TOKENS_EDIT = [
+  ['--accent','Cor principal'], ['--violet','Violeta'], ['--plum','Plum (escuro)'],
+  ['--bg','Fundo da tela'], ['--panel','Superfície'], ['--panel-2','Superfície 2'],
+  ['--text','Texto'], ['--muted','Texto secundário'], ['--border','Linha'],
+  ['--ok','Sucesso'], ['--warn','Atenção'], ['--err','Erro'],
+];
+function _vdNum(v){ const m = String(v||'').match(/-?\d+(\.\d+)?/); return m ? parseFloat(m[0]) : null; }
+
+function _vdCampo(prop, valor, setExpr, clearExpr) {
+  const SET = v => esc(setExpr.replace('%V', v));
+  const d = VD_PROPS[prop]; if (!d) return '';
+  const rot = { background:'Fundo', color:'Cor do texto', borderRadius:'Arredondamento', border:'Borda',
+    boxShadow:'Sombra', padding:'Espaçamento interno', margin:'Margem', gap:'Espaço entre itens',
+    fontSize:'Tamanho da fonte', fontWeight:'Peso da fonte', letterSpacing:'Espaço entre letras',
+    textAlign:'Alinhamento', minHeight:'Altura mínima', width:'Largura', height:'Altura' }[prop] || prop;
+  const limpar = valor != null ? `<button class="vd-clear" onclick="${esc(clearExpr)}">limpar</button>` : '';
+  if (d.type === 'color') {
+    const hex = /^#[0-9a-f]{6}$/i.test(valor||'') ? valor : '#7226d9';
+    return `<div class="vd-field"><label>${rot} ${limpar}</label><div class="vd-row">
+      <input type="color" value="${hex}" oninput="${SET('this.value')}">
+      <select onchange="${SET('this.value')}" style="flex:1">
+        <option value="">${valor ? esc(valor) : '— padrão —'}</option>
+        ${VD_TOKENS_EDIT.map(([t,l])=>`<option value="var(${t})">${esc(l)} (token)</option>`).join('')}
+        <option value="transparent">Transparente</option>
+      </select></div>
+      <div class="small muted" style="font-size:10.5px;margin-top:3px">Usar um token mantém o modo escuro correto.</div></div>`;
+  }
+  if (d.type === 'size') {
+    const n = _vdNum(valor); const at = n == null ? d.min : n;
+    return `<div class="vd-field"><label>${rot} ${limpar}</label><div class="vd-row">
+      <input type="range" min="${d.min}" max="${d.max}" step="1" value="${at}" oninput="${SET("this.value+'px'")}">
+      <span class="vd-val">${n == null ? '—' : at + 'px'}</span></div></div>`;
+  }
+  if (d.type === 'select') {
+    return `<div class="vd-field"><label>${rot} ${limpar}</label>
+      <select onchange="${SET('this.value')}">
+        <option value="">— padrão —</option>
+        ${d.opts.map(o=>`<option value="${o}" ${valor===o?'selected':''}>${o}</option>`).join('')}
+      </select></div>`;
+  }
+  return `<div class="vd-field"><label>${rot} ${limpar}</label>
+    <input type="text" value="${esc(valor||'')}" placeholder="— padrão —" onchange="${SET('this.value')}"></div>`;
+}
+
+function _vdPropsHtml() {
+  const s = VD_SEL;
+  const abas = `<div class="vd-scope">
+    <button class="${VD_SCOPE==='comp'?'on':''}" onclick="vdEscopo('comp')">Componente</button>
+    <button class="${VD_SCOPE==='txt'?'on':''}" onclick="vdEscopo('txt')">Texto</button>
+    <button class="${VD_SCOPE==='tema'?'on':''}" onclick="vdEscopo('tema')">Tema</button>
+  </div>`;
+
+  if (VD_SCOPE === 'tema') {
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const modo = dark ? 'dark' : 'light';
+    return abas + `<div class="vd-hint">Cores base do aplicativo (tema <b>${dark?'escuro':'claro'}</b>). Valem em todas as telas.</div>` +
+      VD_TOKENS_EDIT.map(([t,l]) => {
+        const v = VD_STATE.tokens[modo][t];
+        const hex = /^#[0-9a-f]{6}$/i.test(v||'') ? v : (getComputedStyle(document.documentElement).getPropertyValue(t).trim() || '#7226d9');
+        return `<div class="vd-field"><label>${esc(l)} <code style="font-size:10px;color:var(--muted)">${t}</code>
+          ${v ? `<button class="vd-clear" onclick="vdSetToken('${t}',null)">limpar</button>` : ''}</label>
+          <div class="vd-row"><input type="color" value="${hex.startsWith('#')?hex:'#7226d9'}" oninput="vdSetToken('${t}',this.value)">
+          <span class="vd-val" style="min-width:70px">${v ? esc(v) : 'padrão'}</span></div></div>`;
+      }).join('');
+  }
+
+  if (VD_SCOPE === 'txt') {
+    if (!s?.txt) return abas + `<div class="vd-empty">Toque num texto da tela para reescrevê-lo.<br><br>Textos editáveis aparecem com contorno ao passar o cursor.</div>`;
+    const atual = VD_STATE.text[s.txt] != null ? VD_STATE.text[s.txt] : (s.txtEl?.textContent || '');
+    return abas + `<div class="vd-hint">Texto <code style="font-size:10px">${esc(s.txt)}</code></div>
+      <div class="vd-field"><label>Conteúdo ${VD_STATE.text[s.txt]!=null?`<button class="vd-clear" onclick="vdSetTexto(null)">restaurar</button>`:''}</label>
+      <textarea rows="3" oninput="vdSetTexto(this.value)">${esc(atual)}</textarea></div>`;
+  }
+
+  if (!s?.comp) return abas + `<div class="vd-empty">Toque num elemento da tela para editar.<br><br>Ou escolha um componente na lista à esquerda.</div>`;
+  const c = s.comp, atual = VD_STATE.styles[c.key] || {};
+  const blocoInfo = s.blk ? `<div class="vd-hint" style="margin-top:-4px">Bloco: <b>${esc((VD_LABELS[VD_PAGE]||{})[s.blk] || s.blk)}</b> — use as Camadas à esquerda para mover ou ocultar.</div>` : '';
+  return abas +
+    `<div class="vd-hint">Editando <b>${esc(c.label)}</b> — a mudança vale para <b>todos</b> os elementos deste tipo no aplicativo.</div>` +
+    blocoInfo +
+    c.props.map(p => _vdCampo(p, atual[p],
+        `vdSetProp('${c.key}','${p}',%V)`,
+        `vdSetProp('${c.key}','${p}',null)`)).join('');
+}
+// wrappers usados pelos controles gerados acima
+function vdEscopo(s){ VD_SCOPE = s; _vdRenderProps(); }
+function vdSetProp(comp, prop, valor) {
+  vdCommit(st => {
+    const o = { ...(st.styles[comp] || {}) };
+    if (valor == null || valor === '') delete o[prop]; else o[prop] = String(valor);
+    if (Object.keys(o).length) st.styles[comp] = o; else delete st.styles[comp];
+  }, comp + '.' + prop);
+}
+function vdSetToken(t, valor) {
+  const modo = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  vdCommit(st => { if (valor == null) delete st.tokens[modo][t]; else st.tokens[modo][t] = String(valor); }, 'tk.'+modo+'.'+t);
+}
+function vdSetTexto(v) {
+  const k = VD_SEL?.txt; if (!k) return;
+  vdCommit(st => { if (v == null) delete st.text[k]; else st.text[k] = String(v).slice(0,200); }, 'tx.'+k);
+  const el = VD_SEL.txtEl;
+  if (el) el.textContent = (v == null) ? (el.getAttribute('data-vd-orig') || el.textContent) : v;
+}
+function _vdRenderProps() {
+  const host = document.getElementById('vdRight');
+  if (host) host.innerHTML = _vdPropsHtml();
+  const sheet = document.getElementById('sheetB');
+  if (sheet && document.getElementById('sheet')?.classList.contains('show') && sheet.dataset.vdProps === '1') {
+    sheet.innerHTML = _vdPropsHtml();
+  }
+}
+function vdAbrirPropsSheet() {
+  openSheet('Propriedades', _vdPropsHtml());
+  const b = document.getElementById('sheetB'); if (b) b.dataset.vdProps = '1';
 }
 
 async function saveDesign(key, value) {
