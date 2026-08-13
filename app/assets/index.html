@@ -976,6 +976,21 @@ body.vd-mode main#mc{padding:0;background:none!important}
   .plogin-card{padding:30px 26px 40px}
   .plc-brand{margin-bottom:22px}
 }
+/* A media query acima enxerga a VIEWPORT. No editor a janela é larga, mas o
+   preview cabe num quadro de 412px — sem isto o login apareceria em duas
+   colunas espremidas, que não é o que o celular mostra. */
+.vd-frame .plogin{grid-template-columns:1fr;min-height:auto}
+.vd-frame .plogin-hero{padding:26px 24px 24px;min-height:auto}
+.vd-frame .plh-kicker{font-size:11px}
+.vd-frame .plh-illus{display:none}
+.vd-frame .plh-title{font-size:26px;margin-top:10px}
+.vd-frame .plh-sub{display:none}
+.vd-frame .plh-foot{display:none}
+.vd-frame .plogin-card{padding:30px 26px 40px}
+.vd-frame .plc-brand{margin-bottom:22px}
+/* Painel da marca oculto pelo editor: o cartão assume a tela toda, senão
+   sobraria metade vazia à direita. */
+.plogin:has(> .plogin-hero.vd-hid){grid-template-columns:1fr}
 
 /* ── Relatório (PDF / impressão) — refino preto & branco ── */
 #printArea{display:none}
@@ -8287,7 +8302,9 @@ async function applyCustomDesign() {
   // Editor Visual por último: vence as escritas legadas acima
   await _vdApply();
   _vdApplyText(document.body);   // cobre a tela de login (markup estático)
-  _vdApplyOverlays('login', document.getElementById('pageLogin'));
+  // O login é decorado à mão porque não passa por nav()/_vdDecorateScreen
+  const pl = document.getElementById('pageLogin');
+  if (pl) { _vdInserirBlocos('login', pl); _vdApplyLayout('login', pl); _vdApplyOverlays('login', pl); }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -8550,7 +8567,7 @@ function _vdInserirBlocos(page, root) {
   const st = window._VD_CACHE; if (!st || !root) return;
   root.querySelectorAll('.vd-bloco').forEach(b => b.remove());   // idempotência
   const lista = st.blocos?.[page]; if (!lista || !lista.length) return;
-  const host = root.querySelector('.s4') || root.firstElementChild; if (!host) return;
+  const host = root.querySelector(VD_HOST[page] || '.s4') || root.firstElementChild; if (!host) return;
   for (const b of lista) {
     const el = document.createElement('div');
     el.innerHTML = _vdBlocoHtml(b, st.assets || {});
@@ -8737,17 +8754,32 @@ function _vdApplyLayout(page, root) {
   if (VD_OFF) return;
   const st = window._VD_CACHE; if (!st || !root) return;
   const cfg = st.layout[page]; if (!cfg) return;
-  const host = root.querySelector('.s4') || root.firstElementChild || root;
+  const host = root.querySelector(VD_HOST[page] || '.s4') || root.firstElementChild || root;
   if (!host) return;
+  // Ocultar varre a tela inteira: no login o painel da marca fica fora do host,
+  // e ainda assim precisa poder ser escondido.
+  const proibidos = VD_NAO_OCULTAR[page] || [];
+  // limpa antes de aplicar: o login não é re-renderizado, então um bloco que
+  // deixou de ser oculto na sincronização precisa voltar sozinho
+  root.querySelectorAll('.vd-hid').forEach(el => { el.classList.remove('vd-hid'); el.style.removeProperty('display'); });
+  cfg.hidden.filter(id => !proibidos.includes(id)).forEach(id => {
+    const el = root.querySelector(`[data-blk="${id}"]`); if (!el) return;
+    el.classList.add('vd-hid');
+    el.style.setProperty('display','none','important');
+  });
   const blocos = [...host.children].filter(el => el.hasAttribute?.('data-blk'));
   if (!blocos.length) return;
   const porId = new Map(blocos.map(el => [el.getAttribute('data-blk'), el]));
-  cfg.hidden.forEach(id => porId.get(id)?.style.setProperty('display','none','important'));
   if (cfg.order.length) {
     // primeiro os listados, depois os que a ordem não conhece (bloco novo não some)
     const ordenados = cfg.order.map(id => porId.get(id)).filter(Boolean);
     const resto = blocos.filter(el => !ordenados.includes(el));
-    [...ordenados, ...resto].forEach(el => host.appendChild(el));
+    const nova = [...ordenados, ...resto];
+    // Reocupar exatamente as posições que os blocos já tinham. Um appendChild
+    // simples empurraria para o fim, e no login os elementos sem data-blk
+    // (subtítulo, crédito) subiriam para o topo do cartão.
+    const vagas = blocos.map(el => { const c = document.createComment('vd'); host.replaceChild(c, el); return c; });
+    vagas.forEach((c, k) => host.replaceChild(nova[k], c));
   }
 }
 
@@ -8774,13 +8806,25 @@ function _vdDecorateScreen(page, root) {
 // ═══════════════════════════════════════════════════════
 // EDITOR VISUAL — tela (estilo, textos e ordem dos blocos)
 // ═══════════════════════════════════════════════════════
+// O login é markup estático fora do #mc, não uma função de tela. Guardamos o
+// original aqui, no parse — antes de qualquer substituição de texto — para o
+// preview do editor nascer limpo, como as demais telas.
+const VD_LOGIN_HTML = document.querySelector('#pageLogin .plogin')?.outerHTML || '';
 const VD_PAGES = [
   { key:'home',     label:'Início',    fn:() => renderHome() },
   { key:'search',   label:'Buscar',    fn:() => renderRegistros('busca') },
   { key:'acomp',    label:'Registros', fn:() => renderRegistros('acomp') },
   { key:'families', label:'Famílias',  fn:() => renderFamilies() },
   { key:'agenda',   label:'Agenda',    fn:() => renderAgenda() },
+  { key:'login',    label:'Entrada (login)', fn:() => VD_LOGIN_HTML },
 ];
+// Onde os blocos de uma tela moram. Nas telas do app é sempre .s4; no login os
+// blocos do cartão ficam em .plc-inner, que é também onde um bloco novo deve
+// entrar — nunca dentro do <form>.
+const VD_HOST = { login:'.plc-inner' };
+// Blocos que não podem ser ocultados. Esconder o formulário do login deixaria o
+// app sem campos de entrada, e no APK não há barra de endereço para usar #vdreset.
+const VD_NAO_OCULTAR = { login:['formulario'] };
 let VD_STATE = null, VD_UNDO = [], VD_REDO = [], VD_DIRTY = false;
 let VD_PAGE = 'home', VD_SEL = null, VD_SCOPE = 'comp', VD_LASTKEY = '', VD_LASTAT = 0;
 
@@ -8980,30 +9024,41 @@ function vdSelecionarComp(key) {
 }
 
 // ── Camadas ──
+// O container onde vivem os blocos reordenáveis da tela em edição
+function _vdHostFrame() {
+  const f = document.getElementById('vdFrame'); if (!f) return null;
+  return f.querySelector(VD_HOST[VD_PAGE] || '.s4') || f.firstElementChild;
+}
 function _vdRenderLayers() {
   const host = document.getElementById('vdLayers'); if (!host) return;
   const frame = document.getElementById('vdFrame');
-  const s4 = frame?.querySelector('.s4') || frame?.firstElementChild;
-  const blocos = s4 ? [...s4.children].filter(e => e.hasAttribute?.('data-blk')) : [];
+  const s4 = _vdHostFrame();
+  const dentro = s4 ? [...s4.children].filter(e => e.hasAttribute?.('data-blk')) : [];
+  // Blocos fora do host (no login, o painel da marca) entram na lista sem poder
+  // ser reordenados — não são irmãos dos demais.
+  const fora = [...(frame?.querySelectorAll('[data-blk]') || [])]
+    .filter(e => !dentro.includes(e) && !e.parentElement?.closest('[data-blk]'));
+  const blocos = [...dentro, ...fora];
   if (!blocos.length) { host.innerHTML = `<div class="vd-empty">Nenhum bloco nesta tela.</div>`; return; }
   const rot = VD_LABELS[VD_PAGE] || {};
   const cfg = VD_STATE.layout[VD_PAGE] || { order:[], hidden:[] };
   host.innerHTML = blocos.map((el,i) => {
     const id = el.getAttribute('data-blk');
     const off = cfg.hidden.includes(id);
+    const solto = i >= dentro.length;   // fora do host: não dá para reordenar
     const custom = id.startsWith('custom:')
       ? ((VD_STATE.blocos[VD_PAGE]||[]).find(b => 'custom:'+b.id === id)?.titulo || 'Bloco novo') : null;
     return `<div class="vd-item ${off?'off':''} ${VD_SEL?.blk===id?'on':''}">
       <span class="vd-grow" onclick="vdSelecionarBloco('${esc(id)}')">${esc(custom || rot[id] || id)}</span>
-      <button class="vd-mini" onclick="vdMover('${esc(id)}',-1)" title="Subir" ${i===0?'disabled':''}>${fi('chevron-up',14)}</button>
-      <button class="vd-mini" onclick="vdMover('${esc(id)}',1)" title="Descer" ${i===blocos.length-1?'disabled':''}>${fi('chevron-down',14)}</button>
-      <button class="vd-mini" onclick="vdOcultar('${esc(id)}')" title="${off?'Mostrar':'Ocultar'}">${fi(off?'x-circle':'check-circle',14)}</button>
+      <button class="vd-mini" onclick="vdMover('${esc(id)}',-1)" title="Subir" ${(i===0||solto)?'disabled':''}>${fi('chevron-up',14)}</button>
+      <button class="vd-mini" onclick="vdMover('${esc(id)}',1)" title="Descer" ${(solto||i===dentro.length-1)?'disabled':''}>${fi('chevron-down',14)}</button>
+      ${(VD_NAO_OCULTAR[VD_PAGE]||[]).includes(id) ? ''
+        : `<button class="vd-mini" onclick="vdOcultar('${esc(id)}')" title="${off?'Mostrar':'Ocultar'}">${fi(off?'x-circle':'check-circle',14)}</button>`}
     </div>`;
   }).join('');
 }
 function _vdOrdemAtual() {
-  const frame = document.getElementById('vdFrame');
-  const s4 = frame?.querySelector('.s4') || frame?.firstElementChild;
+  const s4 = _vdHostFrame();
   return s4 ? [...s4.children].filter(e => e.hasAttribute?.('data-blk')).map(e => e.getAttribute('data-blk')) : [];
 }
 function vdSelecionarBloco(id) {
@@ -9021,6 +9076,9 @@ function vdMover(id, dir) {
   _vdApplyLayout(VD_PAGE, frame); _vdRenderLayers();
 }
 function vdOcultar(id) {
+  if ((VD_NAO_OCULTAR[VD_PAGE] || []).includes(id)) {
+    showToast('Este bloco não pode ser ocultado — o app ficaria sem como entrar', 'warn'); return;
+  }
   vdCommit(st => {
     const cfg = st.layout[VD_PAGE] || { order:[], hidden:[] };
     cfg.hidden = cfg.hidden.includes(id) ? cfg.hidden.filter(x => x !== id) : [...cfg.hidden, id];
