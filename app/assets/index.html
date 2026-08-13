@@ -836,6 +836,7 @@ input:focus,select:focus,textarea:focus,.plogin .plc-input:focus{outline:2px sol
 .reg-seg .rseg.active{background:var(--panel);color:var(--violet)}
 @media(max-width:400px){.reg-seg .rseg{font-size:12px;gap:5px;padding:10px 4px}}
 /* Objetos livres (overlay) — valem no app e no editor */
+.vd-bloco>*+*{margin-top:12px}
 .vd-ov-layer{position:absolute;inset:0;pointer-events:none}
 .vd-ov-item{line-height:1.3;word-break:break-word}
 .vd-ov-item img{max-width:100%}
@@ -1853,7 +1854,7 @@ const SYNC_SETTINGS_KEYS = [
   'sobreDescricao', 'sobreResponsavel', 'sobreCargo', 'sobreEndereco',
   'sobreTelefone', 'sobreEmail', 'sobreSite', 'sobreInfo',
   // Editor Visual — decisões de marca do município, valem para todos os aparelhos
-  'vdTokens', 'vdStyles', 'vdText', 'vdLayout', 'vdFlat', 'vdOverlays', 'vdAssets'
+  'vdTokens', 'vdStyles', 'vdText', 'vdLayout', 'vdFlat', 'vdOverlays', 'vdAssets', 'vdBlocos'
 ];
 window._applyingSettings = false;
 
@@ -8338,7 +8339,24 @@ const VD_LABELS = {
   agenda:{hero:'Destaque',banner:'Banner'},
   login:{hero:'Painel da marca',marca:'Marca',titulo:'Título',formulario:'Formulário',ajuda:'Ajuda'},
 };
-const VD_KEYS = ['vdTokens','vdStyles','vdText','vdLayout','vdFlat','vdOverlays','vdAssets'];
+const VD_KEYS = ['vdTokens','vdStyles','vdText','vdLayout','vdFlat','vdOverlays','vdAssets','vdBlocos'];
+// Itens de um bloco personalizado. Cada tipo emite as CLASSES REAIS do app,
+// para o bloco novo nascer com a mesma linguagem visual das telas existentes.
+const VD_ITENS = [
+  { tipo:'titulo',  label:'Título de seção', campos:['texto','icone'] },
+  { tipo:'texto',   label:'Parágrafo',       campos:['texto'] },
+  { tipo:'cartao',  label:'Cartão',          campos:['texto','subtexto'] },
+  { tipo:'numeros', label:'Faixa de números',campos:['numeros'] },
+  { tipo:'linha',   label:'Linha de lista',  campos:['texto','subtexto','icone','etiqueta'] },
+  { tipo:'botao',   label:'Botão',           campos:['texto','icone','acao','estilo'] },
+  { tipo:'imagem',  label:'Imagem',          campos:['asset'] },
+  { tipo:'espaco',  label:'Espaçador',       campos:[] },
+];
+// Ações permitidas num botão — lista fechada, para um payload sincronizado
+// não conseguir executar código arbitrário.
+const VD_ACOES = { '':'Nenhuma', 'nav:home':'Ir para Início', 'nav:search':'Ir para Buscar',
+  'nav:families':'Ir para Famílias', 'nav:acomp':'Ir para Registros', 'nav:agenda':'Ir para Agenda',
+  'nav:config':'Ir para Configurações' };
 // Objetos livres: allowlist PRÓPRIA. Não reusar VD_PROPS — lá position/z-index são
 // proibidos de propósito, e misturar reabriria o buraco de esconder a interface.
 const VD_OV_TIPOS = ['imagem','texto','icone','forma'];
@@ -8359,7 +8377,7 @@ window._VD_CACHE = null;
 const VD_OFF = (typeof location !== 'undefined' && location.hash === '#vdreset');
 if (VD_OFF) { try { console.warn('[Editor Visual] overrides desligados (#vdreset)'); } catch(e){} }
 
-function _vdBlank(){ return { tokens:{light:{},dark:{}}, styles:{}, text:{}, layout:{}, flat:'on', overlays:{}, assets:{} }; }
+function _vdBlank(){ return { tokens:{light:{},dark:{}}, styles:{}, text:{}, layout:{}, flat:'on', overlays:{}, assets:{}, blocos:{} }; }
 
 // Lê e valida o que veio do armazenamento (ou da sincronização)
 async function _vdLoad(force) {
@@ -8447,8 +8465,102 @@ async function _vdLoad(force) {
       if (typeof v === 'string' && /^data:image\/(png|jpeg|webp);base64,/.test(v)) out.assets[String(k).slice(0,40)] = v;
     }
   }
+  // Blocos personalizados
+  const bl = await parse('vdBlocos');
+  if (bl && typeof bl === 'object') {
+    for (const [page, lista] of Object.entries(bl)) {
+      if (!Array.isArray(lista)) continue;
+      const limpos = [];
+      for (const b of lista.slice(0, 20)) {
+        if (!b || typeof b !== 'object') continue;
+        const itens = (Array.isArray(b.itens) ? b.itens : []).slice(0, 30).map(it => {
+          if (!it || !VD_ITENS.some(v => v.tipo === it.tipo)) return null;
+          return {
+            id: String(it.id || crypto.randomUUID()).slice(0,40),
+            tipo: it.tipo,
+            texto:    typeof it.texto    === 'string' ? it.texto.slice(0,300)    : '',
+            subtexto: typeof it.subtexto === 'string' ? it.subtexto.slice(0,300) : '',
+            etiqueta: typeof it.etiqueta === 'string' ? it.etiqueta.slice(0,40)  : '',
+            icone: (typeof it.icone === 'string' && ICONS[it.icone]) ? it.icone : '',
+            asset: typeof it.asset === 'string' ? it.asset.slice(0,40) : null,
+            acao:  Object.prototype.hasOwnProperty.call(VD_ACOES, it.acao) ? it.acao : '',
+            estilo: it.estilo === 'secundario' ? 'secundario' : 'primario',
+            numeros: (Array.isArray(it.numeros) ? it.numeros : []).slice(0,4)
+                      .map(n => ({ valor: String(n?.valor ?? '').slice(0,12), rotulo: String(n?.rotulo ?? '').slice(0,24) })),
+          };
+        }).filter(Boolean);
+        limpos.push({
+          id: String(b.id || crypto.randomUUID()).slice(0,40),
+          titulo: typeof b.titulo === 'string' ? b.titulo.slice(0,60) : 'Bloco',
+          onde: typeof b.onde === 'string' ? b.onde.slice(0,50) : 'fim',
+          itens,
+        });
+      }
+      if (limpos.length) out.blocos[page] = limpos;
+    }
+  }
   window._VD_CACHE = out;
   return out;
+}
+
+// ── Blocos personalizados: renderização ─────────────────
+// Cada item emite as classes reais do app, para o bloco novo ficar
+// indistinguível de uma seção nativa.
+function _vdItemBlocoHtml(it, assets) {
+  const t = esc(it.texto || ''), st = esc(it.subtexto || '');
+  switch (it.tipo) {
+    case 'titulo':
+      return `<div class="mb-section-title">${it.icone ? fi(it.icone,12) : ''} ${t}</div>`;
+    case 'texto':
+      return `<p class="small" style="line-height:1.55;margin:0">${t}</p>`;
+    case 'cartao':
+      return `<div class="card card-sub nh" style="padding:14px">
+        ${t ? `<div style="font-weight:700;font-size:14px">${t}</div>` : ''}
+        ${st ? `<div class="small muted" style="margin-top:3px">${st}</div>` : ''}</div>`;
+    case 'numeros':
+      return `<div class="plum-strip">${(it.numeros||[]).map(n =>
+        `<div class="ps-item"><div class="ps-num">${esc(n.valor)}</div><div class="ps-lbl">${esc(n.rotulo)}</div></div>`).join('')}</div>`;
+    case 'linha':
+      return `<div class="plum-row">
+        <div class="pr-icon">${fi(it.icone || 'info', 20)}</div>
+        <div class="pr-body"><div class="pr-title">${t}</div>${st ? `<div class="pr-sub">${st}</div>` : ''}</div>
+        <div class="pr-right">${it.etiqueta ? `<span class="pchip" style="background:var(--violet-soft);color:var(--violet)">${esc(it.etiqueta)}</span>` : ''}${fi('chevron-right',18)}</div>
+      </div>`;
+    case 'botao': {
+      const cls = it.estilo === 'secundario' ? 'btn btn-g btn-b' : 'btn btn-p btn-b';
+      const rota = it.acao && it.acao.startsWith('nav:') ? it.acao.slice(4) : '';
+      const on = rota ? ` onclick="nav('${esc(rota)}')"` : '';
+      return `<button class="${cls}"${on} style="display:inline-flex;align-items:center;justify-content:center;gap:6px">${it.icone ? fi(it.icone,15) : ''} ${t}</button>`;
+    }
+    case 'imagem': {
+      const src = assets[it.asset];
+      return src ? `<img src="${src}" alt="${t}" style="width:100%;height:auto;display:block">` : '';
+    }
+    case 'espaco': return `<div style="height:12px"></div>`;
+    default: return '';
+  }
+}
+function _vdBlocoHtml(b, assets) {
+  return `<div class="vd-bloco" data-blk="custom:${esc(b.id)}">${
+    (b.itens||[]).map(it => _vdItemBlocoHtml(it, assets)).join('')}</div>`;
+}
+// Insere os blocos na tela ANTES da ordenação, para participarem dela
+function _vdInserirBlocos(page, root) {
+  if (VD_OFF) return;
+  const st = window._VD_CACHE; if (!st || !root) return;
+  root.querySelectorAll('.vd-bloco').forEach(b => b.remove());   // idempotência
+  const lista = st.blocos?.[page]; if (!lista || !lista.length) return;
+  const host = root.querySelector('.s4') || root.firstElementChild; if (!host) return;
+  for (const b of lista) {
+    const el = document.createElement('div');
+    el.innerHTML = _vdBlocoHtml(b, st.assets || {});
+    const no = el.firstElementChild; if (!no) continue;
+    if (b.onde === 'inicio') host.insertBefore(no, host.firstChild);
+    else if (b.onde && b.onde.startsWith('apos:')) {
+      const ref = host.querySelector(`[data-blk="${b.onde.slice(5)}"]`);
+      ref ? ref.after(no) : host.appendChild(no);
+    } else host.appendChild(no);
+  }
 }
 
 // ── Objetos livres: compressão de imagem ────────────────
@@ -8653,9 +8765,10 @@ function _vdApplyText(root) {
 
 // Ponto único chamado após cada renderização de tela
 function _vdDecorateScreen(page, root) {
+  _vdInserirBlocos(page, root);   // blocos novos entram e participam da ordenação
   _vdApplyLayout(page, root);
   _vdApplyText(root || document.body);
-  _vdApplyOverlays(page, root);
+  _vdApplyOverlays(page, root);   // objetos podem ancorar nos blocos novos também
 }
 
 // ═══════════════════════════════════════════════════════
@@ -8711,7 +8824,7 @@ function _vdSyncChrome(){
   if (u) u.disabled = !VD_UNDO.length;
   if (r) r.disabled = !VD_REDO.length;
   if (s) s.textContent = VD_DIRTY ? 'Salvar •' : 'Salvar';
-  _vdRenderLayers(); _vdRenderObjs(); _vdRenderProps();
+  _vdRenderLayers(); _vdRenderObjs(); _vdRenderBlocos(); _vdRenderProps();
 }
 
 function _vdRenderObjs() {
@@ -8759,6 +8872,8 @@ async function renderDesignEditor() {
       </div>
       <h4>Objetos</h4>
       <div id="vdObjList"></div>
+      <h4>Blocos novos <button class="vd-mini" onclick="vdNovoBloco()" title="Novo bloco">${fi('plus-circle',14)}</button></h4>
+      <div id="vdBlocoList"></div>
       <h4>Componentes</h4>
       <div id="vdCompList">${VD_COMPONENTS.map(c=>
         `<button class="vd-item" onclick="vdSelecionarComp('${c.key}')"><span class="vd-grow">${esc(c.label)}</span></button>`).join('')}</div>
@@ -8876,8 +8991,10 @@ function _vdRenderLayers() {
   host.innerHTML = blocos.map((el,i) => {
     const id = el.getAttribute('data-blk');
     const off = cfg.hidden.includes(id);
+    const custom = id.startsWith('custom:')
+      ? ((VD_STATE.blocos[VD_PAGE]||[]).find(b => 'custom:'+b.id === id)?.titulo || 'Bloco novo') : null;
     return `<div class="vd-item ${off?'off':''} ${VD_SEL?.blk===id?'on':''}">
-      <span class="vd-grow" onclick="vdSelecionarBloco('${esc(id)}')">${esc(rot[id] || id)}</span>
+      <span class="vd-grow" onclick="vdSelecionarBloco('${esc(id)}')">${esc(custom || rot[id] || id)}</span>
       <button class="vd-mini" onclick="vdMover('${esc(id)}',-1)" title="Subir" ${i===0?'disabled':''}>${fi('chevron-up',14)}</button>
       <button class="vd-mini" onclick="vdMover('${esc(id)}',1)" title="Descer" ${i===blocos.length-1?'disabled':''}>${fi('chevron-down',14)}</button>
       <button class="vd-mini" onclick="vdOcultar('${esc(id)}')" title="${off?'Mostrar':'Ocultar'}">${fi(off?'x-circle':'check-circle',14)}</button>
@@ -8915,7 +9032,7 @@ function vdOcultar(id) {
   _vdApplyLayout(VD_PAGE, frame); _vdRenderLayers();
 }
 
-async function vdTrocarTela(k) { VD_PAGE = k; VD_OBJ = null; if (VD_MV) { VD_MV.destroy(); VD_MV = null; } await _vdRenderPreview(); }
+async function vdTrocarTela(k) { VD_PAGE = k; VD_OBJ = null; VD_BLOCO = null; VD_ITEM = null; if (VD_MV) { VD_MV.destroy(); VD_MV = null; } await _vdRenderPreview(); }
 
 async function vdSair() {
   if (VD_DIRTY && !await uiConfirm('Há alterações não salvas. Descartar?', {title:'Sair do editor', okText:'Descartar', danger:true})) return;
@@ -8929,7 +9046,7 @@ async function vdSalvar() {
   const payload = { vdTokens: JSON.stringify(VD_STATE.tokens), vdStyles: JSON.stringify(VD_STATE.styles),
                     vdText: JSON.stringify(VD_STATE.text), vdLayout: JSON.stringify(VD_STATE.layout),
                     vdFlat: VD_STATE.flat, vdOverlays: JSON.stringify(VD_STATE.overlays),
-                    vdAssets: JSON.stringify(VD_STATE.assets) };
+                    vdAssets: JSON.stringify(VD_STATE.assets), vdBlocos: JSON.stringify(VD_STATE.blocos) };
   // O teto vale para a configuração; as imagens ficam fora da conta, numa chave
   // própria, para uma imagem grande não derrubar o resto das configurações.
   const tam = Object.entries(payload).filter(([k]) => k !== 'vdAssets').map(([,v]) => v).join('').length;
@@ -8946,9 +9063,148 @@ async function vdSalvar() {
 async function vdRestaurar() {
   if (!await uiConfirm('Descartar todas as personalizações do editor e voltar ao design original?',
       {title:'Restaurar design', okText:'Restaurar', danger:true})) return;
-  vdCommit(st => { st.tokens = {light:{},dark:{}}; st.styles = {}; st.text = {}; st.layout = {}; st.flat = 'on'; st.overlays = {}; st.assets = {}; });
+  vdCommit(st => { st.tokens = {light:{},dark:{}}; st.styles = {}; st.text = {}; st.layout = {}; st.flat = 'on'; st.overlays = {}; st.assets = {}; st.blocos = {}; });
   VD_OBJ = null;
   await _vdRenderPreview();
+}
+
+// ── Blocos personalizados: edição ───────────────────────
+let VD_BLOCO = null, VD_ITEM = null;   // bloco e item selecionados
+
+function _vdBlocos(){ return (VD_STATE.blocos[VD_PAGE] ||= []); }
+function _vdBloco(id){ return _vdBlocos().find(b => b.id === id) || null; }
+function _vdItem(){ const b = _vdBloco(VD_BLOCO); return b ? (b.itens.find(i => i.id === VD_ITEM) || null) : null; }
+function _vdNovoId(p){ return p + Math.random().toString(36).slice(2,9); }
+
+function _vdRenderBlocos() {
+  const host = document.getElementById('vdBlocoList'); if (!host) return;
+  const lista = VD_STATE.blocos[VD_PAGE] || [];
+  if (!lista.length) { host.innerHTML = `<div class="vd-empty" style="padding:12px 8px">Nenhum bloco novo nesta tela.<br>Use <b>+</b> acima.</div>`; return; }
+  host.innerHTML = lista.map(b => `<div class="vd-item ${VD_BLOCO===b.id?'on':''}">
+      <span class="vd-grow" onclick="vdSelBloco('${b.id}')">${esc(b.titulo)}
+        <span style="color:var(--muted);font-size:11px">· ${b.itens.length} item(ns)</span></span>
+      <button class="vd-mini" onclick="vdBlocoExcluir('${b.id}')" title="Excluir bloco">${fi('x',14)}</button>
+    </div>`).join('');
+}
+
+// Redesenha o preview inteiro: blocos novos entram, a ordenação e os objetos
+// são reaplicados por cima. Mesma sequência de _vdDecorateScreen.
+async function _vdRedesenharBlocos() {
+  const f = document.getElementById('vdFrame'); if (!f) return;
+  _vdInserirBlocos(VD_PAGE, f);
+  _vdApplyLayout(VD_PAGE, f);
+  _vdApplyText(f);
+  await _vdRedesenharObjetos();
+}
+
+function vdNovoBloco() {
+  const id = _vdNovoId('b');
+  vdCommit(st => {
+    (st.blocos[VD_PAGE] ||= []).push({ id, titulo:'Bloco novo', onde:'fim',
+      itens:[{ id:_vdNovoId('i'), tipo:'titulo', texto:'Novo bloco', subtexto:'', etiqueta:'',
+               icone:'', asset:null, acao:'', estilo:'primario', numeros:[] }] });
+  });
+  VD_BLOCO = id; VD_ITEM = null; VD_SCOPE = 'bloco';
+  _vdRedesenharBlocos();
+}
+function vdSelBloco(id) {
+  VD_BLOCO = id; VD_ITEM = null; VD_SCOPE = 'bloco';
+  _vdSyncChrome();
+  if (window.innerWidth < 900) vdAbrirPropsSheet();
+}
+async function vdBlocoExcluir(id) {
+  if (!await uiConfirm('Excluir este bloco e todos os seus itens?', {title:'Excluir bloco', okText:'Excluir', danger:true})) return;
+  vdCommit(st => {
+    st.blocos[VD_PAGE] = (st.blocos[VD_PAGE] || []).filter(b => b.id !== id);
+    // objetos ancorados no bloco perdem a âncora junto
+    st.overlays[VD_PAGE] = (st.overlays[VD_PAGE] || []).filter(o => o.blk !== 'custom:' + id);
+  });
+  if (VD_BLOCO === id) { VD_BLOCO = null; VD_ITEM = null; }
+  await _vdRedesenharBlocos();
+}
+function vdSetBloco(campo, valor) {
+  const id = VD_BLOCO; if (!id) return;
+  vdCommit(st => {
+    const b = (st.blocos[VD_PAGE] || []).find(x => x.id === id); if (!b) return;
+    b[campo] = String(valor).slice(0, campo === 'titulo' ? 60 : 50);
+  }, 'blk.' + id + '.' + campo);
+  _vdRedesenharBlocos();
+}
+function vdAddItem(tipo) {
+  const id = VD_BLOCO; if (!id || !VD_ITENS.some(v => v.tipo === tipo)) return;
+  const iid = _vdNovoId('i');
+  vdCommit(st => {
+    const b = (st.blocos[VD_PAGE] || []).find(x => x.id === id); if (!b) return;
+    if (b.itens.length >= 30) { showToast('Máximo de 30 itens por bloco', 'warn'); return; }
+    b.itens.push({ id:iid, tipo, texto: tipo==='botao'?'Botão':(tipo==='titulo'?'Título':''), subtexto:'',
+      etiqueta:'', icone:'', asset:null, acao:'', estilo:'primario',
+      numeros: tipo==='numeros' ? [{valor:'0',rotulo:'Rótulo'}] : [] });
+  });
+  VD_ITEM = iid;
+  _vdRedesenharBlocos();
+}
+function vdSelItem(id){ VD_ITEM = id; VD_SCOPE = 'bloco'; _vdRenderProps(); }
+function vdMoverItem(id, dir) {
+  const bid = VD_BLOCO;
+  vdCommit(st => {
+    const b = (st.blocos[VD_PAGE] || []).find(x => x.id === bid); if (!b) return;
+    const i = b.itens.findIndex(x => x.id === id), j = i + dir;
+    if (i < 0 || j < 0 || j >= b.itens.length) return;
+    b.itens.splice(j, 0, b.itens.splice(i, 1)[0]);
+  });
+  _vdRedesenharBlocos();
+}
+function vdRemItem(id) {
+  const bid = VD_BLOCO;
+  vdCommit(st => {
+    const b = (st.blocos[VD_PAGE] || []).find(x => x.id === bid); if (!b) return;
+    b.itens = b.itens.filter(x => x.id !== id);
+  });
+  if (VD_ITEM === id) VD_ITEM = null;
+  _vdRedesenharBlocos();
+}
+function vdSetItem(campo, valor) {
+  const bid = VD_BLOCO, iid = VD_ITEM; if (!bid || !iid) return;
+  vdCommit(st => {
+    const b = (st.blocos[VD_PAGE] || []).find(x => x.id === bid); if (!b) return;
+    const it = b.itens.find(x => x.id === iid); if (!it) return;
+    if (campo === 'icone') it.icone = ICONS[valor] ? valor : '';
+    else if (campo === 'acao') it.acao = Object.prototype.hasOwnProperty.call(VD_ACOES, valor) ? valor : '';
+    else if (campo === 'estilo') it.estilo = valor === 'secundario' ? 'secundario' : 'primario';
+    else it[campo] = String(valor).slice(0, 300);
+  }, 'itm.' + iid + '.' + campo);
+  _vdRedesenharBlocos();
+}
+function vdSetNumero(i, campo, valor) {
+  const bid = VD_BLOCO, iid = VD_ITEM;
+  vdCommit(st => {
+    const it = (st.blocos[VD_PAGE] || []).find(x => x.id === bid)?.itens.find(x => x.id === iid);
+    if (it?.numeros?.[i]) it.numeros[i][campo] = String(valor).slice(0, campo === 'valor' ? 12 : 24);
+  }, 'num.' + iid + '.' + i + '.' + campo);
+  _vdRedesenharBlocos();
+}
+function vdNumeroAdd(dir) {
+  const bid = VD_BLOCO, iid = VD_ITEM;
+  vdCommit(st => {
+    const it = (st.blocos[VD_PAGE] || []).find(x => x.id === bid)?.itens.find(x => x.id === iid); if (!it) return;
+    if (dir > 0) { if (it.numeros.length < 4) it.numeros.push({ valor:'0', rotulo:'Rótulo' }); }
+    else it.numeros.pop();
+  });
+  _vdRedesenharBlocos();
+}
+async function vdItemImagem() {
+  const bid = VD_BLOCO, iid = VD_ITEM; if (!bid || !iid) return;
+  const file = await _vdEscolherArquivo(); if (!file) return;
+  let dataUri;
+  try { showToast('Processando imagem…', ''); dataUri = await _vdComprimirImagem(file); }
+  catch (e) { showToast('Não foi possível processar a imagem', 'err'); return; }
+  const aid = _vdNovoId('a');
+  vdCommit(st => {
+    st.assets[aid] = dataUri;
+    const it = (st.blocos[VD_PAGE] || []).find(x => x.id === bid)?.itens.find(x => x.id === iid);
+    if (it) it.asset = aid;
+  });
+  _vdRedesenharBlocos();
 }
 
 // ── Objetos livres: edição ──────────────────────────────
@@ -9185,14 +9441,91 @@ function _vdCampo(prop, valor, setExpr, clearExpr) {
     <input type="text" value="${esc(valor||'')}" placeholder="— padrão —" onchange="${SET('this.value')}"></div>`;
 }
 
+// Painel do bloco personalizado: onde ele entra na tela e quais itens o compõem.
+function _vdPropsBlocoHtml() {
+  const b = _vdBloco(VD_BLOCO);
+  if (!b) return `<div class="vd-empty">Nenhum bloco novo selecionado.<br><br>Use <b>+</b> em “Blocos novos”, à esquerda, para criar um.</div>`;
+  const rotB = VD_LABELS[VD_PAGE] || {};
+  const destinos = [...(document.getElementById('vdFrame')?.querySelectorAll('[data-blk]') || [])]
+    .map(e => e.getAttribute('data-blk')).filter(id => id !== 'custom:' + b.id);
+  const it = _vdItem();
+  const campos = VD_ITENS.find(v => v.tipo === it?.tipo)?.campos || [];
+
+  const listaItens = b.itens.map((x, i) => {
+    const rot = VD_ITENS.find(v => v.tipo === x.tipo)?.label || x.tipo;
+    const amostra = (x.texto || x.subtexto || '').slice(0, 20);
+    return `<div class="vd-item ${VD_ITEM===x.id?'on':''}">
+      <span class="vd-grow" onclick="vdSelItem('${x.id}')">${esc(rot)}${amostra?` <span style="color:var(--muted);font-size:11px">· ${esc(amostra)}</span>`:''}</span>
+      <button class="vd-mini" onclick="vdMoverItem('${x.id}',-1)" ${i===0?'disabled':''} title="Subir">${fi('chevron-up',14)}</button>
+      <button class="vd-mini" onclick="vdMoverItem('${x.id}',1)" ${i===b.itens.length-1?'disabled':''} title="Descer">${fi('chevron-down',14)}</button>
+      <button class="vd-mini" onclick="vdRemItem('${x.id}')" title="Remover">${fi('x',14)}</button>
+    </div>`;
+  }).join('') || `<div class="vd-empty" style="padding:10px 8px">Bloco vazio — adicione um item abaixo.</div>`;
+
+  const editor = !it ? `<div class="vd-hint">Toque num item da lista para editar o conteúdo dele.</div>` : `
+    <div class="vd-hint">Editando <b>${esc(VD_ITENS.find(v=>v.tipo===it.tipo)?.label || it.tipo)}</b> — ele usa os mesmos componentes das telas nativas.</div>
+    ${campos.includes('texto') ? `<div class="vd-field"><label>Texto</label>
+      <textarea rows="2" oninput="vdSetItem('texto',this.value)">${esc(it.texto||'')}</textarea></div>` : ''}
+    ${campos.includes('subtexto') ? `<div class="vd-field"><label>Texto secundário</label>
+      <textarea rows="2" oninput="vdSetItem('subtexto',this.value)">${esc(it.subtexto||'')}</textarea></div>` : ''}
+    ${campos.includes('etiqueta') ? `<div class="vd-field"><label>Etiqueta</label>
+      <input type="text" value="${esc(it.etiqueta||'')}" oninput="vdSetItem('etiqueta',this.value)"></div>` : ''}
+    ${campos.includes('icone') ? `<div class="vd-field"><label>Ícone</label>
+      <select onchange="vdSetItem('icone',this.value)"><option value="">— nenhum —</option>
+        ${Object.keys(ICONS).map(k=>`<option value="${k}" ${k===it.icone?'selected':''}>${k}</option>`).join('')}
+      </select></div>` : ''}
+    ${campos.includes('acao') ? `<div class="vd-field"><label>Ação ao tocar</label>
+      <select onchange="vdSetItem('acao',this.value)">
+        ${Object.entries(VD_ACOES).map(([k,l])=>`<option value="${k}" ${k===it.acao?'selected':''}>${esc(l)}</option>`).join('')}
+      </select></div>` : ''}
+    ${campos.includes('estilo') ? `<div class="vd-field"><label>Estilo do botão</label>
+      <select onchange="vdSetItem('estilo',this.value)">
+        <option value="primario" ${it.estilo!=='secundario'?'selected':''}>Principal</option>
+        <option value="secundario" ${it.estilo==='secundario'?'selected':''}>Secundário</option>
+      </select></div>` : ''}
+    ${campos.includes('asset') ? `<div class="vd-field"><label>Imagem</label>
+      <div class="vd-row"><button class="vd-btn" style="flex:1" onclick="vdItemImagem()">${it.asset?'Trocar imagem':'Escolher imagem'}</button></div>
+      ${it.asset && VD_STATE.assets[it.asset] ? `<img src="${VD_STATE.assets[it.asset]}" alt="" style="width:100%;margin-top:8px;display:block">` : ''}</div>` : ''}
+    ${campos.includes('numeros') ? `<div class="vd-field"><label>Números</label>
+      ${(it.numeros||[]).map((n,i)=>`<div class="vd-row" style="margin-bottom:5px">
+        <input type="text" value="${esc(n.valor)}" placeholder="valor" style="width:70px" oninput="vdSetNumero(${i},'valor',this.value)">
+        <input type="text" value="${esc(n.rotulo)}" placeholder="rótulo" style="flex:1" oninput="vdSetNumero(${i},'rotulo',this.value)">
+      </div>`).join('')}
+      <div class="vd-row"><button class="vd-btn" style="flex:1" onclick="vdNumeroAdd(1)" ${(it.numeros||[]).length>=4?'disabled':''}>+ número</button>
+        <button class="vd-btn" style="flex:1" onclick="vdNumeroAdd(-1)" ${!(it.numeros||[]).length?'disabled':''}>− número</button></div></div>` : ''}`;
+
+  return `<div class="vd-hint">Bloco novo montado com os componentes reais do app. Ele entra na tela junto dos nativos e pode receber objetos ancorados.</div>
+    <div class="vd-field"><label>Nome do bloco</label>
+      <input type="text" value="${esc(b.titulo)}" onchange="vdSetBloco('titulo',this.value)"></div>
+    <div class="vd-field"><label>Posição na tela</label>
+      <select onchange="vdSetBloco('onde',this.value)">
+        <option value="inicio" ${b.onde==='inicio'?'selected':''}>No começo da tela</option>
+        ${destinos.map(id=>`<option value="apos:${esc(id)}" ${b.onde==='apos:'+id?'selected':''}>Depois de: ${esc(rotB[id]||id)}</option>`).join('')}
+        <option value="fim" ${b.onde==='fim'?'selected':''}>No fim da tela</option>
+      </select>
+      <div class="small muted" style="font-size:10.5px;margin-top:3px">Depois de inserido, dá para reordenar pelas Camadas, como qualquer bloco nativo.</div></div>
+    <div class="vd-field"><label>Itens do bloco</label>${listaItens}</div>
+    <div class="vd-field"><label>Adicionar item</label>
+      <select onchange="if(this.value){vdAddItem(this.value);this.value=''}">
+        <option value="">— escolher —</option>
+        ${VD_ITENS.map(v=>`<option value="${v.tipo}">${esc(v.label)}</option>`).join('')}
+      </select></div>
+    ${editor}
+    <div class="vd-field"><div class="vd-row">
+      <button class="vd-btn" style="flex:1;color:var(--err)" onclick="vdBlocoExcluir('${b.id}')">Excluir bloco</button></div></div>`;
+}
+
 function _vdPropsHtml() {
   const s = VD_SEL;
-  const abas = `<div class="vd-scope" style="grid-template-columns:repeat(4,1fr)">
+  const abas = `<div class="vd-scope" style="grid-template-columns:repeat(5,1fr)">
     <button class="${VD_SCOPE==='obj'?'on':''}" onclick="vdEscopo('obj')">Objeto</button>
+    <button class="${VD_SCOPE==='bloco'?'on':''}" onclick="vdEscopo('bloco')">Bloco</button>
     <button class="${VD_SCOPE==='comp'?'on':''}" onclick="vdEscopo('comp')">Compon.</button>
     <button class="${VD_SCOPE==='txt'?'on':''}" onclick="vdEscopo('txt')">Texto</button>
     <button class="${VD_SCOPE==='tema'?'on':''}" onclick="vdEscopo('tema')">Tema</button>
   </div>`;
+
+  if (VD_SCOPE === 'bloco') return abas + _vdPropsBlocoHtml();
 
   if (VD_SCOPE === 'obj') {
     const o = _vdObj(VD_OBJ);
