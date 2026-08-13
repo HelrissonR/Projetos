@@ -479,7 +479,12 @@ body:not(.role-admin) .cfg-admin-only{display:none!important}
 .plum-hero .ph-kicker{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.62)}
 .plum-hero .ph-name{font-size:26px;font-weight:800;letter-spacing:-.5px;margin-top:2px}
 .plum-hero .ph-sub{font-size:13px;color:rgba(255,255,255,.7);margin-top:2px}
-.plum-hero .ph-avatar{width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex-shrink:0}
+.plum-hero .ph-avatar{width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex-shrink:0;overflow:hidden}
+.plum-hero .ph-avatar.has-foto{background:transparent}
+.plum-hero .ph-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+/* Foto no Config -> Minha conta */
+.me-foto{width:64px;height:64px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--violet-soft);color:var(--violet);font-weight:800;font-size:20px;overflow:hidden}
+.me-foto img{width:100%;height:100%;object-fit:cover;display:block}
 .plum-hero .ph-bell{width:46px;height:46px;border-radius:13px;background:transparent;border:1px solid rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;cursor:pointer}
 .plum-hero .ph-cov{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px;margin-top:16px;display:flex;align-items:center;gap:14px}
 .plum-hero .ph-cov-num{font-size:38px;font-weight:800;line-height:1;letter-spacing:-1px}
@@ -2771,8 +2776,24 @@ async function saveImportResult(result) {
       }
     }
 
-    // Salvar no IndexedDB
-    await IDB.putAll('beneficiarios', result.beneficiarios);
+    // Salvar no IndexedDB.
+    // Merge campo a campo: um arquivo que nao traga certos campos (data de
+    // nascimento, CNS, endereco...) nao pode apagar o que ja foi coletado.
+    const _incoming = result.beneficiarios || [];
+    const _keep = ['dob','idade','cns','cpf','tel','endereco','bairro','eas','cod_fam','nome'];
+    const _mergedBen = [];
+    for (const nb of _incoming) {
+      const ex = await IDB.get('beneficiarios', nb.nis);
+      if (!ex) { _mergedBen.push(nb); continue; }
+      const out = { ...ex, ...nb };
+      for (const k of _keep) {
+        const v = nb[k];
+        if (v === null || v === undefined || v === '') out[k] = ex[k];  // preserva o existente
+      }
+      out.updated_at = new Date().toISOString();
+      _mergedBen.push(out);
+    }
+    await IDB.putAll('beneficiarios', _mergedBen);
     await IDB.putAll('familias', result.familias);
     if (result._acomps?.length) {
       // Merge seguro: não sobrescreve peso/altura/observações já coletados no app.
@@ -3250,7 +3271,7 @@ async function renderHome() {
           <div class="ph-sub" style="text-transform:capitalize">${hoje}</div>
         </div>
         <div class="flex aic" style="gap:8px;flex-shrink:0">
-          <div class="ph-avatar">${(function(){const p=ME.nome.trim().split(/\s+/);return (p[0][0]+(p[1]?.[0]||'')).toUpperCase();})()}</div>
+          ${_meAvatar('ph-avatar')}
           <div class="ph-bell" role="button" tabindex="0" aria-label="Notificações" onclick="nav('config')">${fi('bell',20)}</div>
         </div>
       </div>
@@ -4142,7 +4163,19 @@ async function renderConfig() {
     <div class="cfg-card" data-tab="geral">
       <div class="cfg-card-head">${fi('user-plus',15)} Minha conta</div>
       <div class="cfg-card-body"><div class="s3">
-        <div class="small muted">Conectado como <b>${esc(ME.nome)}</b> (${esc(ME.user)}) · perfil <span class="tag tag-i" style="font-size:10px">${esc(ME.role)}</span></div>
+        <div class="flex aic" style="gap:14px">
+          ${_meAvatar('me-foto')}
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:700;font-size:15px">${esc(ME.nome)}</div>
+            <div class="small muted">${esc(ME.user)} · perfil ${esc(ME.role)}</div>
+            <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+              <button class="btn btn-s btn-g" onclick="document.getElementById('minhaFotoFile').click()" style="display:inline-flex;align-items:center;gap:5px">${fi('upload',13)} ${ME.foto?'Trocar foto':'Adicionar foto'}</button>
+              ${ME.foto?`<button class="btn btn-s btn-g" onclick="removerMinhaFoto()" style="display:inline-flex;align-items:center;gap:5px;color:var(--err)">${fi('x',13)} Remover</button>`:''}
+            </div>
+          </div>
+        </div>
+        <input type="file" id="minhaFotoFile" accept="image/*" style="display:none" onchange="uploadMinhaFoto(this.files[0]);this.value=''">
+        <div class="small muted">A foto fica salva no seu perfil e acompanha o seu login nos outros aparelhos após a sincronização.</div>
         <button class="btn btn-g btn-b" onclick="showChangeMyPass()" style="display:inline-flex;align-items:center;gap:6px">${fi('edit',14)} Trocar minha senha</button>
         ${ME.email?`<div class="small muted">Login online: <b>${esc(ME.email)}</b> — a troca atualiza a nuvem e o acesso offline.</div>`:`<div class="small muted">Sem email configurado: a troca vale só para o acesso offline deste login.</div>`}
       </div></div>
@@ -6979,6 +7012,7 @@ const fmtBR = iso => {
   return m ? `${m[3]}/${m[2]}/${m[1]}` : String(iso);
 };
 async function exportEgestor() {
+  const _EAS_PAD = await _easPadrao();
   if (typeof XLSX === 'undefined') {
     showToast('Biblioteca XLSX não carregada. Verifique conexão.', 'err');
     return;
@@ -7028,7 +7062,7 @@ async function exportEgestor() {
   // Resumo por EAS (facilita conferência da meta de acompanhamento por unidade)
   const porEas = new Map();
   benefs.forEach(b => {
-    const k = b.eas || '(sem EAS)';
+    const k = b.eas || _EAS_PAD;
     const o = porEas.get(k) || { total:0, acomp:0 };
     o.total++; if (acompSem.get(b.nis)?.acompanhado !== false && acompSem.has(b.nis)) o.acomp++;
     porEas.set(k, o);
@@ -7064,6 +7098,7 @@ async function _reportHeader(titulo, metaHtml) {
 }
 
 async function gerarRelatorioVigencia() {
+  const _EAS_PAD = await _easPadrao();
   const benefs   = await getBenefCache();
   if (!benefs.length) { showToast('Nenhum beneficiário na base', 'warn'); return; }
   const acompSem = await acompanhadosNoSemestre();
@@ -7077,7 +7112,7 @@ async function gerarRelatorioVigencia() {
   let acomp = 0, naoAcomp = 0;
   const motivos = new Map(), porEas = new Map();
   benefs.forEach(b => {
-    const k = b.eas || '(sem EAS)';
+    const k = b.eas || _EAS_PAD;
     const o = porEas.get(k) || { total:0, ok:0, nao:0 };
     o.total++;
     const a = acompSem.get(b.nis);
@@ -7430,6 +7465,79 @@ function _easFieldHtml(id, value, opts) {
 async function showAddUser() {
   const easOpts = await _easDatalistOptions();
   openSheet('Novo Usuário',`<div class="s3"><div class="field"><label>Nome</label><input type="text" id="uN"></div><div class="field"><label>Username</label><input type="text" id="uU"></div><div class="field"><label>Email</label><input type="email" id="uE"></div><div class="field"><label>Senha</label><input type="password" id="uP"></div><div class="field"><label>Perfil</label><select id="uR"><option value="visualizador">Visualizador</option><option value="operador">Operador</option><option value="admin">Admin</option></select></div>${_easFieldHtml('uEas','',easOpts)}<button class="btn btn-p btn-b" onclick="saveUser()">Criar</button></div>`);
+}
+
+// ═══ Foto de perfil do usuario logado ═══════════════════
+// Guardada como data URI quadrado e comprimido dentro do proprio registro do
+// usuario (meta 'users'), que ja e sincronizado entre os aparelhos. Sem
+// dependencia externa: funciona offline e respeita a CSP (img-src data:).
+const FOTO_LADO = 192;      // px do lado do quadrado final
+const FOTO_MAX_KB = 90;     // teto por foto
+
+function _fotoComprimir(file) {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onerror = () => reject(new Error('Falha ao ler a imagem'));
+    fr.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error('Arquivo de imagem invalido'));
+      img.onload = () => {
+        // recorte central quadrado
+        const lado = Math.min(img.width, img.height);
+        const sx = (img.width - lado) / 2, sy = (img.height - lado) / 2;
+        const cv = document.createElement('canvas');
+        cv.width = cv.height = FOTO_LADO;
+        const ctx = cv.getContext('2d');
+        ctx.drawImage(img, sx, sy, lado, lado, 0, 0, FOTO_LADO, FOTO_LADO);
+        let q = 0.82, out = cv.toDataURL('image/jpeg', q);
+        while (out.length / 1024 > FOTO_MAX_KB && q > 0.4) { q -= 0.1; out = cv.toDataURL('image/jpeg', q); }
+        resolve(out);
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+
+async function uploadMinhaFoto(file) {
+  if (!file) return;
+  if (!/^image\//.test(file.type)) { showToast('Selecione um arquivo de imagem', 'warn'); return; }
+  if (file.size > 8 * 1024 * 1024) { showToast('Imagem muito grande (max 8 MB)', 'warn'); return; }
+  try {
+    showToast('Processando imagem…', '');
+    const dataUri = await _fotoComprimir(file);
+    const users = JSON.parse(await IDB.getMeta('users') || '[]');
+    const u = users.find(x => x.id === ME.id);
+    if (!u) { showToast('Usuario nao encontrado', 'err'); return; }
+    u.foto = dataUri;
+    await IDB.setMeta('users', JSON.stringify(users));
+    ME.foto = dataUri;
+    try { localStorage.setItem('settingsDirty', '1'); } catch(e) {}
+    Audit.log('user.photo', ME.id);
+    showToast('✓ Foto atualizada', 'ok');
+    nav('config').then(() => setCfgTab('geral'));
+  } catch (e) {
+    console.warn(e); showToast('Nao foi possivel processar a imagem', 'err');
+  }
+}
+
+async function removerMinhaFoto() {
+  if (!await uiConfirm('Remover sua foto de perfil?', {title:'Foto de perfil', okText:'Remover', danger:true})) return;
+  const users = JSON.parse(await IDB.getMeta('users') || '[]');
+  const u = users.find(x => x.id === ME.id);
+  if (u) { delete u.foto; await IDB.setMeta('users', JSON.stringify(users)); }
+  delete ME.foto;
+  try { localStorage.setItem('settingsDirty', '1'); } catch(e) {}
+  showToast('Foto removida', 'ok');
+  nav('config').then(() => setCfgTab('geral'));
+}
+
+// Avatar do usuario logado: foto quando houver, iniciais como alternativa
+function _meAvatar(cls) {
+  const ini = (function(){ const p = String(ME?.nome || '?').trim().split(/\s+/); return (p[0][0] + (p[1]?.[0] || '')).toUpperCase(); })();
+  return ME?.foto
+    ? `<div class="${cls} has-foto"><img src="${ME.foto}" alt="Foto de ${esc(ME.nome||'')}"></div>`
+    : `<div class="${cls}">${ini}</div>`;
 }
 
 async function saveUser() {
@@ -8351,9 +8459,13 @@ async function gerarRelatorio(filtro = {}) {
 }
 
 function _easDoLogin() { return (ME && ME.eas) ? String(ME.eas).trim() : ''; }
+// Estabelecimento atribuido a beneficiarios sem EAS vinculado (configuravel)
+async function _easPadrao() { return (await IDB.getMeta('easPadrao')) || 'CENTRO DE SAÚDE DE LÁBREA'; }
 
 async function gerarRelatorioAcomp(opts) {
   opts = opts || {};
+  // Beneficiarios sem EAS vinculado entram no estabelecimento padrao do municipio
+  const EAS_PADRAO = await _easPadrao();
   const isAdmin = ME.role === 'admin';
   const meuEas = _easDoLogin();
   if (!isAdmin && !meuEas) {
@@ -8393,7 +8505,7 @@ async function gerarRelatorioAcomp(opts) {
   let linhas = [];
   ultimo.forEach((a, nis) => {
     const b = byNis.get(nis) || {};
-    const eas = (b.eas || a.estabelecimento || '').trim();
+    const eas = (b.eas || a.estabelecimento || '').trim() || EAS_PADRAO;
     if (easFiltro && eas !== easFiltro) return;
     linhas.push({
       cod_fam: b.cod_fam || '',   // nao e exibido; usado no KPI de familias atendidas
@@ -8401,7 +8513,7 @@ async function gerarRelatorioAcomp(opts) {
       nome: b.nome || '',
       dob: b.dob || '',
       idade: (b.idade != null ? b.idade : null),
-      eas: eas || '(sem EAS)',
+      eas: eas,
       data: a.data,
       peso: a.peso,
       altura: a.altura,
