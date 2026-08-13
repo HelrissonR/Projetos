@@ -421,7 +421,7 @@ body:not(.role-admin) .cfg-admin-only{display:none!important}
 .mb-tria-bar{height:10px;border-radius:999px;display:flex;gap:2px;overflow:hidden;background:var(--border);margin-bottom:12px}
 .mb-tria-bar .tseg{border-radius:999px;height:100%}
 /* Wizard do acompanhamento */
-.wiz-bar{display:flex;gap:5px}
+.wiz-bar{display:flex;gap:5px;margin-top:14px}
 .wiz-seg{flex:1;height:5px;border-radius:999px;background:var(--border);transition:background .3s}
 .wiz-seg.active{background:var(--accent)}
 /* Progresso da família (modo mutirão) */
@@ -1085,7 +1085,7 @@ header.top{padding:12px 16px}
 #sheetT{letter-spacing:-.01em;font-weight:750}
 #sheetB .card{border-radius:12px}
 #sheetB .sheet-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:3px}
-#wizLbl{text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-size:10.5px}
+#wizLbl{text-transform:uppercase;letter-spacing:.1em;font-weight:700;font-size:10.5px;text-align:center;margin-top:9px;margin-bottom:14px}
 .wiz-seg{height:4px}
 </style>
 </head>
@@ -6216,7 +6216,7 @@ async function showAcompForm(nis) {
     ${famProgHtml}
 
     <div class="wiz-bar" id="wizBar"><div class="wiz-seg active"></div><div class="wiz-seg"></div></div>
-    <div class="small muted" id="wizLbl" style="text-align:center;margin-top:-4px">Etapa 1 de 2 — Registro</div>
+    <div class="small muted" id="wizLbl">Etapa 1 de 2 — Registro</div>
 
     <div id="aStep1">
     <div class="form-sep">${fi('calendar',12)} Registro</div>
