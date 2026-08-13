@@ -844,6 +844,10 @@ body.vd-mode .vd-ov-item{cursor:move}
 body.vd-mode .vd-ov-item[data-ov-sel]{outline:2px solid var(--violet);outline-offset:2px}
 /* ══ EDITOR VISUAL ══════════════════════════════════════ */
 body.vd-mode header.top,body.vd-mode nav.bottom,body.vd-mode #appFooter{display:none!important}
+/* …menos o clone dentro do preview: é dele que vem a barra lateral do modo
+   computador, e a regra acima o alcançava junto com o chrome de verdade. */
+body.vd-mode .vd-frame header.top{display:flex!important}
+body.vd-mode .vd-frame nav.bottom{display:flex!important}
 body.vd-mode .app{max-width:none;padding:0}
 body.vd-mode main#mc{padding:0;background:none!important}
 .vd-wrap{display:grid;grid-template-columns:224px minmax(0,1fr) 288px;grid-template-rows:auto minmax(0,1fr);
@@ -863,8 +867,30 @@ body.vd-mode main#mc{padding:0;background:none!important}
   margin:4px 0 8px;padding-left:9px;border-left:3px solid var(--violet)}
 .vd-pane h4+h4{margin-top:18px}
 .vd-canvas{overflow:auto;padding:18px;display:flex;justify-content:center;align-items:flex-start}
-.vd-frame{background:var(--bg);width:412px;flex:0 0 auto;transform-origin:top center;
+.vd-stage{flex:0 0 auto;position:relative}
+.vd-frame{background:var(--bg);width:412px;transform-origin:top left;
   box-shadow:0 2px 18px rgba(0,0,0,.14);padding:14px;min-height:200px}
+.vd-frame[data-dev="desktop"]{width:1280px;padding:0}
+/* A barra lateral do app usa 100vh; dentro de um quadro reduzido isso estoura */
+.vd-frame[data-dev="desktop"] nav.bottom{height:auto;min-height:100%}
+/* Espelham as duas regras de desktop presas a #mc — o preview não pode repetir
+   esse id, então o conteúdo vai num .vd-mc */
+body:not(.desk-bottom) .vd-frame .vd-mc{grid-area:main}
+.vd-frame .vd-mc .g2{grid-template-columns:1fr 1fr}
+/* Alternador de dispositivo */
+.vd-dev{display:flex;gap:2px;background:var(--panel-2);padding:2px}
+.vd-dev button{padding:6px 10px;background:transparent;color:var(--muted);cursor:pointer;display:flex;align-items:center}
+.vd-dev button.on{background:var(--panel);color:var(--violet)}
+#vdZoom.on{color:var(--violet)}
+/* As media queries do app enxergam a JANELA, não o quadro. No modo celular o
+   quadro tem 412px mas a janela do editor é larga — sem repetir esta regra o
+   preview mostraria a grade de 2 colunas onde o celular mostra 1.
+   Só .g2 entra aqui: .mb-stat-grid e .home-hero não são usados em markup
+   nenhum, e a de .reg-seg é max-width:400, que num celular de 412 também
+   não valeria.
+   O #mc no seletor não é enfeite: o editor é montado dentro de #mc, e a regra
+   de desktop `#mc .g2` traz um id — sem ele, ela venceria esta aqui. */
+#mc .vd-frame[data-dev="mobile"] .g2{grid-template-columns:1fr}
 .vd-item{display:flex;align-items:center;gap:8px;width:100%;padding:9px 10px;font-size:13px;text-align:left;
   background:transparent;color:var(--text);cursor:pointer}
 .vd-item:hover{background:var(--panel-2)}
@@ -979,15 +1005,15 @@ body.vd-mode main#mc{padding:0;background:none!important}
 /* A media query acima enxerga a VIEWPORT. No editor a janela é larga, mas o
    preview cabe num quadro de 412px — sem isto o login apareceria em duas
    colunas espremidas, que não é o que o celular mostra. */
-.vd-frame .plogin{grid-template-columns:1fr;min-height:auto}
-.vd-frame .plogin-hero{padding:26px 24px 24px;min-height:auto}
-.vd-frame .plh-kicker{font-size:11px}
-.vd-frame .plh-illus{display:none}
-.vd-frame .plh-title{font-size:26px;margin-top:10px}
-.vd-frame .plh-sub{display:none}
-.vd-frame .plh-foot{display:none}
-.vd-frame .plogin-card{padding:30px 26px 40px}
-.vd-frame .plc-brand{margin-bottom:22px}
+.vd-frame[data-dev="mobile"] .plogin{grid-template-columns:1fr;min-height:auto}
+.vd-frame[data-dev="mobile"] .plogin-hero{padding:26px 24px 24px;min-height:auto}
+.vd-frame[data-dev="mobile"] .plh-kicker{font-size:11px}
+.vd-frame[data-dev="mobile"] .plh-illus{display:none}
+.vd-frame[data-dev="mobile"] .plh-title{font-size:26px;margin-top:10px}
+.vd-frame[data-dev="mobile"] .plh-sub{display:none}
+.vd-frame[data-dev="mobile"] .plh-foot{display:none}
+.vd-frame[data-dev="mobile"] .plogin-card{padding:30px 26px 40px}
+.vd-frame[data-dev="mobile"] .plc-brand{margin-bottom:22px}
 /* Painel da marca oculto pelo editor: o cartão assume a tela toda, senão
    sobraria metade vazia à direita. */
 .plogin:has(> .plogin-hero.vd-hid){grid-template-columns:1fr}
@@ -1330,6 +1356,8 @@ function debounce(func, wait) {
 // ─── Feather Icons — inline, offline-safe ────────────────
 const ICONS = {
   home:           `<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>`,
+  smartphone:     `<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>`,
+  monitor:        `<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>`,
   search:         `<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>`,
   users:          `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>`,
   clipboard:      `<path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>`,
@@ -4826,7 +4854,7 @@ async function nav(page, _fromPop) {
   }
   mc.innerHTML = html;
   document.body.classList.toggle('vd-mode', page === 'design');
-  if (page === 'design') { _vdRenderPreview(); }
+  if (page === 'design') { _vdRenderPreview(); _vdObservarCanvas(); }
   else _vdDecorateScreen(page, mc);
   mc.classList.remove('loading');
   mc.classList.remove('enter'); void mc.offsetWidth; mc.classList.add('enter');
@@ -8810,6 +8838,18 @@ function _vdDecorateScreen(page, root) {
 // original aqui, no parse — antes de qualquer substituição de texto — para o
 // preview do editor nascer limpo, como as demais telas.
 const VD_LOGIN_HTML = document.querySelector('#pageLogin .plogin')?.outerHTML || '';
+// Chrome do app (cabeçalho + barra lateral) para o preview de computador. Sem os
+// ids: o preview não pode duplicar #ssEl, #themeBtn e afins no documento.
+const VD_CHROME_HTML = (() => {
+  const app = document.querySelector('#pageApp .app'); if (!app) return null;
+  const c = app.cloneNode(true);
+  c.querySelector('#mc')?.remove();
+  c.querySelector('#appFooter')?.remove();
+  c.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+  return { cabecalho: c.querySelector('header.top')?.outerHTML || '',
+           barra:     c.querySelector('nav.bottom')?.outerHTML || '' };
+})();
+let VD_DEV = 'mobile', VD_ZOOM = 1, VD_ZOOM_FIT = true;
 const VD_PAGES = [
   { key:'home',     label:'Início',    fn:() => renderHome() },
   { key:'search',   label:'Buscar',    fn:() => renderRegistros('busca') },
@@ -8899,6 +8939,11 @@ async function renderDesignEditor() {
       <select id="vdPageSel" onchange="vdTrocarTela(this.value)" style="width:auto;font-size:13px;padding:7px 9px">
         ${VD_PAGES.map(p=>`<option value="${p.key}">${p.label}</option>`).join('')}
       </select>
+      <div class="vd-dev">
+        <button class="on" data-dev="mobile"  onclick="vdTrocarDev('mobile')"  title="Ver como celular">${fi('smartphone',15)}</button>
+        <button           data-dev="desktop" onclick="vdTrocarDev('desktop')" title="Ver como computador">${fi('monitor',15)}</button>
+      </div>
+      <button class="vd-btn" id="vdZoom" onclick="vdAlternarZoom()" title="Alternar entre caber na tela e tamanho real">100%</button>
       <span class="vd-spacer"></span>
       <button class="vd-btn" id="vdUndo" onclick="vdUndo()" title="Desfazer" disabled>${fi('rotate-ccw',15)}</button>
       <button class="vd-btn" id="vdRedo" onclick="vdRedo()" title="Refazer" disabled>${fi('refresh-cw',15)}</button>
@@ -8925,7 +8970,7 @@ async function renderDesignEditor() {
       <div id="vdLayers"></div>
     </aside>
 
-    <main class="vd-canvas"><div class="vd-frame" id="vdFrame"></div></main>
+    <main class="vd-canvas" id="vdCanvas"><div class="vd-stage" id="vdStage"><div class="vd-frame" id="vdFrame" data-dev="mobile"></div></div></main>
 
     <aside class="vd-pane vd-right" id="vdRight"></aside>
 
@@ -8949,12 +8994,20 @@ async function _vdRenderPreview() {
   f.innerHTML = _navSkeleton();
   let html = '';
   try { html = await pg.fn(); } catch(e) { html = `<div class="vd-empty">Não foi possível montar esta tela.<br>${esc(e.message||'')}</div>`; }
+  // No computador a tela vive dentro do chrome do app — é dele que vêm a barra
+  // lateral e o cabeçalho. O login não tem chrome nenhum.
+  f.dataset.dev = VD_DEV;
+  if (VD_DEV === 'desktop' && VD_PAGE !== 'login' && VD_CHROME_HTML) {
+    html = `<div class="app">${VD_CHROME_HTML.cabecalho}<main class="vd-mc">${html}</main>${VD_CHROME_HTML.barra}</div>`;
+  }
   f.innerHTML = html;
+  _vdInserirBlocos(VD_PAGE, f);
   _vdApplyLayout(VD_PAGE, f);
   _vdApplyText(f);
   _vdNeutralizar(f);
   VD_SEL = null;
   await _vdRedesenharObjetos();
+  _vdAjustarZoom();
 }
 
 // Desarma o comportamento do app dentro do preview: clique vira seleção
@@ -9088,6 +9141,46 @@ function vdOcultar(id) {
   const frame = document.getElementById('vdFrame');
   frame?.querySelectorAll('[data-blk]').forEach(e => e.style.removeProperty('display'));
   _vdApplyLayout(VD_PAGE, frame); _vdRenderLayers();
+}
+
+// ── Dispositivo e redução do preview ────────────────────
+const VD_LARGURA = { mobile: 412, desktop: 1280 };
+
+async function vdTrocarDev(d) {
+  if (VD_DEV === d) return;
+  VD_DEV = d; VD_ZOOM_FIT = true;
+  document.querySelectorAll('.vd-dev button').forEach(b => b.classList.toggle('on', b.dataset.dev === d));
+  VD_OBJ = null; if (VD_MV) { VD_MV.destroy(); VD_MV = null; }
+  await _vdRenderPreview();
+}
+function vdAlternarZoom() { VD_ZOOM_FIT = !VD_ZOOM_FIT; _vdAjustarZoom(); }
+
+// A área de preview muda de largura quando a janela muda ou os painéis se
+// recolhem; o encaixe precisa acompanhar.
+let VD_RO = null;
+function _vdObservarCanvas() {
+  const canvas = document.getElementById('vdCanvas'); if (!canvas) return;
+  VD_RO?.disconnect();
+  if (typeof ResizeObserver !== 'function') return;
+  VD_RO = new ResizeObserver(() => _vdAjustarZoom());
+  VD_RO.observe(canvas);
+}
+
+// Encolhe o quadro até caber na área de preview. O transform não encolhe a
+// caixa de layout, então o .vd-stage precisa receber o tamanho já reduzido —
+// senão a área rolaria como se o quadro continuasse inteiro.
+function _vdAjustarZoom() {
+  const canvas = document.getElementById('vdCanvas'), stage = document.getElementById('vdStage'),
+        frame = document.getElementById('vdFrame');
+  if (!canvas || !stage || !frame) return;
+  const larg = VD_LARGURA[VD_DEV] || 412;
+  const disp = Math.max(120, canvas.clientWidth - 36);
+  VD_ZOOM = VD_ZOOM_FIT ? Math.min(1, disp / larg) : 1;
+  frame.style.transform = VD_ZOOM < 1 ? `scale(${VD_ZOOM})` : '';
+  stage.style.width  = Math.round(larg * VD_ZOOM) + 'px';
+  stage.style.height = Math.round(frame.offsetHeight * VD_ZOOM) + 'px';
+  const b = document.getElementById('vdZoom');
+  if (b) { b.textContent = Math.round(VD_ZOOM * 100) + '%'; b.classList.toggle('on', VD_ZOOM < 1); }
 }
 
 async function vdTrocarTela(k) { VD_PAGE = k; VD_OBJ = null; VD_BLOCO = null; VD_ITEM = null; if (VD_MV) { VD_MV.destroy(); VD_MV = null; } await _vdRenderPreview(); }
@@ -9379,6 +9472,8 @@ async function _vdLigarMoveable() {
              y: +(((a.top  - r.top ) / r.height) * 100).toFixed(2),
              w: +((a.width / r.width) * 100).toFixed(2) };
   };
+  // O Moveable já entrega os deslocamentos no espaço do quadro, descontando a
+  // redução — dividir de novo pela escala fazia o objeto andar o dobro.
   VD_MV.on('drag', ({ target, beforeTranslate }) => {
     dx = beforeTranslate[0]; dy = beforeTranslate[1];
     target.style.transform = `translate(${dx}px, ${dy}px) rotate(${_vdObj(VD_OBJ)?.rot || 0}deg)`;
