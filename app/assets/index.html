@@ -803,6 +803,8 @@ body.flat #sheet{border-top-left-radius:0;border-top-right-radius:0}
 body.flat #toast{border-radius:0!important;border:none}
 body.flat #sheetB .card{border-radius:0}
 body.flat .mb-section-title::before{border-radius:0}
+/* Objetos do Editor Visual mantêm o proprio arredondamento */
+body.flat .vd-ov-layer,body.flat .vd-ov-layer *{border-radius:revert}
 /* Separação por superfície e por linha-fina apenas onde é estrutural */
 .card,.card-sub,.cfg-card,.plum-row,.benef-facts,.plum-strip{background:var(--panel)}
 .plum-row+.plum-row,.benef-facts .bf-item+.bf-item,.ur+.ur{box-shadow:inset 0 1px 0 var(--border)}
@@ -833,6 +835,12 @@ input:focus,select:focus,textarea:focus,.plogin .plc-input:focus{outline:2px sol
 .reg-seg .rseg{display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 8px;font-size:13px;font-weight:700;color:var(--muted);background:transparent;cursor:pointer;transition:background .12s,color .12s}
 .reg-seg .rseg.active{background:var(--panel);color:var(--violet)}
 @media(max-width:400px){.reg-seg .rseg{font-size:12px;gap:5px;padding:10px 4px}}
+/* Objetos livres (overlay) — valem no app e no editor */
+.vd-ov-layer{position:absolute;inset:0;pointer-events:none}
+.vd-ov-item{line-height:1.3;word-break:break-word}
+.vd-ov-item img{max-width:100%}
+body.vd-mode .vd-ov-item{cursor:move}
+body.vd-mode .vd-ov-item[data-ov-sel]{outline:2px solid var(--violet);outline-offset:2px}
 /* ══ EDITOR VISUAL ══════════════════════════════════════ */
 body.vd-mode header.top,body.vd-mode nav.bottom,body.vd-mode #appFooter{display:none!important}
 body.vd-mode .app{max-width:none;padding:0}
@@ -878,6 +886,9 @@ body.vd-mode main#mc{padding:0;background:none!important}
 .vd-field .vd-clear{font-size:11px;color:var(--muted);cursor:pointer;background:transparent;padding:2px 4px}
 .vd-field .vd-clear:hover{color:var(--err)}
 .vd-empty{font-size:12px;color:var(--muted);text-align:center;padding:22px 8px;line-height:1.5}
+.vd-ins{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.vd-ins .vd-item{background:var(--panel-2);justify-content:flex-start;font-size:12px;padding:10px 8px}
+.vd-ins .vd-item:hover{background:var(--violet-soft);color:var(--violet)}
 /* Realce no preview */
 #vdFrame [data-vd-hover]{outline:1px dashed var(--violet);outline-offset:-1px}
 #vdFrame [data-vd-sel]{outline:2px solid var(--violet);outline-offset:-2px}
@@ -1842,7 +1853,7 @@ const SYNC_SETTINGS_KEYS = [
   'sobreDescricao', 'sobreResponsavel', 'sobreCargo', 'sobreEndereco',
   'sobreTelefone', 'sobreEmail', 'sobreSite', 'sobreInfo',
   // Editor Visual — decisões de marca do município, valem para todos os aparelhos
-  'vdTokens', 'vdStyles', 'vdText', 'vdLayout', 'vdFlat'
+  'vdTokens', 'vdStyles', 'vdText', 'vdLayout', 'vdFlat', 'vdOverlays', 'vdAssets'
 ];
 window._applyingSettings = false;
 
@@ -8275,6 +8286,7 @@ async function applyCustomDesign() {
   // Editor Visual por último: vence as escritas legadas acima
   await _vdApply();
   _vdApplyText(document.body);   // cobre a tela de login (markup estático)
+  _vdApplyOverlays('login', document.getElementById('pageLogin'));
 }
 
 // ═══════════════════════════════════════════════════════
@@ -8326,14 +8338,28 @@ const VD_LABELS = {
   agenda:{hero:'Destaque',banner:'Banner'},
   login:{hero:'Painel da marca',marca:'Marca',titulo:'Título',formulario:'Formulário',ajuda:'Ajuda'},
 };
-const VD_KEYS = ['vdTokens','vdStyles','vdText','vdLayout','vdFlat'];
+const VD_KEYS = ['vdTokens','vdStyles','vdText','vdLayout','vdFlat','vdOverlays','vdAssets'];
+// Objetos livres: allowlist PRÓPRIA. Não reusar VD_PROPS — lá position/z-index são
+// proibidos de propósito, e misturar reabriria o buraco de esconder a interface.
+const VD_OV_TIPOS = ['imagem','texto','icone','forma'];
+const VD_OV_PROPS = {
+  cor:{css:'color',type:'color'}, fundo:{css:'background',type:'color'},
+  raio:{css:'border-radius',type:'size',min:0,max:200},
+  opacidade:{css:'opacity',type:'size',min:10,max:100},
+  tamanhoFonte:{css:'font-size',type:'size',min:8,max:64},
+  peso:{css:'font-weight',type:'select',opts:['400','600','700','800']},
+  alinhamento:{css:'text-align',type:'select',opts:['left','center','right']},
+  borda:{css:'border',type:'text'},
+};
+// Blocos com overflow:hidden não servem de âncora (recortariam o objeto)
+const VD_ANCORAS_PROIBIDAS = ['banner'];
 window._VD_CACHE = null;
 // Escotilha de emergência: abrir com #vdreset desliga os overrides nesta sessão.
 // Avaliada uma única vez, porque nav() reescreve o hash para #home logo depois.
 const VD_OFF = (typeof location !== 'undefined' && location.hash === '#vdreset');
 if (VD_OFF) { try { console.warn('[Editor Visual] overrides desligados (#vdreset)'); } catch(e){} }
 
-function _vdBlank(){ return { tokens:{light:{},dark:{}}, styles:{}, text:{}, layout:{}, flat:'on' }; }
+function _vdBlank(){ return { tokens:{light:{},dark:{}}, styles:{}, text:{}, layout:{}, flat:'on', overlays:{}, assets:{} }; }
 
 // Lê e valida o que veio do armazenamento (ou da sincronização)
 async function _vdLoad(force) {
@@ -8375,8 +8401,185 @@ async function _vdLoad(force) {
     }
   }
   out.flat = (await IDB.getMeta('vdFlat')) === 'off' ? 'off' : 'on';
+
+  // Objetos livres
+  const ov = await parse('vdOverlays'), as = await parse('vdAssets');
+  const num = (v, min, max, pad) => { const n = parseFloat(v); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : pad; };
+  if (ov && typeof ov === 'object') {
+    for (const [page, itens] of Object.entries(ov)) {
+      if (!Array.isArray(itens)) continue;
+      const limpos = [];
+      for (const it of itens.slice(0, 60)) {
+        if (!it || typeof it !== 'object') continue;
+        if (!VD_OV_TIPOS.includes(it.tipo)) continue;
+        if (typeof it.blk !== 'string' || !it.blk) continue;
+        const est = {};
+        for (const [p, v] of Object.entries(it.estilo || {})) {
+          if (!VD_OV_PROPS[p] || typeof v !== 'string') continue;
+          if (/[{}<>;]|@import|expression\(/i.test(v)) continue;
+          if (/url\(/i.test(v) && !/url\(["']?data:/i.test(v)) continue;
+          est[p] = v.slice(0, 120);
+        }
+        limpos.push({
+          id: String(it.id || crypto.randomUUID()).slice(0, 40),
+          blk: it.blk.slice(0, 40),
+          tipo: it.tipo,
+          camada: it.camada === 'abaixo' ? 'abaixo' : 'acima',
+          z: num(it.z, -50, 50, 1),
+          x: num(it.x, -50, 150, 10), y: num(it.y, -50, 150, 10),
+          w: num(it.w, 2, 200, 30),  rot: num(it.rot, -180, 180, 0),
+          clicavel: it.clicavel === true,
+          props: {
+            asset:  typeof it.props?.asset  === 'string' ? it.props.asset.slice(0,40)  : null,
+            texto:  typeof it.props?.texto  === 'string' ? it.props.texto.slice(0,300) : '',
+            icone:  (typeof it.props?.icone === 'string' && ICONS[it.props.icone]) ? it.props.icone : 'award',
+            forma:  it.props?.forma === 'circulo' ? 'circulo' : 'retangulo',
+            alt:    typeof it.props?.alt === 'string' ? it.props.alt.slice(0,120) : '',
+          },
+          estilo: est,
+        });
+      }
+      if (limpos.length) out.overlays[page] = limpos;
+    }
+  }
+  if (as && typeof as === 'object') {
+    for (const [k, v] of Object.entries(as)) {
+      if (typeof v === 'string' && /^data:image\/(png|jpeg|webp);base64,/.test(v)) out.assets[String(k).slice(0,40)] = v;
+    }
+  }
   window._VD_CACHE = out;
   return out;
+}
+
+// ── Objetos livres: compressão de imagem ────────────────
+// Diferente de _fotoComprimir (que recorta quadrado 192px e força JPEG):
+// aqui a proporção é preservada e o PNG é mantido quando há transparência,
+// senão um logo perderia o fundo transparente ao virar JPEG.
+const VD_IMG_LADO = 1024, VD_IMG_MAX_KB = 150;
+function _vdComprimirImagem(file) {
+  return new Promise((ok, err) => {
+    const fr = new FileReader();
+    fr.onerror = () => err(new Error('Falha ao ler a imagem'));
+    fr.onload = () => {
+      const img = new Image();
+      img.onerror = () => err(new Error('Arquivo de imagem inválido'));
+      img.onload = () => {
+        const esc0 = Math.min(1, VD_IMG_LADO / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * esc0)), h = Math.max(1, Math.round(img.height * esc0));
+        const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+        const ctx = cv.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        // Detecta transparência amostrando o canal alfa
+        let temAlfa = false;
+        try {
+          const d = ctx.getImageData(0, 0, w, h).data;
+          const passo = Math.max(4, Math.floor(d.length / 4 / 4000) * 4);
+          for (let i = 3; i < d.length; i += passo) if (d[i] < 250) { temAlfa = true; break; }
+        } catch (e) { temAlfa = /\.png$/i.test(file.name || '') || file.type === 'image/png'; }
+
+        if (temAlfa) {
+          // PNG não tem controle de qualidade: reduz a escala até caber
+          let cur = cv, out = cur.toDataURL('image/png'), tent = 0;
+          while (out.length / 1024 > VD_IMG_MAX_KB && tent < 5) {
+            const nc = document.createElement('canvas');
+            nc.width = Math.max(1, Math.round(cur.width * 0.75));
+            nc.height = Math.max(1, Math.round(cur.height * 0.75));
+            nc.getContext('2d').drawImage(cur, 0, 0, nc.width, nc.height);
+            cur = nc; out = cur.toDataURL('image/png'); tent++;
+          }
+          ok(out);
+        } else {
+          let q = 0.85, out = cv.toDataURL('image/jpeg', q);
+          while (out.length / 1024 > VD_IMG_MAX_KB && q > 0.35) { q -= 0.1; out = cv.toDataURL('image/jpeg', q); }
+          ok(out);
+        }
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+
+// Carrega o Moveable sob demanda. Local primeiro (funciona offline no APK);
+// se o arquivo faltar, cai no CDN, no mesmo padrão da tag do xlsx.
+let _vdMvPromise = null;
+function _vdLoadMoveable() {
+  if (window.Moveable) return Promise.resolve(true);
+  if (_vdMvPromise) return _vdMvPromise;
+  _vdMvPromise = new Promise((ok) => {
+    const tenta = (src, ehUltimo) => {
+      const sc = document.createElement('script');
+      sc.src = src;
+      sc.onload = () => ok(!!window.Moveable);
+      sc.onerror = () => ehUltimo ? ok(false) : tenta('https://cdn.jsdelivr.net/npm/moveable/dist/moveable.min.js', true);
+      document.head.appendChild(sc);
+    };
+    tenta('moveable.min.js', false);
+  });
+  return _vdMvPromise;
+}
+
+// Peso do design, para o aviso (sem bloquear, conforme combinado)
+function _vdPeso() {
+  const ov = JSON.stringify(VD_STATE?.overlays || {}).length;
+  const as = JSON.stringify(VD_STATE?.assets   || {}).length;
+  return { overlays: ov, assets: as, total: ov + as, nImagens: Object.keys(VD_STATE?.assets || {}).length };
+}
+
+// ── Objetos livres: renderização no app real ────────────
+function _vdItemHtml(it, assets, noEditor) {
+  const est = Object.entries(it.estilo || {})
+    .filter(([p]) => VD_OV_PROPS[p])
+    .map(([p,v]) => `${VD_OV_PROPS[p].css}:${p === 'opacidade' ? (parseFloat(v)/100 || 1) : v}`)
+    .join(';');
+  let dentro = '';
+  if (it.tipo === 'imagem') {
+    const src = assets[it.props.asset];
+    dentro = src ? `<img src="${src}" alt="${esc(it.props.alt||'')}" style="width:100%;height:auto;display:block">`
+                 : `<div style="padding:8px;font-size:11px;text-align:center;background:var(--panel-2);color:var(--muted)">imagem ausente</div>`;
+  } else if (it.tipo === 'texto') {
+    dentro = esc(it.props.texto || 'Texto');
+  } else if (it.tipo === 'icone') {
+    dentro = fi(it.props.icone, 999).replace('width="999" height="999"', 'width="100%" height="100%"');
+  } else { // forma
+    dentro = '';
+  }
+  const formaEst = it.tipo === 'forma'
+    ? `aspect-ratio:1;${it.props.forma === 'circulo' ? 'border-radius:50%;' : ''}${it.estilo?.fundo ? '' : 'background:var(--violet);'}`
+    : '';
+  const pe = (noEditor && !it.clicavel) ? 'pointer-events:none' : 'pointer-events:auto';
+  return `<div class="vd-ov-item" data-ov="${esc(it.id)}"
+    style="position:absolute;left:${it.x}%;top:${it.y}%;width:${it.w}%;
+      transform:rotate(${it.rot}deg);transform-origin:top left;z-index:${it.z};${pe};${formaEst}${est}">${dentro}</div>`;
+}
+
+// Chamado após cada renderização de tela. Fora de _vdApplyLayout de propósito:
+// aquela função tem returns antecipados que engoliriam os objetos.
+function _vdApplyOverlays(page, root) {
+  if (VD_OFF) return;
+  const st = window._VD_CACHE; if (!st || !root) return;
+  // limpa camadas antigas (idempotência: alguns caminhos re-renderizam sem recriar o bloco)
+  root.querySelectorAll('.vd-ov-layer').forEach(l => l.remove());
+  const itens = st.overlays?.[page]; if (!itens || !itens.length) return;
+  const noEditor = !document.body.classList.contains('vd-mode');
+  const porBloco = new Map();
+  itens.forEach(it => { if (!porBloco.has(it.blk)) porBloco.set(it.blk, []); porBloco.get(it.blk).push(it); });
+  for (const [blkId, lista] of porBloco) {
+    const blk = root.querySelector(`[data-blk="${blkId}"]`); if (!blk) continue;
+    // Indispensável: a animação de entrada aplica transform que termina em `none`;
+    // sem isto o objeto saltaria de lugar ao fim da animação.
+    blk.style.position = 'relative';
+    blk.style.zIndex = '0';
+    for (const camada of ['abaixo','acima']) {
+      const doGrupo = lista.filter(i => i.camada === camada).sort((a,b) => a.z - b.z);
+      if (!doGrupo.length) continue;
+      const l = document.createElement('div');
+      l.className = 'vd-ov-layer vd-ov-' + camada;
+      l.style.cssText = `position:absolute;inset:0;pointer-events:none;z-index:${camada === 'abaixo' ? -1 : 2}`;
+      l.innerHTML = doGrupo.map(i => _vdItemHtml(i, st.assets || {}, noEditor)).join('');
+      blk.appendChild(l);
+    }
+  }
 }
 
 // Monta uma regra CSS. Prefixo `body` + !important para vencer o bloco FLAT.
@@ -8452,6 +8655,7 @@ function _vdApplyText(root) {
 function _vdDecorateScreen(page, root) {
   _vdApplyLayout(page, root);
   _vdApplyText(root || document.body);
+  _vdApplyOverlays(page, root);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -8507,7 +8711,24 @@ function _vdSyncChrome(){
   if (u) u.disabled = !VD_UNDO.length;
   if (r) r.disabled = !VD_REDO.length;
   if (s) s.textContent = VD_DIRTY ? 'Salvar •' : 'Salvar';
-  _vdRenderLayers(); _vdRenderProps();
+  _vdRenderLayers(); _vdRenderObjs(); _vdRenderProps();
+}
+
+function _vdRenderObjs() {
+  const host = document.getElementById('vdObjList'); if (!host) return;
+  const itens = (VD_STATE.overlays[VD_PAGE] || []).slice().sort((a,b) => b.z - a.z);
+  if (!itens.length) { host.innerHTML = `<div class="vd-empty" style="padding:12px 8px">Nenhum objeto nesta tela.<br>Use <b>Inserir</b> acima.</div>`; return; }
+  const rot = VD_LABELS[VD_PAGE] || {};
+  const nome = o => o.tipo === 'texto' ? (o.props.texto || 'Texto').slice(0,18)
+              : o.tipo === 'imagem' ? 'Imagem'
+              : o.tipo === 'icone' ? 'Ícone ' + o.props.icone : 'Forma';
+  host.innerHTML = itens.map(o => `<div class="vd-item ${VD_OBJ===o.id?'on':''}">
+      <span class="vd-grow" onclick="vdSelObj('${o.id}')" title="${esc(rot[o.blk]||o.blk)}">
+        ${esc(nome(o))} <span style="color:var(--muted);font-size:11px">· ${o.camada==='abaixo'?'atrás':'frente'}</span></span>
+      <button class="vd-mini" onclick="vdObjZ('${o.id}',1)" title="Trazer para frente">${fi('chevron-up',14)}</button>
+      <button class="vd-mini" onclick="vdObjZ('${o.id}',-1)" title="Enviar para trás">${fi('chevron-down',14)}</button>
+      <button class="vd-mini" onclick="vdObjExcluir('${o.id}')" title="Excluir">${fi('x',14)}</button>
+    </div>`).join('');
 }
 
 async function renderDesignEditor() {
@@ -8529,6 +8750,15 @@ async function renderDesignEditor() {
     </div>
 
     <aside class="vd-pane vd-left">
+      <h4>Inserir</h4>
+      <div class="vd-ins">
+        <button class="vd-item" onclick="vdInserir('imagem')">${fi('image',15)}<span class="vd-grow">Imagem</span></button>
+        <button class="vd-item" onclick="vdInserir('texto')">${fi('type',15)}<span class="vd-grow">Texto</span></button>
+        <button class="vd-item" onclick="vdInserir('icone')">${fi('award',15)}<span class="vd-grow">Ícone</span></button>
+        <button class="vd-item" onclick="vdInserir('forma')">${fi('grid',15)}<span class="vd-grow">Forma</span></button>
+      </div>
+      <h4>Objetos</h4>
+      <div id="vdObjList"></div>
       <h4>Componentes</h4>
       <div id="vdCompList">${VD_COMPONENTS.map(c=>
         `<button class="vd-item" onclick="vdSelecionarComp('${c.key}')"><span class="vd-grow">${esc(c.label)}</span></button>`).join('')}</div>
@@ -8565,7 +8795,7 @@ async function _vdRenderPreview() {
   _vdApplyText(f);
   _vdNeutralizar(f);
   VD_SEL = null;
-  _vdSyncChrome();
+  await _vdRedesenharObjetos();
 }
 
 // Desarma o comportamento do app dentro do preview: clique vira seleção
@@ -8685,10 +8915,12 @@ function vdOcultar(id) {
   _vdApplyLayout(VD_PAGE, frame); _vdRenderLayers();
 }
 
-async function vdTrocarTela(k) { VD_PAGE = k; await _vdRenderPreview(); }
+async function vdTrocarTela(k) { VD_PAGE = k; VD_OBJ = null; if (VD_MV) { VD_MV.destroy(); VD_MV = null; } await _vdRenderPreview(); }
 
 async function vdSair() {
   if (VD_DIRTY && !await uiConfirm('Há alterações não salvas. Descartar?', {title:'Sair do editor', okText:'Descartar', danger:true})) return;
+  if (VD_MV) { VD_MV.destroy(); VD_MV = null; }
+  VD_OBJ = null;
   document.body.classList.remove('vd-mode');
   await applyCustomDesign();   // volta ao que está salvo
   nav('config');
@@ -8696,9 +8928,15 @@ async function vdSair() {
 async function vdSalvar() {
   const payload = { vdTokens: JSON.stringify(VD_STATE.tokens), vdStyles: JSON.stringify(VD_STATE.styles),
                     vdText: JSON.stringify(VD_STATE.text), vdLayout: JSON.stringify(VD_STATE.layout),
-                    vdFlat: VD_STATE.flat };
-  const tam = Object.values(payload).join('').length;
-  if (tam > 64000) { showToast('Design muito grande para sincronizar. Simplifique as alterações.', 'err'); return; }
+                    vdFlat: VD_STATE.flat, vdOverlays: JSON.stringify(VD_STATE.overlays),
+                    vdAssets: JSON.stringify(VD_STATE.assets) };
+  // O teto vale para a configuração; as imagens ficam fora da conta, numa chave
+  // própria, para uma imagem grande não derrubar o resto das configurações.
+  const tam = Object.entries(payload).filter(([k]) => k !== 'vdAssets').map(([,v]) => v).join('').length;
+  if (tam > 64000) { showToast('Configuração muito grande. Reduza objetos ou textos.', 'err'); return; }
+  const p = _vdPeso();
+  if (p.total > 1024*1024 || p.nImagens > 20)
+    showToast(`Salvo. Atenção: ${(p.total/1024/1024).toFixed(1)} MB de design — a sincronização ficará lenta em 3G.`, 'warn');
   for (const [k,v] of Object.entries(payload)) await IDB.setMeta(k, v);
   await applyCustomDesign();
   VD_DIRTY = false; VD_UNDO = []; VD_REDO = [];
@@ -8708,8 +8946,198 @@ async function vdSalvar() {
 async function vdRestaurar() {
   if (!await uiConfirm('Descartar todas as personalizações do editor e voltar ao design original?',
       {title:'Restaurar design', okText:'Restaurar', danger:true})) return;
-  vdCommit(st => { st.tokens = {light:{},dark:{}}; st.styles = {}; st.text = {}; st.layout = {}; st.flat = 'on'; });
+  vdCommit(st => { st.tokens = {light:{},dark:{}}; st.styles = {}; st.text = {}; st.layout = {}; st.flat = 'on'; st.overlays = {}; st.assets = {}; });
+  VD_OBJ = null;
   await _vdRenderPreview();
+}
+
+// ── Objetos livres: edição ──────────────────────────────
+let VD_OBJ = null, VD_MV = null;   // id selecionado e instância do Moveable
+
+function _vdObjs(){ return (VD_STATE.overlays[VD_PAGE] ||= []); }
+function _vdObj(id){ return _vdObjs().find(o => o.id === id) || null; }
+
+// Bloco onde inserir: o selecionado, ou o primeiro disponível
+function _vdAncoraAtual() {
+  if (VD_SEL?.blk && !VD_ANCORAS_PROIBIDAS.includes(VD_SEL.blk)) return VD_SEL.blk;
+  const f = document.getElementById('vdFrame');
+  const cand = [...(f?.querySelectorAll('[data-blk]') || [])]
+    .map(e => e.getAttribute('data-blk'))
+    .filter(b => !VD_ANCORAS_PROIBIDAS.includes(b));
+  return cand[0] || null;
+}
+// Avisa quando a âncora tem filhos de fundo opaco (marca d'água ficaria invisível)
+function _vdAncoraOpaca(blkId) {
+  const el = document.getElementById('vdFrame')?.querySelector(`[data-blk="${blkId}"]`);
+  if (!el) return false;
+  return [...el.children].some(c => {
+    if (c.classList?.contains('vd-ov-layer')) return false;
+    const bg = getComputedStyle(c).backgroundColor;
+    const m = bg.match(/rgba?\(([^)]+)\)/);
+    if (!m) return false;
+    const p = m[1].split(',').map(x => parseFloat(x));
+    return p.length < 4 || p[3] > 0.9;
+  });
+}
+
+async function vdInserir(tipo) {
+  const blk = _vdAncoraAtual();
+  if (!blk) { showToast('Selecione um bloco na tela antes de inserir', 'warn'); return; }
+  let props = { asset:null, texto:'', icone:'award', forma:'retangulo', alt:'' };
+  let estilo = {}, w = 30;
+  if (tipo === 'imagem') {
+    const file = await _vdEscolherArquivo();
+    if (!file) return;
+    try {
+      showToast('Processando imagem…', '');
+      const dataUri = await _vdComprimirImagem(file);
+      const aid = 'a' + Math.random().toString(36).slice(2, 9);
+      VD_STATE.assets[aid] = dataUri;
+      props.asset = aid; props.alt = (file.name || '').slice(0, 60);
+    } catch (e) { showToast('Não foi possível processar a imagem', 'err'); return; }
+  } else if (tipo === 'texto') {
+    props.texto = 'Novo texto'; estilo = { cor:'#ffffff', tamanhoFonte:'16px', peso:'700' }; w = 45;
+  } else if (tipo === 'icone') {
+    estilo = { cor:'var(--violet)' }; w = 14;
+  } else {
+    estilo = { fundo:'var(--violet)', opacidade:'70' }; w = 24;
+  }
+  const id = 'o' + Math.random().toString(36).slice(2, 9);
+  vdCommit(st => {
+    (st.overlays[VD_PAGE] ||= []).push({
+      id, blk, tipo, camada:'acima',
+      z: 1 + (st.overlays[VD_PAGE]?.length || 0),
+      x: 8, y: 8, w, rot: 0, clicavel: false, props, estilo,
+    });
+  });
+  VD_OBJ = id; VD_SCOPE = 'obj';
+  await _vdRedesenharObjetos();
+  showToast('Objeto inserido — arraste para posicionar', 'ok');
+}
+
+function _vdEscolherArquivo() {
+  return new Promise(res => {
+    const i = document.createElement('input');
+    i.type = 'file'; i.accept = 'image/*'; i.style.display = 'none';
+    i.onchange = () => { res(i.files?.[0] || null); i.remove(); };
+    document.body.appendChild(i); i.click();
+  });
+}
+
+// Redesenha as camadas no preview e religa o Moveable
+async function _vdRedesenharObjetos() {
+  const f = document.getElementById('vdFrame'); if (!f) return;
+  _vdApplyOverlays(VD_PAGE, f);
+  f.querySelectorAll('.vd-ov-item').forEach(el => {
+    el.style.pointerEvents = 'auto';
+    el.onclick = (e) => { e.preventDefault(); e.stopPropagation(); vdSelObj(el.dataset.ov); };
+  });
+  _vdSyncChrome();
+  await _vdLigarMoveable();
+}
+
+async function vdSelObj(id) {
+  VD_OBJ = id; VD_SCOPE = 'obj';
+  document.getElementById('vdFrame')?.querySelectorAll('[data-ov-sel]').forEach(e => e.removeAttribute('data-ov-sel'));
+  document.getElementById('vdFrame')?.querySelector(`[data-ov="${id}"]`)?.setAttribute('data-ov-sel','1');
+  _vdSyncChrome();
+  await _vdLigarMoveable();
+  if (window.innerWidth < 900) vdAbrirPropsSheet();
+}
+
+async function _vdLigarMoveable() {
+  const alvo = VD_OBJ ? document.getElementById('vdFrame')?.querySelector(`[data-ov="${VD_OBJ}"]`) : null;
+  if (!alvo) { if (VD_MV) { VD_MV.destroy(); VD_MV = null; } return; }
+  const ok = await _vdLoadMoveable();
+  if (!ok) { showToast('Arraste indisponível — use os controles de posição', 'warn'); return; }
+  const anc = alvo.closest('[data-blk]');
+  if (VD_MV) { VD_MV.destroy(); VD_MV = null; }
+  VD_MV = new window.Moveable(document.body, {
+    target: alvo, container: document.body,
+    draggable: true, resizable: true, rotatable: true, snappable: true, origin: false,
+    throttleDrag: 0, throttleResize: 0, throttleRotate: 1,
+    elementGuidelines: [...(anc?.children || [])].filter(c => !c.classList.contains('vd-ov-layer')),
+  });
+  let dx = 0, dy = 0;
+  const paraPct = () => {
+    const r = anc.getBoundingClientRect(), a = alvo.getBoundingClientRect();
+    return { x: +(((a.left - r.left) / r.width) * 100).toFixed(2),
+             y: +(((a.top  - r.top ) / r.height) * 100).toFixed(2),
+             w: +((a.width / r.width) * 100).toFixed(2) };
+  };
+  VD_MV.on('drag', ({ target, beforeTranslate }) => {
+    dx = beforeTranslate[0]; dy = beforeTranslate[1];
+    target.style.transform = `translate(${dx}px, ${dy}px) rotate(${_vdObj(VD_OBJ)?.rot || 0}deg)`;
+  }).on('dragEnd', () => {
+    const p = paraPct(); alvo.style.transform = '';
+    vdCommit(st => { const o = (st.overlays[VD_PAGE]||[]).find(x=>x.id===VD_OBJ); if(o){ o.x=p.x; o.y=p.y; } }, 'ov.pos.'+VD_OBJ);
+    _vdRedesenharObjetos();
+  }).on('resize', ({ target, width, height, drag }) => {
+    target.style.width = width + 'px';
+    if (_vdObj(VD_OBJ)?.tipo !== 'imagem') target.style.height = height + 'px';
+    target.style.transform = `translate(${drag.beforeTranslate[0]}px, ${drag.beforeTranslate[1]}px)`;
+  }).on('resizeEnd', () => {
+    const p = paraPct(); alvo.style.transform = ''; alvo.style.width = ''; alvo.style.height = '';
+    vdCommit(st => { const o=(st.overlays[VD_PAGE]||[]).find(x=>x.id===VD_OBJ); if(o){ o.x=p.x; o.y=p.y; o.w=p.w; } }, 'ov.size.'+VD_OBJ);
+    _vdRedesenharObjetos();
+  }).on('rotate', ({ target, beforeRotate }) => {
+    target.style.transform = `rotate(${beforeRotate}deg)`;
+  }).on('rotateEnd', ({ lastEvent }) => {
+    const g = Math.round((lastEvent?.beforeRotate ?? 0) / 5) * 5;
+    vdCommit(st => { const o=(st.overlays[VD_PAGE]||[]).find(x=>x.id===VD_OBJ); if(o) o.rot = g; }, 'ov.rot.'+VD_OBJ);
+    _vdRedesenharObjetos();
+  });
+}
+
+function vdObjZ(id, dir) {
+  vdCommit(st => { const o=(st.overlays[VD_PAGE]||[]).find(x=>x.id===id); if(o) o.z = Math.max(-50, Math.min(50, (o.z||1) + dir)); }, null);
+  _vdRedesenharObjetos();
+}
+function vdObjCamada(id) {
+  vdCommit(st => { const o=(st.overlays[VD_PAGE]||[]).find(x=>x.id===id); if(o) o.camada = o.camada === 'acima' ? 'abaixo' : 'acima'; });
+  const o = _vdObj(id);
+  if (o?.camada === 'abaixo' && _vdAncoraOpaca(o.blk))
+    showToast('Este bloco tem cartões de fundo sólido — o objeto atrás pode não aparecer', 'warn');
+  _vdRedesenharObjetos();
+}
+function vdObjClicavel(id) {
+  vdCommit(st => { const o=(st.overlays[VD_PAGE]||[]).find(x=>x.id===id); if(o) o.clicavel = !o.clicavel; });
+  _vdSyncChrome();
+}
+async function vdObjExcluir(id) {
+  if (!await uiConfirm('Excluir este objeto?', {title:'Objeto', okText:'Excluir', danger:true})) return;
+  vdCommit(st => {
+    const arr = st.overlays[VD_PAGE] || [];
+    const o = arr.find(x=>x.id===id);
+    st.overlays[VD_PAGE] = arr.filter(x => x.id !== id);
+    // solta a imagem se ninguém mais usa
+    if (o?.props?.asset) {
+      const usada = Object.values(st.overlays).flat().some(x => x.props?.asset === o.props.asset);
+      if (!usada) delete st.assets[o.props.asset];
+    }
+  });
+  VD_OBJ = null;
+  await _vdRedesenharObjetos();
+}
+function vdObjDuplicar(id) {
+  const o = _vdObj(id); if (!o) return;
+  const novo = { ..._vdClone(o), id: 'o' + Math.random().toString(36).slice(2,9), x: (o.x||0)+4, y: (o.y||0)+4, z: (o.z||1)+1 };
+  vdCommit(st => { (st.overlays[VD_PAGE] ||= []).push(novo); });
+  VD_OBJ = novo.id;
+  _vdRedesenharObjetos();
+}
+function vdSetObj(campo, valor) {
+  vdCommit(st => {
+    const o = (st.overlays[VD_PAGE]||[]).find(x=>x.id===VD_OBJ); if (!o) return;
+    if (campo.startsWith('estilo.')) {
+      const p = campo.slice(7);
+      if (valor == null || valor === '') delete o.estilo[p]; else o.estilo[p] = String(valor);
+    } else if (campo.startsWith('props.')) {
+      o.props[campo.slice(6)] = valor;
+    } else if (campo === 'blk') { o.blk = valor; }
+    else { o[campo] = valor; }
+  }, 'ov.' + campo + '.' + VD_OBJ);
+  _vdRedesenharObjetos();
 }
 
 // ── Painel de propriedades ──
@@ -8759,11 +9187,61 @@ function _vdCampo(prop, valor, setExpr, clearExpr) {
 
 function _vdPropsHtml() {
   const s = VD_SEL;
-  const abas = `<div class="vd-scope">
-    <button class="${VD_SCOPE==='comp'?'on':''}" onclick="vdEscopo('comp')">Componente</button>
+  const abas = `<div class="vd-scope" style="grid-template-columns:repeat(4,1fr)">
+    <button class="${VD_SCOPE==='obj'?'on':''}" onclick="vdEscopo('obj')">Objeto</button>
+    <button class="${VD_SCOPE==='comp'?'on':''}" onclick="vdEscopo('comp')">Compon.</button>
     <button class="${VD_SCOPE==='txt'?'on':''}" onclick="vdEscopo('txt')">Texto</button>
     <button class="${VD_SCOPE==='tema'?'on':''}" onclick="vdEscopo('tema')">Tema</button>
   </div>`;
+
+  if (VD_SCOPE === 'obj') {
+    const o = _vdObj(VD_OBJ);
+    if (!o) return abas + `<div class="vd-empty">Nenhum objeto selecionado.<br><br>Use <b>Inserir</b> à esquerda ou toque num objeto na tela.</div>`;
+    const p = _vdPeso();
+    const alerta = (p.total > 1024*1024 || p.nImagens > 20)
+      ? `<div class="vd-hint" style="background:var(--warn-soft);color:var(--warn)">Design com ${(p.total/1024/1024).toFixed(1)} MB e ${p.nImagens} imagens. Vai continuar salvando, mas a sincronização fica lenta em conexão 3G.</div>` : '';
+    const campos = { imagem:['raio','opacidade','borda'], texto:['cor','fundo','tamanhoFonte','peso','alinhamento','raio','opacidade'],
+                     icone:['cor','opacidade'], forma:['fundo','raio','opacidade','borda'] }[o.tipo] || [];
+    const blocos = [...(document.getElementById('vdFrame')?.querySelectorAll('[data-blk]') || [])]
+      .map(e => e.getAttribute('data-blk')).filter(b => !VD_ANCORAS_PROIBIDAS.includes(b));
+    const rotB = VD_LABELS[VD_PAGE] || {};
+    return abas + alerta +
+      `<div class="vd-hint">Objeto <b>${o.tipo}</b> preso ao bloco <b>${esc(rotB[o.blk]||o.blk)}</b>. A posição é guardada em % do bloco, então acompanha qualquer largura de tela.</div>
+      <div class="vd-field"><label>Bloco de âncora</label>
+        <select onchange="vdSetObj('blk',this.value)">
+          ${blocos.map(b=>`<option value="${esc(b)}" ${b===o.blk?'selected':''}>${esc(rotB[b]||b)}</option>`).join('')}
+        </select></div>
+      <div class="vd-field"><label>Camada</label>
+        <div class="vd-row">
+          <button class="vd-btn" style="flex:1" onclick="vdObjCamada('${o.id}')">${o.camada==='acima'?'Na frente do conteúdo':'Atrás do conteúdo'}</button>
+        </div>
+        <div class="small muted" style="font-size:10.5px;margin-top:3px">Toque para alternar. Atrás funciona como marca d'água.</div></div>
+      <div class="vd-field"><label>Ordem entre objetos (z ${o.z})</label><div class="vd-row">
+        <button class="vd-btn" style="flex:1" onclick="vdObjZ('${o.id}',-1)">− trás</button>
+        <button class="vd-btn" style="flex:1" onclick="vdObjZ('${o.id}',1)">frente +</button></div></div>
+      ${o.tipo==='texto' ? `<div class="vd-field"><label>Conteúdo</label>
+        <textarea rows="2" oninput="vdSetObj('props.texto',this.value)">${esc(o.props.texto||'')}</textarea></div>` : ''}
+      ${o.tipo==='icone' ? `<div class="vd-field"><label>Ícone</label>
+        <select onchange="vdSetObj('props.icone',this.value)">
+          ${Object.keys(ICONS).map(k=>`<option value="${k}" ${k===o.props.icone?'selected':''}>${k}</option>`).join('')}
+        </select></div>` : ''}
+      ${o.tipo==='forma' ? `<div class="vd-field"><label>Formato</label>
+        <select onchange="vdSetObj('props.forma',this.value)">
+          <option value="retangulo" ${o.props.forma==='retangulo'?'selected':''}>Retângulo</option>
+          <option value="circulo" ${o.props.forma==='circulo'?'selected':''}>Círculo</option>
+        </select></div>` : ''}
+      <div class="vd-field"><label>Largura (${o.w}% do bloco)</label>
+        <input type="range" min="2" max="120" step="1" value="${o.w}" oninput="vdSetObj('w',parseFloat(this.value))"></div>
+      <div class="vd-field"><label>Rotação (${o.rot}°)</label>
+        <input type="range" min="-180" max="180" step="5" value="${o.rot}" oninput="vdSetObj('rot',parseFloat(this.value))"></div>
+      ${campos.map(pr => _vdCampo(pr, o.estilo?.[pr], `vdSetObj('estilo.${pr}',%V)`, `vdSetObj('estilo.${pr}',null)`)).join('')}
+      <div class="vd-field"><label>Recebe toque</label>
+        <div class="vd-row"><button class="vd-btn" style="flex:1" onclick="vdObjClicavel('${o.id}')">${o.clicavel?'Sim — pode tapar botões':'Não (recomendado)'}</button></div>
+        <div class="small muted" style="font-size:10.5px;margin-top:3px">Desligado, o objeto deixa o toque passar para o que está embaixo.</div></div>
+      <div class="vd-field"><div class="vd-row">
+        <button class="vd-btn" style="flex:1" onclick="vdObjDuplicar('${o.id}')">Duplicar</button>
+        <button class="vd-btn" style="flex:1;color:var(--err)" onclick="vdObjExcluir('${o.id}')">Excluir</button></div></div>`;
+  }
 
   if (VD_SCOPE === 'tema') {
     const dark = document.documentElement.getAttribute('data-theme') === 'dark';
