@@ -2,3 +2,7 @@
 *.jks
 *.keystore
 *.p12
+
+# Bytecode dos scripts de build em tools/
+__pycache__/
+*.pyc
