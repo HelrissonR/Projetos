@@ -1495,6 +1495,41 @@ function acompId(nis, dataISO){ return nis + '-' + semestreRef(dataISO); }
 function semestreLabel(ref){ return ref ? ref.replace('S',' / S') : ''; } // "2026S1" → "2026 / S1"
 function semestreAtualRef(){ const n=new Date(); return n.getFullYear()+(n.getMonth()<6?'S1':'S2'); }
 
+// ─── Vigência: uma definição só para o app inteiro ───────────────────────
+// Antes havia duas noções em paralelo — um intervalo configurável (que vinha
+// com o ano inteiro por padrão) e o semestre civil — e elas discordavam: a
+// mesma pessoa contava como acompanhada no topo da Início e aparecia como
+// pendente na lista. Agora vale o semestre, e o intervalo só quando o admin
+// escolher explicitamente "Personalizada".
+let _VIG_CACHE = null;
+function invalidateVigCache(){ _VIG_CACHE = null; }
+async function vigenciaAtual(){
+  if (_VIG_CACHE && _VIG_CACHE.dia === new Date().toDateString()) return _VIG_CACHE;
+  const modo = (await IDB.getMeta('vigenciaModo')) === 'manual' ? 'manual' : 'auto';
+  let ini, fim, ref = semestreAtualRef();
+  if (modo === 'manual') {
+    ini = await IDB.getMeta('vigenciaInicio') || '2026-01-01';
+    fim = await IDB.getMeta('vigenciaFim')    || '2026-12-31';
+  } else {
+    const n = new Date(), ano = n.getFullYear(), s1 = n.getMonth() < 6;
+    ini = `${ano}-${s1 ? '01-01' : '07-01'}`;
+    fim = `${ano}-${s1 ? '06-30' : '12-31'}`;
+  }
+  _VIG_CACHE = { ini, fim, ref, manual: modo === 'manual', dia: new Date().toDateString() };
+  return _VIG_CACHE;
+}
+// Único teste de pertencimento à vigência. No modo automático é equivalente a
+// comparar o semestre; no manual, vale o intervalo escolhido.
+function naVigencia(dataISO, vig){
+  const d = String(dataISO || '').slice(0,10);
+  if (!d) return false;
+  return vig.manual ? (d >= vig.ini && d <= vig.fim) : (semestreRef(d) === vig.ref);
+}
+function vigenciaLabel(vig){
+  const br = s => String(s).slice(0,10).split('-').reverse().join('/');
+  return vig.manual ? `${br(vig.ini)} a ${br(vig.fim)}` : semestreLabel(vig.ref);
+}
+
 // Motivos oficiais de Não Acompanhamento — Sistema PBF na Saúde (Fonte: SAPS/Ministério da Saúde)
 const MOTIVOS_NA = [
   'Beneficiário(a) ausente',
@@ -1510,12 +1545,12 @@ const motivoNAOptions = sel => MOTIVOS_NA.map(m =>
 // TRIA ativa? (configuração de admin, sincronizada) — padrão: ativa
 async function triaAtiva(){ return false; } // Módulo TRIA removido do app
 
-// Mapa nis -> último acompanhamento DO SEMESTRE ATUAL (para destaque visual nas listas)
+// Mapa nis -> último acompanhamento DA VIGÊNCIA ATUAL (para destaque nas listas)
 async function acompanhadosNoSemestre(){
-  const ref = semestreAtualRef();
+  const vig = await vigenciaAtual();
   const m = new Map();
   for (const a of await getAcompCache()) {
-    if (semestreRef(a.data) === ref) {
+    if (naVigencia(a.data, vig)) {
       const prev = m.get(a.nis);
       if (!prev || new Date(a.data) > new Date(prev.data)) m.set(a.nis, a);
     }
@@ -1889,7 +1924,7 @@ function _tempoRel(iso){
 // Configurações administrativas sincronizadas entre dispositivos
 // (tabela app_settings no Supabase: key text PK, value text, updated_at timestamptz)
 const SYNC_SETTINGS_KEYS = [
-  'instituicao', 'vigenciaInicio', 'vigenciaFim', 'triaAtiva',
+  'instituicao', 'vigenciaModo', 'vigenciaInicio', 'vigenciaFim', 'triaAtiva',
   'users', 'rolePermissions',
   'homeBannerText', 'homeBannerTitle', 'homeBannerType', 'bannerImages', 'bannerPages', 'bannerSlideMs',
   'designAppTitle', 'designLoginSubtitle', 'corPrimaria',
@@ -1970,6 +2005,7 @@ const Sync = {
     await IDB.setMeta('lastSettingsDown', new Date().toISOString());
     // Aplicar efeitos imediatos
     _invalidatePermsCache();
+    invalidateVigCache();   // a vigência pode ter mudado de modo ou de datas
     try { await applyCustomDesign(); } catch(e) {}
     const titulo = await IDB.getMeta('designAppTitle') || await IDB.getMeta('instituicao');
     if (titulo && $('#appTitle')) $('#appTitle').textContent = titulo;
@@ -2895,6 +2931,46 @@ async function parseImportFile(file) {
     return result;
 }
 
+// Ao substituir a base, oferece zerar também os acompanhamentos — para a
+// vigência nova começar do zero. Pergunta separada, porque isso apaga trabalho
+// de campo e propaga para os outros aparelhos.
+async function _perguntarLimparAcomps() {
+  const n = await IDB.count('acompanhamentos');
+  if (!n) return false;
+  const ok = await uiConfirm(
+    `Existem ${n} acompanhamento${n>1?'s':''} registrado${n>1?'s':''}.\n\nApagar também, para a vigência começar do zero?\n\nIsto apaga na nuvem e vale para TODOS os aparelhos. Se quiser só atualizar a base de beneficiários, escolha Manter.`,
+    {title:'Acompanhamentos', okText:'Apagar tudo', cancelText:'Manter', danger:true}
+  );
+  if (!ok) return false;
+  if (await uiConfirm('Quer salvar um backup antes de apagar?\n\nO arquivo guarda beneficiários, famílias, acompanhamentos e configurações.',
+                      {title:'Backup', okText:'Salvar backup', cancelText:'Apagar sem backup'})) {
+    try { await exportBackup(); } catch (e) { console.warn('backup:', e); }
+    if (!await uiConfirm('Backup salvo. Apagar os acompanhamentos agora?',
+                         {title:'Confirmar', okText:'Apagar', cancelText:'Cancelar', danger:true})) return false;
+  }
+  const todos = await IDB.getAll('acompanhamentos');
+  await IDB.clear('acompanhamentos');
+  invalidateAcompCache();
+  // Na nuvem: soft-delete, o mesmo caminho de deleteAcomp(). Um DELETE de
+  // verdade deixaria os outros aparelhos re-enviarem os registros no próximo
+  // upload; o deleted_at é o que faz a exclusão propagar sem ressuscitar.
+  const naNuvem = todos.filter(a => a.synced_at).map(a => a.id);
+  if (SB && naNuvem.length) {
+    const agora = new Date().toISOString();
+    for (let i = 0; i < naNuvem.length; i += 200) {
+      const lote = naNuvem.slice(i, i + 200);
+      try {
+        const { error } = await SB.from('acompanhamentos')
+          .update({ deleted_at: agora, updated_at: agora }).in('id', lote);
+        if (error) console.warn('⚠️ Soft-delete em lote falhou:', error.message);
+      } catch (e) { console.warn('⚠️ Soft-delete em lote falhou:', e.message); }
+    }
+  }
+  _audit('acomp.wipe', 'acompanhamento', `${todos.length} registros`);
+  showToast(`${todos.length} acompanhamento${todos.length>1?'s':''} apagado${todos.length>1?'s':''} — vigência zerada`, 'ok');
+  return true;
+}
+
 // Salva o resultado do import ({beneficiarios, familias, _acomps}) com merge seguro de acompanhamentos
 async function saveImportResult(result) {
     // LIMPAR dados antigos antes de reimportar (evita duplicação)
@@ -2911,6 +2987,11 @@ async function saveImportResult(result) {
         console.log('🗑️ Limpando dados antigos...');
         await IDB.clear('beneficiarios');
         await IDB.clear('familias');
+        // Os acompanhamentos são trabalho de campo, não base cadastral: só saem
+        // se o usuário pedir, numa pergunta à parte. Antes existia a armadilha
+        // de "Substituir" limpar a base e manter os registros, e a vigência
+        // nova começar já com gente contada como acompanhada.
+        await _perguntarLimparAcomps();
       }
     }
 
@@ -3241,7 +3322,8 @@ async function renderHome() {
   const recent = [...acomps].sort((a,b) => new Date(b.data||0) - new Date(a.data||0)).slice(0, 5);
 
   // ── Periodicidade: acompanhamentos vencidos ──────────
-  const vencidosN = _calcVencidos(benefs, ultimoAcomp).length;
+  const _vig = await vigenciaAtual();
+  const vencidosN = _calcVencidos(benefs, ultimoAcomp, _vig).length;
 
   // ── Helpers ──────────────────────────────────────────
   function initials(nome) {
@@ -3255,14 +3337,9 @@ async function renderHome() {
   }
 
   // ── Meta da vigência ─────────────────────────────────
-  const vigIni = await IDB.getMeta('vigenciaInicio') || '2026-01-01';
-  const vigFim = await IDB.getMeta('vigenciaFim') || '2026-12-31';
+  const vigIni = _vig.ini, vigFim = _vig.fim;
   const vIni = new Date(vigIni + 'T00:00:00'), vFim = new Date(vigFim + 'T23:59:59');
-  const nisVig = new Set(acomps.filter(a => {
-    if (!a.data) return false;
-    const d = new Date(a.data + 'T12:00:00');
-    return d >= vIni && d <= vFim;
-  }).map(a => a.nis));
+  const nisVig = new Set(acomps.filter(a => naVigencia(a.data, _vig)).map(a => a.nis));
   const vigDone = nisVig.size;
   const vigPct = nb > 0 ? Math.min(100, Math.round(vigDone / nb * 100)) : 0;
   const agora = new Date();
@@ -3344,12 +3421,12 @@ async function renderHome() {
     const usersList = JSON.parse(await IDB.getMeta('users') || '[]');
     const onlineList = await Presence.online();
     const onlineSet = new Set(onlineList.flatMap(p => [String(p.usuario||'').toLowerCase(), String(p.user_name||'').toLowerCase()]));
-    const refSem = semestreAtualRef();
+    const _vigOps = await vigenciaAtual();
     const cntTotal = {}, cntSem = {};
     acomps.forEach(a => {
       const t = a.tecnico; if (!t) return;
       cntTotal[t] = (cntTotal[t]||0) + 1;
-      if (semestreRef(a.data) === refSem) cntSem[t] = (cntSem[t]||0) + 1;
+      if (naVigencia(a.data, _vigOps)) cntSem[t] = (cntSem[t]||0) + 1;
     });
     const ops = usersList.filter(u => u.ativo !== false && u.role !== 'visualizador');
     const isOn = u => onlineSet.has(String(u.user||'').toLowerCase()) || onlineSet.has(String(u.nome||'').toLowerCase());
@@ -3980,8 +4057,8 @@ async function renderAgenda() {
     if (!p || new Date(a.data) > new Date(p.data)) ultimo.set(a.nis, a);
   });
 
-  // Pendentes do semestre atual (reaproveita a regra oficial do app)
-  const pend = _calcVencidos(benefs, ultimo);
+  // Pendentes da vigência atual (reaproveita a regra oficial do app)
+  const pend = _calcVencidos(benefs, ultimo, await vigenciaAtual());
 
   // Prazo do semestre: S1 termina 30/jun · S2 termina 31/dez
   const now = new Date();
@@ -4232,6 +4309,13 @@ async function renderConfig() {
   const cor = await IDB.getMeta('corPrimaria') || '#7226d9';
   const vi = await IDB.getMeta('vigenciaInicio') || '2026-01-01';
   const vf = await IDB.getMeta('vigenciaFim') || '2026-12-31';
+  const vigAtual = await vigenciaAtual();
+  const vigModoManual = vigAtual.manual;
+  // No modo automático os campos mostram o período que está valendo, não as
+  // datas guardadas — senão eles contradizem o texto logo acima. As guardadas
+  // continuam salvas e voltam ao escolher "Personalizada".
+  const viMostrar = vigModoManual ? vi : vigAtual.ini;
+  const vfMostrar = vigModoManual ? vf : vigAtual.fim;
   const tema = await IDB.getMeta('tema') || 'light';
   const sUrl = await IDB.getMeta('supabaseUrl') || SUPABASE_URL;
   const sKey = await IDB.getMeta('supabaseKey') || SUPABASE_KEY;
@@ -4291,9 +4375,20 @@ async function renderConfig() {
     <div class="cfg-card" data-tab="geral">
       <div class="cfg-card-head">${fi('calendar',15)} Vigência do programa</div>
       <div class="cfg-card-body">
+        <div class="field"><label>Como a vigência é definida</label>
+          <select ${isAdmin?'onchange="setVigModo(this.value)"':'disabled'}>
+            <option value="auto"   ${!vigModoManual?'selected':''}>Automático — semestre (jan–jun / jul–dez)</option>
+            <option value="manual" ${ vigModoManual?'selected':''}>Personalizada — escolher as datas</option>
+          </select>
+          <div class="small muted" style="margin-top:5px">
+            ${vigModoManual
+              ? 'As datas abaixo definem o que conta como acompanhado. Lembre de atualizá-las a cada vigência.'
+              : `Vale <b>${esc(vigenciaLabel(vigAtual))}</b> (${esc(vigAtual.ini.split('-').reverse().join('/'))} a ${esc(vigAtual.fim.split('-').reverse().join('/'))}). Vira sozinha, sem precisar mexer aqui.`}
+          </div>
+        </div>
         <div class="g2">
-          <div class="field" style="margin-bottom:0"><label>Início</label><input type="date" value="${vi}" ${isAdmin?'onchange="saveMeta(\'vigenciaInicio\',this.value);updVig()"':'disabled'}></div>
-          <div class="field" style="margin-bottom:0"><label>Fim</label><input type="date" value="${vf}" ${isAdmin?'onchange="saveMeta(\'vigenciaFim\',this.value);updVig()"':'disabled'}></div>
+          <div class="field" style="margin-bottom:0"><label>Início</label><input type="date" value="${viMostrar}" ${isAdmin&&vigModoManual?'onchange="saveMeta(\'vigenciaInicio\',this.value);invalidateVigCache();updVig()"':'disabled'}></div>
+          <div class="field" style="margin-bottom:0"><label>Fim</label><input type="date" value="${vfMostrar}" ${isAdmin&&vigModoManual?'onchange="saveMeta(\'vigenciaFim\',this.value);invalidateVigCache();updVig()"':'disabled'}></div>
         </div>
       </div>
     </div>
@@ -4938,11 +5033,11 @@ async function doSearch(q) {
   }
   // ─────────────────────────────────────────────────
 
-  // Acompanhamentos do semestre atual (destaque + ordenação "pendentes primeiro")
-  const refSem = semestreAtualRef();
+  // Acompanhamentos da vigência atual (destaque + ordenação "pendentes primeiro")
+  const _vigBusca = await vigenciaAtual();
   const acompSemestre = new Map();
   for (const a of await getAcompCache()) {
-    if (semestreRef(a.data) === refSem) {
+    if (naVigencia(a.data, _vigBusca)) {
       const prev = acompSemestre.get(a.nis);
       if (!prev || new Date(a.data) > new Date(prev.data)) acompSemestre.set(a.nis, a);
     }
@@ -5844,13 +5939,14 @@ function _idadeAnos(b) {
 
 // Regra: 1 acompanhamento por semestre para TODOS os beneficiários.
 // Pendente = quem não tem acompanhamento registrado no semestre atual.
-function _calcVencidos(benefs, ultimoPorNis) {
-  const refAtual = semestreAtualRef();
+function _calcVencidos(benefs, ultimoPorNis, vig) {
+  const v = vig || _VIG_CACHE || { ref: semestreAtualRef(), manual: false };
+  const refAtual = v.ref;
   const hoje = Date.now();
   const out = [];
   for (const b of benefs) {
     const ult = ultimoPorNis.get(b.nis);
-    const emDia = ult?.data && semestreRef(ult.data) === refAtual;
+    const emDia = ult?.data && naVigencia(ult.data, v);
     if (emDia) continue;
     const ref = ult?.data ? new Date(ult.data + 'T12:00:00').getTime() : null;
     const diasDesde = ref ? Math.floor((hoje - ref) / 864e5) : null;
@@ -5869,11 +5965,12 @@ async function showVencidos() {
     const p = ultimo.get(a.nis);
     if (!p || new Date(a.data) > new Date(p.data)) ultimo.set(a.nis, a);
   });
-  const v = _calcVencidos(benefs, ultimo);
+  const _vigV = await vigenciaAtual();
+  const v = _calcVencidos(benefs, ultimo, _vigV);
   openSheet(`Acompanhamentos vencidos (${v.length})`, v.length === 0
     ? `<div class="empty-state">${illus('done',false)}<strong>Tudo em dia</strong><p>Nenhum acompanhamento vencido pelas regras de periodicidade.</p></div>`
     : `<div class="s3">
-        <div class="small muted">Regra: 1 acompanhamento por semestre (S1 jan–jun · S2 jul–dez). Pendentes do semestre ${semestreLabel(semestreAtualRef())}. Toque para abrir o beneficiário.</div>
+        <div class="small muted">Regra: 1 acompanhamento por vigência. Pendentes da vigência ${esc(vigenciaLabel(_vigV))}. Toque para abrir o beneficiário.</div>
         ${v.slice(0, 100).map(x => `<div class="card" role="button" tabindex="0" aria-label="Abrir beneficiário ${esc(x.b.nome||'')}" onclick="showBenef('${esc(x.b.nis)}')">
           <div class="res-card-name">${esc(x.b.nome)}
             <span class="tag" style="background:var(--err-soft);color:var(--err)">${x.ultimaData == null ? 'nunca acompanhado' : `há ${x.diasDesde} dias`}</span></div>
@@ -5965,10 +6062,12 @@ async function showBenef(nis) {
     ? `<div class="card card-sub nh" style="background:var(--warn-soft);border-color:var(--warn)"><div class="small" style="color:var(--warn);font-weight:600">${fi('alert-triangle',13)} Cadastro avulso</div><div class="small muted">Cadastrado por: ${esc(b.cadastrado_por||'-')} em ${b.data_cadastro_avulso?new Date(b.data_cadastro_avulso).toLocaleDateString():'-'}</div></div>`
     : '';
   // Status do semestre atual para o cabeçalho
-  const _refSem = semestreAtualRef();
+  const _vigB = await vigenciaAtual();
+  const _refSem = _vigB.ref;
   const _ultimo = acomps[0];
-  const _emDia = _ultimo && _ultimo.data && semestreRef(_ultimo.data) === _refSem && _ultimo.acompanhado !== false;
-  const _naoLoc = _ultimo && _ultimo.data && semestreRef(_ultimo.data) === _refSem && _ultimo.acompanhado === false;
+  const _naVig = _ultimo && _ultimo.data && naVigencia(_ultimo.data, _vigB);
+  const _emDia = _naVig && _ultimo.acompanhado !== false;
+  const _naoLoc = _naVig && _ultimo.acompanhado === false;
   const _ini = (function(){const p=String(b.nome||'?').trim().split(/\s+/);return (p[0][0]+(p[1]?.[0]||'')).toUpperCase();})();
   const _statChip = _emDia ? `<span class="pchip pchip-ok">${fi('check-circle',11)} Acompanhado</span>`
     : _naoLoc ? `<span class="pchip pchip-w">${fi('alert-triangle',11)} Não localizado</span>`
@@ -7169,15 +7268,15 @@ async function exportEgestor() {
   const benefs   = (await getBenefCache()).slice().sort((a,b)=> (a.eas||'').localeCompare(b.eas||'') || (a.nome||'').localeCompare(b.nome||''));
   const acompSem = await acompanhadosNoSemestre();
   const inst     = await IDB.getMeta('instituicao') || '';
-  const vi       = await IDB.getMeta('vigenciaInicio') || '';
-  const vf       = await IDB.getMeta('vigenciaFim') || '';
+  const _vigM    = await vigenciaAtual();
+  const vi = _vigM.ini, vf = _vigM.fim;
   const hoje     = new Date().toISOString().split('T')[0];
 
   const wb  = XLSX.utils.book_new();
   const hdr = [
     ['MAPA DE DIGITAÇÃO — SISTEMA PBF NA SAÚDE (e-Gestor AB)'],
     [inst],
-    [`Vigência: ${semestreLabel(semestreAtualRef())}${vi?` (${fmtBR(vi)} a ${fmtBR(vf)})`:''} · Gerado em ${fmtBR(hoje)}`],
+    [`Vigência: ${vigenciaLabel(_vigM)} (${fmtBR(vi)} a ${fmtBR(vf)}) · Gerado em ${fmtBR(hoje)}`],
     [],
     ['NIS','Nome do Beneficiário','Data de Nascimento','CNS','EAS','Situação na Vigência','Motivo de Não Acompanhamento',
      'Data do Acompanhamento','Peso (kg)','Altura (cm)','Vacinação em dia','Gestante','DUM','Pré-natal em dia'],
@@ -7252,8 +7351,8 @@ async function gerarRelatorioVigencia() {
   const inst  = await IDB.getMeta('instituicao') || 'Prefeitura Municipal';
   const resp  = await IDB.getMeta('sobreResponsavel') || '';
   const cargo = await IDB.getMeta('sobreCargo') || '';
-  const vi = await IDB.getMeta('vigenciaInicio') || '';
-  const vf = await IDB.getMeta('vigenciaFim') || '';
+  const _vigR = await vigenciaAtual();
+  const vi = _vigR.ini, vf = _vigR.fim;
   const triaOn = await triaAtiva();
 
   let acomp = 0, naoAcomp = 0;
@@ -7289,7 +7388,7 @@ async function gerarRelatorioVigencia() {
   $('#printArea').innerHTML = `
     ${await _reportHeader(
       'Relatório de Acompanhamento das Condicionalidades de Saúde — Programa Bolsa Família',
-      `Vigência ${semestreLabel(semestreAtualRef())}${vi?` (${fmtBR(vi)} a ${fmtBR(vf)})`:''} · Emitido em ${new Date().toLocaleDateString('pt-BR')} por ${esc(ME?.nome||'')}`
+      `Vigência ${vigenciaLabel(_vigR)} (${fmtBR(vi)} a ${fmtBR(vf)}) · Emitido em ${new Date().toLocaleDateString('pt-BR')} por ${esc(ME?.nome||'')}`
     )}
 
     <h2>1. Cobertura geral</h2>
@@ -8123,7 +8222,7 @@ async function doLogout() {
 
 async function updVig() {
   const el=$('#vigC'); if(!el)return;
-  const fim = new Date(await IDB.getMeta('vigenciaFim') || '2026-12-31');
+  const fim = new Date((await vigenciaAtual()).fim + 'T23:59:59');
   const diff = Math.ceil((fim - new Date()) / 86400000);
   el.textContent = diff < 0 ? 'Vencida' : diff+' dias';
   el.className = diff < 0 ? 'vig e' : diff < 15 ? 'vig e' : diff < 30 ? 'vig w' : 'vig';
@@ -9940,6 +10039,14 @@ function toggleTheme(){const c=document.documentElement.hasAttribute('data-theme
 
 async function saveMeta(k,v){await IDB.setMeta(k,v);if(k==='instituicao')$('#appTitle').textContent=v;showToast('✓ Salvo','ok');}
 async function saveSobre(k,v){await IDB.setMeta(k,v);}
+// Modo da vigência: automático (semestre) ou personalizado (datas escolhidas)
+async function setVigModo(v){
+  await IDB.setMeta('vigenciaModo', v === 'manual' ? 'manual' : 'auto');
+  invalidateVigCache();
+  await updVig();
+  showToast(v === 'manual' ? 'Vigência personalizada — defina as datas abaixo' : '✓ Vigência automática por semestre', 'ok');
+  nav('config');
+}
 
 // Autentica no Supabase Auth (RLS exige usuário autenticado para ler/escrever)
 async function _sbSignIn() {
@@ -9980,8 +10087,8 @@ async function reconnectSB(){
 async function gerarRelatorio(filtro = {}) {
   showToast('Gerando relatório…', '');
   const inst    = await IDB.getMeta('instituicao') || 'Prefeitura Municipal';
-  const vi      = await IDB.getMeta('vigenciaInicio') || '';
-  const vf      = await IDB.getMeta('vigenciaFim') || '';
+  const _vigG   = await vigenciaAtual();
+  const vi = _vigG.ini, vf = _vigG.fim;
   const benefs  = await IDB.getAll('beneficiarios');
   const acomps  = await IDB.getAll('acompanhamentos');
   const _famRefIds = new Set(benefs.map(b=>b.cod_fam).filter(Boolean));
