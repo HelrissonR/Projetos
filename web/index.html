@@ -1571,7 +1571,50 @@ async function getBenefCache() {
   _bCacheTs = Date.now();
   return _bCache;
 }
-function invalidateBenefCache() { _bCache = null; }
+function invalidateBenefCache() { _bCache = null; _baseVig = null; }
+
+// ─── Base da vigência ────────────────────────────────────────────────────
+// Só entram nas contagens os beneficiários do MAPA 1 desta vigência, marcados
+// no import com a data de início dela. Quem ficou de fora continua guardado
+// (busca e relatórios antigos ainda encontram), mas não conta.
+let _baseVig = null, _baseVigRef = null;
+async function getBaseVigencia() {
+  const ref = (await vigenciaAtual()).ini;
+  if (_baseVig && _baseVigRef === ref) return _baseVig;
+  const todos = await getBenefCache();
+  // "A partir da data de início da vigência": entra quem foi importado nesta
+  // vigência ou depois. Comparar por igualdade deixaria a base órfã assim que
+  // alguém mexesse nas datas ou trocasse o modo da vigência.
+  _baseVig = todos.filter(b => b.vigencia_ref && b.vigencia_ref >= ref);
+  _baseVigRef = ref;
+  return _baseVig;
+}
+async function nisDaVigencia() { return new Set((await getBaseVigencia()).map(b => b.nis)); }
+// Existe base de vigências anteriores esperando um mapa novo?
+async function temBaseAnterior() {
+  const ref = (await vigenciaAtual()).ini;
+  return (await getBenefCache()).some(b => b.vigencia_ref && b.vigencia_ref < ref);
+}
+// Instalações que já existiam não têm carimbo nenhum. Marca uma única vez, com
+// a vigência corrente, para ninguém ver a base zerar do nada ao atualizar; da
+// próxima virada em diante o comportamento pedido passa a valer.
+async function migrarBaseVigencia() {
+  if (await IDB.getMeta('baseVigenciaMigrada')) return;
+  const todos = await IDB.getAll('beneficiarios');
+  // Base ainda vazia: deixa pendente. Num aparelho novo os beneficiários só
+  // chegam pela sincronização, e marcar agora deixaria todos eles sem carimbo
+  // para sempre — a Início ficaria zerada sem motivo.
+  if (!todos.length) return;
+  const ref = (await vigenciaAtual()).ini;
+  const semCarimbo = todos.filter(b => !b.vigencia_ref);
+  if (semCarimbo.length) {
+    const agora = new Date().toISOString();
+    await IDB.putAll('beneficiarios', semCarimbo.map(b => ({ ...b, vigencia_ref: ref, updated_at: agora })));
+    console.log(`✅ ${semCarimbo.length} beneficiários marcados na vigência ${ref}`);
+  }
+  await IDB.setMeta('baseVigenciaMigrada', '1');
+  invalidateBenefCache();
+}
 
 // ─── Reconciliação de famílias ───────────────────────────────────────────────
 // Corrige a divergência "famílias > beneficiários": remove famílias ÓRFÃS
@@ -2136,7 +2179,8 @@ const Sync = {
           cpf: b.cpf || null, gestante: b.gestante || false,
           eas: b.eas || null,
           cadastro_avulso: b.cadastro_avulso || false,
-          cadastrado_por: b.cadastrado_por || null
+          cadastrado_por: b.cadastrado_por || null,
+          vigencia_ref: b.vigencia_ref || null
         }));
         const { count, error } = await this.upsertBatch('beneficiarios', rows, 'nis');
         if (error) errors.push(`Beneficiários: ${error.message}`);
@@ -2223,6 +2267,8 @@ const Sync = {
     try {
       // Configurações administrativas primeiro (vigência, usuários, permissões…)
       await this.downloadSettings();
+      // Se a base chegou agora pela nuvem, carimba antes de qualquer contagem
+      try { await migrarBaseVigencia(); } catch(e) { console.warn('migra base:', e); }
 
       // 1. Beneficiários (paginado + gravação em lote)
       const newBen = await this.fetchAllPaged('beneficiarios', lastDown);
@@ -2233,6 +2279,7 @@ const Sync = {
           idade: b.idade, endereco: b.endereco, bairro: b.bairro,
           cod_fam: b.cod_fam, tel: b.tel, cpf: b.cpf, eas: b.eas,
           gestante: b.gestante, cadastro_avulso: b.cadastro_avulso,
+          vigencia_ref: b.vigencia_ref || null,
           updated_at: b.updated_at, synced_at: now
         })));
         invalidateBenefCache();
@@ -2416,7 +2463,7 @@ function _refreshAdminHome() {
 // Assinatura do que é VISÍVEL na Home. Se não mudar, não re-renderiza (evita piscar).
 async function _homeSig() {
   try {
-    const nb = await IDB.count('beneficiarios');
+    const nb = (await getBaseVigencia()).length;
     const nf = await IDB.count('familias');
     const na = await IDB.count('acompanhamentos');
     const on = (await Presence.online()).map(o => o.device_id).sort().join(',');
@@ -3000,15 +3047,20 @@ async function saveImportResult(result) {
     // nascimento, CNS, endereco...) nao pode apagar o que ja foi coletado.
     const _incoming = result.beneficiarios || [];
     const _keep = ['dob','idade','cns','cpf','tel','endereco','bairro','eas','cod_fam','nome'];
+    // Quem vem no arquivo passa a ser a base DESTA vigência. Quem não veio não é
+    // tocado: mantém o carimbo antigo e sai das contas sozinho, sem precisar ser
+    // apagado — inclusive quando voltar da nuvem numa sincronização.
+    const _vigImp = (await vigenciaAtual()).ini;
     const _mergedBen = [];
     for (const nb of _incoming) {
       const ex = await IDB.get('beneficiarios', nb.nis);
-      if (!ex) { _mergedBen.push(nb); continue; }
+      if (!ex) { _mergedBen.push({ ...nb, vigencia_ref: _vigImp }); continue; }
       const out = { ...ex, ...nb };
       for (const k of _keep) {
         const v = nb[k];
         if (v === null || v === undefined || v === '') out[k] = ex[k];  // preserva o existente
       }
+      out.vigencia_ref = _vigImp;
       out.updated_at = new Date().toISOString();
       _mergedBen.push(out);
     }
@@ -3244,11 +3296,15 @@ async function importDualMapa(f1, f2) {
 // VIEWS
 // ═══════════════════════════════════════════════════════
 async function renderHome() {
-  const nb = await IDB.count('beneficiarios');
+  // Só a base desta vigência entra nas contas — ver getBaseVigencia()
+  const _vig = await vigenciaAtual();
+  const _benHome = await getBaseVigencia();
+  const nb = _benHome.length;
+  // Base vazia mas existe gente de vigências anteriores = falta importar o mapa
+  const _semMapaDaVigencia = nb === 0 && await temBaseAnterior();
   // Contagem REAL de famílias = códigos familiares distintos entre os beneficiários
   // existentes. Evita contar famílias órfãs/fantasma (que faziam o total estourar
   // acima do nº de beneficiários). Garante sempre: famílias ≤ beneficiários.
-  const _benHome = await getBenefCache();
   const _liveFamIds = new Set(_benHome.filter(b => b.cod_fam).map(b => b.cod_fam));
   const nf = _liveFamIds.size;
   const na = await IDB.count('acompanhamentos');
@@ -3322,7 +3378,6 @@ async function renderHome() {
   const recent = [...acomps].sort((a,b) => new Date(b.data||0) - new Date(a.data||0)).slice(0, 5);
 
   // ── Periodicidade: acompanhamentos vencidos ──────────
-  const _vig = await vigenciaAtual();
   const vencidosN = _calcVencidos(benefs, ultimoAcomp, _vig).length;
 
   // ── Helpers ──────────────────────────────────────────
@@ -3339,7 +3394,10 @@ async function renderHome() {
   // ── Meta da vigência ─────────────────────────────────
   const vigIni = _vig.ini, vigFim = _vig.fim;
   const vIni = new Date(vigIni + 'T00:00:00'), vFim = new Date(vigFim + 'T23:59:59');
-  const nisVig = new Set(acomps.filter(a => naVigencia(a.data, _vig)).map(a => a.nis));
+  // Além da data, o NIS precisa estar na base desta vigência: registro de quem
+  // saiu do programa não pode continuar somando.
+  const _nisBase = new Set(_benHome.map(b => b.nis));
+  const nisVig = new Set(acomps.filter(a => naVigencia(a.data, _vig) && _nisBase.has(a.nis)).map(a => a.nis));
   const vigDone = nisVig.size;
   const vigPct = nb > 0 ? Math.min(100, Math.round(vigDone / nb * 100)) : 0;
   const agora = new Date();
@@ -3467,8 +3525,11 @@ async function renderHome() {
       ${bannerHtml}
       <div class="empty-state">
         ${illus('empty')}
-        <strong>Nenhum dado importado</strong>
-        <p>Importe a planilha da base de dados para começar a usar o sistema.</p>
+        ${_semMapaDaVigencia
+          ? `<strong>Vigência ${esc(vigenciaLabel(_vig))} começou</strong>
+             <p>A base anterior não conta mais. Importe o <b>MAPA 1</b> desta vigência para começar a contagem.</p>`
+          : `<strong>Nenhum dado importado</strong>
+             <p>Importe a planilha da base de dados para começar a usar o sistema.</p>`}
         ${can('data.import')?`<button class="btn btn-p" onclick="showImportMapaModal()" style="display:inline-flex;align-items:center;gap:6px">${fi('upload',15)} Importar agora</button>`:''}
       </div>
     </div>`;
@@ -3717,10 +3778,10 @@ async function renderSearch() {
 }
 
 async function renderFamilies() {
-  const nb = await IDB.count('beneficiarios');
-  // Fonte de verdade: famílias que têm ao menos um beneficiário vinculado.
-  // Remove da exibição as famílias órfãs/fantasma (sobra de re-importações).
-  const _benFam = await getBenefCache();
+  // Fonte de verdade: famílias que têm ao menos um beneficiário vinculado
+  // DESTA vigência. Remove órfãs/fantasma (sobra de re-importações).
+  const _benFam = await getBaseVigencia();
+  const nb = _benFam.length;
   const _liveFamFam = new Set(_benFam.filter(b => b.cod_fam).map(b => b.cod_fam));
   const todasFamilias = (await IDB.getAll('familias')).filter(f => _liveFamFam.has(f.familyId));
 
@@ -3827,7 +3888,7 @@ function _renderFamLista(familias, nb, page) {
 }
 
 async function _carregarMaisFamilias() {
-  const nb = await IDB.count('beneficiarios');
+  const nb = (await getBaseVigencia()).length;
   const lista = window._famListaAtual || [];
   const html = _renderFamLista(lista, nb, _famPage + 1);
   const container = document.getElementById('famLista');
@@ -3881,7 +3942,7 @@ async function filtrarFamilias() {
   if (zona)   fams = fams.filter(f => f.zona === zona);
   fams = fams.sort((a,b) => (b.membros?.length||0)-(a.membros?.length||0));
 
-  const nb = await IDB.count('beneficiarios');
+  const nb = (await getBaseVigencia()).length;
   const lista = $('#famLista');
   if (lista) lista.innerHTML = _renderFamLista(fams, nb, 1); // reseta para página 1
   _syncFamFiltroLabels();
@@ -4046,7 +4107,7 @@ async function setRegTab(t) {
 // AGENDA — prioridades de acompanhamento (por semestre)
 // ═══════════════════════════════════════════════════════
 async function renderAgenda() {
-  const benefs = await getBenefCache();
+  const benefs = await getBaseVigencia();
   const acomps = await getAcompCache();
   const nb = benefs.length;
 
@@ -4299,9 +4360,9 @@ function filtrarAcomps(q) {
 async function renderConfig() {
   const isAdmin = ME.role === 'admin';
   document.body.classList.toggle('role-admin', isAdmin);
-  const nb = await IDB.count('beneficiarios');
+  const _benCfg = await getBaseVigencia();
+  const nb = _benCfg.length;
   // Contagem real de famílias (códigos distintos entre beneficiários existentes)
-  const _benCfg = await getBenefCache();
   const nf = new Set(_benCfg.filter(b => b.cod_fam).map(b => b.cod_fam)).size;
   const na = await IDB.count('acompanhamentos');
   const inst = await IDB.getMeta('instituicao') || 'Prefeitura Municipal';
@@ -4384,6 +4445,10 @@ async function renderConfig() {
             ${vigModoManual
               ? 'As datas abaixo definem o que conta como acompanhado. Lembre de atualizá-las a cada vigência.'
               : `Vale <b>${esc(vigenciaLabel(vigAtual))}</b> (${esc(vigAtual.ini.split('-').reverse().join('/'))} a ${esc(vigAtual.fim.split('-').reverse().join('/'))}). Vira sozinha, sem precisar mexer aqui.`}
+          </div>
+          <div class="small muted" style="margin-top:6px">
+            Base desta vigência: <b>${nb.toLocaleString('pt-BR')}</b> beneficiário${nb===1?'':'s'}${
+              nb===0 ? ' — importe o MAPA 1 desta vigência' : ' (do MAPA 1 importado)'}
           </div>
         </div>
         <div class="g2">
@@ -5958,7 +6023,7 @@ function _calcVencidos(benefs, ultimoPorNis, vig) {
 }
 
 async function showVencidos() {
-  const benefs = await getBenefCache();
+  const benefs = await getBaseVigencia();
   const acomps = await getAcompCache();
   const ultimo = new Map();
   acomps.forEach(a => {
@@ -6875,6 +6940,7 @@ async function saveAcompAvulso() {
     cadastro_avulso: true,       // ← FLAG para relatórios
     data_cadastro_avulso: new Date().toISOString(),
     cadastrado_por: ME?.nome || 'Sistema',
+    vigencia_ref: (await vigenciaAtual()).ini,   // entra na base da vigência corrente
     updated_at: new Date().toISOString()
   };
   
@@ -7104,7 +7170,7 @@ async function exportXLSX() {
   }
   showToast('Gerando planilha...', 'ok');
 
-  const benefs  = await IDB.getAll('beneficiarios');
+  const benefs  = await getBaseVigencia();
   const acomps  = (await IDB.getAll('acompanhamentos')).sort((a,b)=>new Date(b.data)-new Date(a.data));
   const bMap    = new Map(benefs.map(b=>[b.nis,b]));
   const wb      = XLSX.utils.book_new();
@@ -7207,7 +7273,7 @@ async function exportCSV(tipo) {
   let headers, rows, filename;
 
   if (tipo === 'beneficiarios') {
-    const benefs = await IDB.getAll('beneficiarios');
+    const benefs = await getBaseVigencia();
     headers = ['NIS','Nome','CNS','Data Nascimento','Idade','Endereço','Bairro','CEP','Zona','Telefone','Código Familiar','EAS','Gestante','Avulso'];
     rows = benefs.map(b => [
       b.nis, b.nome, b.cns||'', b.dob||'', b.idade||'',
@@ -7265,7 +7331,7 @@ async function exportEgestor() {
   }
   showToast('Gerando mapa e-Gestor...', 'ok');
 
-  const benefs   = (await getBenefCache()).slice().sort((a,b)=> (a.eas||'').localeCompare(b.eas||'') || (a.nome||'').localeCompare(b.nome||''));
+  const benefs   = (await getBaseVigencia()).slice().sort((a,b)=> (a.eas||'').localeCompare(b.eas||'') || (a.nome||'').localeCompare(b.nome||''));
   const acompSem = await acompanhadosNoSemestre();
   const inst     = await IDB.getMeta('instituicao') || '';
   const _vigM    = await vigenciaAtual();
@@ -7345,7 +7411,7 @@ async function _reportHeader(titulo, metaHtml) {
 
 async function gerarRelatorioVigencia() {
   const _EAS_PAD = await _easPadrao();
-  const benefs   = await getBenefCache();
+  const benefs   = await getBaseVigencia();
   if (!benefs.length) { showToast('Nenhum beneficiário na base', 'warn'); return; }
   const acompSem = await acompanhadosNoSemestre();
   const inst  = await IDB.getMeta('instituicao') || 'Prefeitura Municipal';
@@ -10089,7 +10155,7 @@ async function gerarRelatorio(filtro = {}) {
   const inst    = await IDB.getMeta('instituicao') || 'Prefeitura Municipal';
   const _vigG   = await vigenciaAtual();
   const vi = _vigG.ini, vf = _vigG.fim;
-  const benefs  = await IDB.getAll('beneficiarios');
+  const benefs  = await getBaseVigencia();
   const acomps  = await IDB.getAll('acompanhamentos');
   const _famRefIds = new Set(benefs.map(b=>b.cod_fam).filter(Boolean));
   const familias = (await IDB.getAll('familias')).filter(f => _famRefIds.has(f.familyId));
@@ -10465,6 +10531,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   // Limpeza única na inicialização: remove famílias órfãs herdadas de importações
   // anteriores (corrige a divergência famílias > beneficiários).
+  try { await migrarBaseVigencia(); } catch(e){ console.warn('migra base vigência:', e); }
   try { await reconcileFamilias(); } catch(e){ console.warn('reconcile init:', e); }
 
   // Supabase
