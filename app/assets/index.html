@@ -1571,49 +1571,86 @@ async function getBenefCache() {
   _bCacheTs = Date.now();
   return _bCache;
 }
-function invalidateBenefCache() { _bCache = null; _baseVig = null; }
+function invalidateBenefCache() { _bCache = null; _baseVig = null; _baseVigId = null; }
 
 // ─── Base da vigência ────────────────────────────────────────────────────
-// Só entram nas contagens os beneficiários do MAPA 1 desta vigência, marcados
-// no import com a data de início dela. Quem ficou de fora continua guardado
-// (busca e relatórios antigos ainda encontram), mas não conta.
-let _baseVig = null, _baseVigRef = null;
+// A base é o CONJUNTO DE UM ARQUIVO: os beneficiários da última importação do
+// MAPA 1. O carimbo `vigencia_ref` guarda o id dessa importação
+// (`<início da vigência>#<timestamp>`) e `baseImportId` aponta para a que vale.
+//
+// Já tentei antes usar "carimbado nesta vigência ou depois" como critério, e
+// era largo demais: qualquer marcação em massa fazia a base velha voltar a
+// contar. O vínculo tem de ser com a importação, não com um intervalo.
+function novoImportId(vigIni){ return vigIni + '#' + Date.now(); }
+function vigDoImportId(id){ const i = String(id||'').indexOf('#'); return i < 0 ? '' : id.slice(0, i); }
+
+let _baseVig = null, _baseVigId = null;
+async function baseImportIdAtual() {
+  const id = await IDB.getMeta('baseImportId');
+  if (!id) return null;
+  // Importação de outra vigência não serve como base da atual
+  return vigDoImportId(id) === (await vigenciaAtual()).ini ? id : null;
+}
 async function getBaseVigencia() {
-  const ref = (await vigenciaAtual()).ini;
-  if (_baseVig && _baseVigRef === ref) return _baseVig;
-  const todos = await getBenefCache();
-  // "A partir da data de início da vigência": entra quem foi importado nesta
-  // vigência ou depois. Comparar por igualdade deixaria a base órfã assim que
-  // alguém mexesse nas datas ou trocasse o modo da vigência.
-  _baseVig = todos.filter(b => b.vigencia_ref && b.vigencia_ref >= ref);
-  _baseVigRef = ref;
+  const id = await baseImportIdAtual();
+  if (!id) return [];                       // sem mapa desta vigência
+  if (_baseVig && _baseVigId === id) return _baseVig;
+  _baseVig = (await getBenefCache()).filter(b => b.vigencia_ref === id);
+  _baseVigId = id;
   return _baseVig;
 }
 async function nisDaVigencia() { return new Set((await getBaseVigencia()).map(b => b.nis)); }
-// Existe base de vigências anteriores esperando um mapa novo?
-async function temBaseAnterior() {
-  const ref = (await vigenciaAtual()).ini;
-  return (await getBenefCache()).some(b => b.vigencia_ref && b.vigencia_ref < ref);
-}
-// Instalações que já existiam não têm carimbo nenhum. Marca uma única vez, com
-// a vigência corrente, para ninguém ver a base zerar do nada ao atualizar; da
-// próxima virada em diante o comportamento pedido passa a valer.
+// Há base guardada esperando o mapa da vigência nova?
+async function temBaseAnterior() { return (await getBenefCache()).length > 0; }
+
+// Correção única. A versão anterior carimbava a base pré-existente inteira com
+// a data de início da vigência, o que a fazia contar como se fosse o mapa novo
+// — era o defeito que inflava o total. Aqui esses carimbos viram `legado:` e a
+// base fica sem dono até a próxima importação do MAPA 1, que é o comportamento
+// pedido. Nada é apagado: a busca e o backup continuam achando todo mundo.
 async function migrarBaseVigencia() {
-  if (await IDB.getMeta('baseVigenciaMigrada')) return;
+  if (await IDB.getMeta('baseVigenciaMigrada') === '2') return;
   const todos = await IDB.getAll('beneficiarios');
-  // Base ainda vazia: deixa pendente. Num aparelho novo os beneficiários só
-  // chegam pela sincronização, e marcar agora deixaria todos eles sem carimbo
-  // para sempre — a Início ficaria zerada sem motivo.
-  if (!todos.length) return;
-  const ref = (await vigenciaAtual()).ini;
-  const semCarimbo = todos.filter(b => !b.vigencia_ref);
-  if (semCarimbo.length) {
+  if (!todos.length) return;   // base vazia: deixa pendente até a nuvem chegar
+  const antigos = todos.filter(b => b.vigencia_ref && !b.vigencia_ref.includes('#')
+                                    && !b.vigencia_ref.startsWith('legado:'));
+  if (antigos.length) {
     const agora = new Date().toISOString();
-    await IDB.putAll('beneficiarios', semCarimbo.map(b => ({ ...b, vigencia_ref: ref, updated_at: agora })));
-    console.log(`✅ ${semCarimbo.length} beneficiários marcados na vigência ${ref}`);
+    await IDB.putAll('beneficiarios', antigos.map(b => ({
+      ...b, vigencia_ref: 'legado:' + b.vigencia_ref, updated_at: agora })));
+    console.log(`✅ ${antigos.length} carimbos antigos movidos para legado`);
   }
-  await IDB.setMeta('baseVigenciaMigrada', '1');
+  const id = await IDB.getMeta('baseImportId');
+  if (id && !id.includes('#')) await IDB.setMeta('baseImportId', null);
+  await IDB.setMeta('baseVigenciaMigrada', '2');
   invalidateBenefCache();
+}
+
+// Avulso entra na base que vale agora; se ainda não houver mapa desta vigência,
+// ele mesmo estabelece a primeira base, senão não apareceria em lugar nenhum.
+async function _idParaAvulso() {
+  let id = await baseImportIdAtual();
+  if (!id) { id = novoImportId((await vigenciaAtual()).ini); await IDB.setMeta('baseImportId', id); }
+  return id;
+}
+
+// Saída de emergência: assume a base local como o mapa desta vigência, para
+// quem não tem o arquivo à mão. Inclui gente de vigências anteriores — que é
+// justamente o problema que a contagem por importação resolve.
+async function adotarBaseAtual() {
+  const todos = await IDB.getAll('beneficiarios');
+  if (!todos.length) { showToast('Não há beneficiários neste aparelho', 'warn'); return; }
+  if (!await uiConfirm(
+      `Marcar os ${todos.length.toLocaleString('pt-BR')} beneficiários deste aparelho como o mapa desta vigência?\n\n` +
+      `Atenção: isso inclui quem veio de vigências anteriores. O certo é importar o MAPA 1 da vigência; use isto só se não tiver o arquivo.`,
+      {title:'Usar a base atual', okText:'Marcar tudo', danger:true})) return;
+  const id = novoImportId((await vigenciaAtual()).ini), agora = new Date().toISOString();
+  await IDB.putAll('beneficiarios', todos.map(b => ({ ...b, vigencia_ref: id, updated_at: agora })));
+  await IDB.setMeta('baseImportId', id);
+  invalidateBenefCache();
+  _audit('base.adotar', 'beneficiarios', `${todos.length} marcados`);
+  showToast(`${todos.length.toLocaleString('pt-BR')} beneficiários marcados nesta vigência`, 'ok');
+  nav('config');
 }
 
 // ─── Reconciliação de famílias ───────────────────────────────────────────────
@@ -1967,7 +2004,7 @@ function _tempoRel(iso){
 // Configurações administrativas sincronizadas entre dispositivos
 // (tabela app_settings no Supabase: key text PK, value text, updated_at timestamptz)
 const SYNC_SETTINGS_KEYS = [
-  'instituicao', 'vigenciaModo', 'vigenciaInicio', 'vigenciaFim', 'triaAtiva',
+  'instituicao', 'vigenciaModo', 'vigenciaInicio', 'vigenciaFim', 'baseImportId', 'triaAtiva',
   'users', 'rolePermissions',
   'homeBannerText', 'homeBannerTitle', 'homeBannerType', 'bannerImages', 'bannerPages', 'bannerSlideMs',
   'designAppTitle', 'designLoginSubtitle', 'corPrimaria',
@@ -3020,20 +3057,23 @@ async function _perguntarLimparAcomps() {
 
 // Salva o resultado do import ({beneficiarios, familias, _acomps}) com merge seguro de acompanhamentos
 async function saveImportResult(result) {
-    // LIMPAR dados antigos antes de reimportar (evita duplicação)
+    let _substituindoBase = false;
     const existingBen = await IDB.count('beneficiarios');
     const existingFam = await IDB.count('familias');
     
     if (existingBen > 0) {
       const confirmar = await uiConfirm(
-        `Já existem ${existingBen} beneficiários e ${existingFam} famílias.\nO arquivo contém ${result.beneficiarios.length} beneficiários e ${result.familias.length} famílias.\n\nSubstituir os dados existentes? (Substituir = limpar e reimportar; Mesclar = manter e somar)`,
-        {title:'Importar dados', okText:'Substituir', cancelText:'Mesclar', danger:true}
+        `Já existem ${existingBen} beneficiários. O arquivo traz ${result.beneficiarios.length}.\n\n` +
+        `SUBSTITUIR: este arquivo passa a ser a base da vigência. Só ele conta — quem não está nele sai dos totais (continua guardado e achável na busca).\n\n` +
+        `MESCLAR: soma este arquivo ao que já conta hoje. Os ${existingBen} continuam nos totais.`,
+        {title:'Importar MAPA 1', okText:'Substituir', cancelText:'Mesclar', danger:true}
       );
       
       if (confirmar) {
-        console.log('🗑️ Limpando dados antigos...');
-        await IDB.clear('beneficiarios');
-        await IDB.clear('familias');
+        // Não apaga mais nada: quem não está no arquivo sai da contagem pelo
+        // carimbo, e continua guardado para busca, histórico e backup. Antes
+        // isso era um IDB.clear(), e um arquivo errado levava a base junto.
+        _substituindoBase = true;
         // Os acompanhamentos são trabalho de campo, não base cadastral: só saem
         // se o usuário pedir, numa pergunta à parte. Antes existia a armadilha
         // de "Substituir" limpar a base e manter os registros, e a vigência
@@ -3050,7 +3090,11 @@ async function saveImportResult(result) {
     // Quem vem no arquivo passa a ser a base DESTA vigência. Quem não veio não é
     // tocado: mantém o carimbo antigo e sai das contas sozinho, sem precisar ser
     // apagado — inclusive quando voltar da nuvem numa sincronização.
-    const _vigImp = (await vigenciaAtual()).ini;
+    // Substituir cria uma base nova; Mesclar soma à que já vale. Se não houver
+    // base desta vigência ainda, qualquer import estabelece a primeira.
+    const _vigIni = (await vigenciaAtual()).ini;
+    const _idAtual = await baseImportIdAtual();
+    const _vigImp = (_substituindoBase || !_idAtual) ? novoImportId(_vigIni) : _idAtual;
     const _mergedBen = [];
     for (const nb of _incoming) {
       const ex = await IDB.get('beneficiarios', nb.nis);
@@ -3065,6 +3109,7 @@ async function saveImportResult(result) {
       _mergedBen.push(out);
     }
     await IDB.putAll('beneficiarios', _mergedBen);
+    await IDB.setMeta('baseImportId', _vigImp);   // este arquivo passa a ser a base
     await IDB.putAll('familias', result.familias);
     if (result._acomps?.length) {
       // Merge seguro: não sobrescreve peso/altura/observações já coletados no app.
@@ -4372,6 +4417,13 @@ async function renderConfig() {
   const vf = await IDB.getMeta('vigenciaFim') || '2026-12-31';
   const vigAtual = await vigenciaAtual();
   const vigModoManual = vigAtual.manual;
+  const totalNaBase = await IDB.count('beneficiarios');
+  const baseIdCfg = await baseImportIdAtual();
+  const baseImportLabel = (() => {
+    const id = baseIdCfg || '';
+    const ts = parseInt(id.slice(id.indexOf('#') + 1), 10);
+    return isNaN(ts) ? '—' : new Date(ts).toLocaleString('pt-BR');
+  })();
   // No modo automático os campos mostram o período que está valendo, não as
   // datas guardadas — senão eles contradizem o texto logo acima. As guardadas
   // continuam salvas e voltam ao escolher "Personalizada".
@@ -4448,8 +4500,13 @@ async function renderConfig() {
           </div>
           <div class="small muted" style="margin-top:6px">
             Base desta vigência: <b>${nb.toLocaleString('pt-BR')}</b> beneficiário${nb===1?'':'s'}${
-              nb===0 ? ' — importe o MAPA 1 desta vigência' : ' (do MAPA 1 importado)'}
+              nb===0 ? ' — importe o MAPA 1 desta vigência'
+                     : ` · MAPA 1 importado em ${esc(baseImportLabel)}`}
           </div>
+          ${isAdmin && nb===0 && totalNaBase>0 ? `<div style="margin-top:8px">
+            <button class="btn btn-g btn-s" onclick="adotarBaseAtual()">Usar os ${totalNaBase.toLocaleString('pt-BR')} deste aparelho como base</button>
+            <div class="small muted" style="font-size:10.5px;margin-top:3px">Só se não tiver o arquivo: inclui gente de vigências anteriores.</div>
+          </div>` : ''}
         </div>
         <div class="g2">
           <div class="field" style="margin-bottom:0"><label>Início</label><input type="date" value="${viMostrar}" ${isAdmin&&vigModoManual?'onchange="saveMeta(\'vigenciaInicio\',this.value);invalidateVigCache();updVig()"':'disabled'}></div>
@@ -6940,7 +6997,7 @@ async function saveAcompAvulso() {
     cadastro_avulso: true,       // ← FLAG para relatórios
     data_cadastro_avulso: new Date().toISOString(),
     cadastrado_por: ME?.nome || 'Sistema',
-    vigencia_ref: (await vigenciaAtual()).ini,   // entra na base da vigência corrente
+    vigencia_ref: await _idParaAvulso(),   // entra na base da vigência corrente
     updated_at: new Date().toISOString()
   };
   
