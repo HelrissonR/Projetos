@@ -1018,6 +1018,30 @@ body:not(.desk-bottom) .vd-frame .vd-mc{grid-area:main}
    sobraria metade vazia à direita. */
 .plogin:has(> .plogin-hero.vd-hid){grid-template-columns:1fr}
 
+/* ── Manual e tour guiado ── */
+.man-grid{display:grid;gap:8px}
+.man-card{display:grid;grid-template-columns:34px 1fr;gap:2px 12px;align-items:start;width:100%;text-align:left;
+  padding:13px 14px;background:var(--panel);border:1px solid var(--border);cursor:pointer}
+.man-card:hover{border-color:var(--violet)}
+.man-num{grid-row:1/3;display:flex;align-items:center;justify-content:center;width:30px;height:30px;
+  background:var(--violet-soft);color:var(--violet);font-weight:800;font-size:13px}
+.man-tit{font-weight:700;font-size:14.5px;color:var(--text)}
+.man-res{font-size:12.5px;color:var(--muted);line-height:1.45}
+.man-passos{display:flex;flex-direction:column;gap:2px;margin-bottom:16px}
+.man-passo{display:flex;gap:12px;padding:12px 13px;background:var(--panel);border:1px solid var(--border)}
+.man-passo+.man-passo{border-top:none}
+.man-passo-n{flex:0 0 26px;height:26px;display:flex;align-items:center;justify-content:center;
+  background:var(--violet);color:#fff;font-weight:800;font-size:12px}
+.man-passo-t{font-weight:700;font-size:14px;margin-bottom:2px}
+.man-passo-d{font-size:13px;color:var(--muted);line-height:1.55}
+#tourOv{display:none;position:fixed;inset:0;z-index:9000}
+#tourHole{box-shadow:0 0 0 9999px rgba(20,8,32,.62);outline:2px solid var(--violet);pointer-events:none}
+#tourBox{background:var(--panel);color:var(--text);padding:14px;max-width:520px;margin:0 auto;
+  box-shadow:0 10px 40px rgba(0,0,0,.3)}
+.tour-n{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--violet)}
+.tour-txt{font-size:14px;line-height:1.55;margin:6px 0 12px}
+.tour-btns{display:flex;gap:6px;justify-content:flex-end}
+
 /* ── Relatório (PDF / impressão) — refino preto & branco ── */
 #printArea{display:none}
 /* ── Documentos impressos: identidade Plum ── */
@@ -1175,6 +1199,9 @@ header.top{padding:12px 16px}
 <div class="vig" id="vigC"></div>
 <div class="right">
   <div class="ss off" id="ssEl" role="button" tabindex="0" aria-label="Ativar ou desativar o modo offline" onclick="toggleManualOffline()" title="Toque para ativar/desativar o modo offline" style="cursor:pointer"><span class="dot"></span><span id="ssT">Offline</span></div>
+  <button class="btn-icon" onclick="abrirAjuda()" title="Ajuda desta tela" aria-label="Ajuda">
+    <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+  </button>
   <button class="btn-icon" id="themeBtn" onclick="toggleTheme()" title="Alternar tema">
     <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
   </button>
@@ -1357,6 +1384,8 @@ function debounce(func, wait) {
 const ICONS = {
   home:           `<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>`,
   smartphone:     `<rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>`,
+  'help-circle':  `<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>`,
+  book:           `<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>`,
   monitor:        `<rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>`,
   search:         `<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>`,
   users:          `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>`,
@@ -1427,6 +1456,72 @@ function fi(name, size = 16) {
 // Autoria própria do app — desenhadas para os estados vazios.
 // Uso de currentColor + tokens; sem dependências externas (CSP-safe).
 const ILLUS = {
+  // ── Ilustrações do manual (originais, mesmo traço das demais) ──
+  // Vigência — calendário com semestre em destaque
+  vigencia: `<svg viewBox="0 0 200 150" width="170" height="128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustração: vigência semestral">
+    <ellipse cx="100" cy="134" rx="62" ry="8" fill="var(--violet-soft)"/>
+    <rect x="42" y="26" width="116" height="96" rx="12" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
+    <path d="M42 50h116" stroke="var(--accent)" stroke-width="2"/>
+    <path d="M68 18v16M132 18v16" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+    <rect x="54" y="60" width="42" height="24" rx="6" fill="var(--violet-soft)"/>
+    <rect x="104" y="60" width="42" height="24" rx="6" fill="var(--accent)"/>
+    <path d="M112 72l6 6 12-12" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M54 96h40M104 96h30" stroke="var(--border)" stroke-width="3" stroke-linecap="round"/>
+  </svg>`,
+  // Registro de acompanhamento — prancheta com pessoa
+  registro: `<svg viewBox="0 0 200 150" width="170" height="128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustração: registrar acompanhamento">
+    <ellipse cx="100" cy="134" rx="60" ry="8" fill="var(--violet-soft)"/>
+    <rect x="54" y="22" width="92" height="104" rx="12" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
+    <rect x="82" y="14" width="36" height="18" rx="6" fill="var(--violet-soft)" stroke="var(--accent)" stroke-width="2"/>
+    <circle cx="82" cy="58" r="11" fill="var(--violet-soft)" stroke="var(--accent)" stroke-width="2"/>
+    <path d="M70 80c0-7 5.4-12 12-12s12 5 12 12" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/>
+    <path d="M104 52h30M104 64h24" stroke="var(--border)" stroke-width="3" stroke-linecap="round"/>
+    <path d="M70 98h60M70 110h40" stroke="var(--border)" stroke-width="3" stroke-linecap="round"/>
+  </svg>`,
+  // Condicionalidades — coração, seringa e balança
+  condic: `<svg viewBox="0 0 200 150" width="170" height="128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustração: condicionalidades de saúde">
+    <ellipse cx="100" cy="134" rx="66" ry="8" fill="var(--violet-soft)"/>
+    <circle cx="56" cy="70" r="26" fill="var(--violet-soft)" stroke="var(--accent)" stroke-width="2"/>
+    <path d="M56 80c-8-6-13-11-13-17a7 7 0 0113-4 7 7 0 0113 4c0 6-5 11-13 17z" fill="var(--accent)"/>
+    <circle cx="144" cy="70" r="26" fill="var(--violet-soft)" stroke="var(--accent)" stroke-width="2"/>
+    <path d="M134 80l20-20M148 54l8 8M138 64l6 6" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round"/>
+    <rect x="78" y="52" width="44" height="36" rx="8" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
+    <path d="M86 74a14 14 0 0128 0z" fill="var(--violet-soft)" stroke="var(--accent)" stroke-width="2"/>
+    <path d="M100 74V62" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+  </svg>`,
+  // Relatórios — folha com gráfico
+  relatorio: `<svg viewBox="0 0 200 150" width="170" height="128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustração: relatórios">
+    <ellipse cx="100" cy="134" rx="58" ry="8" fill="var(--violet-soft)"/>
+    <rect x="56" y="18" width="88" height="108" rx="10" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
+    <path d="M70 34h60M70 46h40" stroke="var(--border)" stroke-width="3" stroke-linecap="round"/>
+    <rect x="72" y="86" width="14" height="26" rx="3" fill="var(--violet-soft)" stroke="var(--accent)" stroke-width="2"/>
+    <rect x="93" y="72" width="14" height="40" rx="3" fill="var(--accent)"/>
+    <rect x="114" y="60" width="14" height="52" rx="3" fill="var(--violet-soft)" stroke="var(--accent)" stroke-width="2"/>
+  </svg>`,
+  // Sincronização — nuvem e setas
+  sync: `<svg viewBox="0 0 200 150" width="170" height="128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustração: sincronização">
+    <ellipse cx="100" cy="134" rx="60" ry="8" fill="var(--violet-soft)"/>
+    <path d="M68 76a20 20 0 0138-9 16 16 0 0122 15 15 15 0 01-3 30H70a17 17 0 01-2-36z" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
+    <path d="M86 96v18m0 0l-7-7m7 7l7-7" stroke="var(--accent)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M114 118v-18m0 0l-7 7m7-7l7 7" stroke="var(--ok)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>`,
+  // Famílias — três figuras
+  familia: `<svg viewBox="0 0 200 150" width="170" height="128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustração: famílias">
+    <ellipse cx="100" cy="132" rx="66" ry="8" fill="var(--violet-soft)"/>
+    <circle cx="66" cy="52" r="14" fill="var(--violet-soft)" stroke="var(--accent)" stroke-width="2"/>
+    <path d="M44 112c0-13 10-24 22-24s22 11 22 24z" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
+    <circle cx="134" cy="52" r="14" fill="var(--violet-soft)" stroke="var(--accent)" stroke-width="2"/>
+    <path d="M112 112c0-13 10-24 22-24s22 11 22 24z" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
+    <circle cx="100" cy="76" r="11" fill="var(--accent)"/>
+    <path d="M82 118c0-10 8-18 18-18s18 8 18 18z" fill="var(--accent)"/>
+  </svg>`,
+  // Manual — livro aberto
+  manual: `<svg viewBox="0 0 200 150" width="170" height="128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustração: manual do aplicativo">
+    <ellipse cx="100" cy="132" rx="64" ry="8" fill="var(--violet-soft)"/>
+    <path d="M100 40c-12-9-28-12-44-10v76c16-2 32 1 44 10 12-9 28-12 44-10V30c-16-2-32 1-44 10z" fill="#fff" stroke="var(--accent)" stroke-width="2"/>
+    <path d="M100 40v76" stroke="var(--accent)" stroke-width="2"/>
+    <path d="M68 52h20M68 66h20M112 52h20M112 66h20M112 80h14" stroke="var(--border)" stroke-width="3" stroke-linecap="round"/>
+  </svg>`,
   // Base de dados vazia — pasta + planilha subindo
   empty: `<svg viewBox="0 0 200 150" width="180" height="135" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustração: importar base de dados">
     <ellipse cx="100" cy="132" rx="66" ry="9" fill="var(--violet-soft)"/>
@@ -3406,6 +3501,311 @@ async function importDualMapa(f1, f2) {
 // ═══════════════════════════════════════════════════════
 // VIEWS
 // ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// MANUAL DO APLICATIVO — capítulos ilustrados + tour guiado
+// Cada capítulo tem uma ilustração, o passo a passo e as dúvidas comuns.
+// `tela` liga o capítulo à página do app, para o botão de ajuda do cabeçalho
+// abrir direto o assunto de onde a pessoa está.
+// ═══════════════════════════════════════════════════════
+const MANUAL = [
+  { id:'inicio', tela:'home', illus:'manual', titulo:'Como começar',
+    resumo:'O que o aplicativo faz e por onde se anda nele.',
+    passos:[
+      ['O que é', 'Este aplicativo registra o acompanhamento das condicionalidades de saúde do Bolsa Família: peso, altura, vacinação e pré-natal de cada beneficiário, dentro da vigência (o semestre corrente).'],
+      ['Funciona sem internet', 'Tudo é gravado no próprio aparelho. Quando há conexão, o app envia sozinho para a nuvem e recebe o que os outros aparelhos registraram. O ponto no topo mostra o estado: verde é conectado, cinza é offline.'],
+      ['A barra de baixo', 'Início mostra os números da vigência. Famílias lista as famílias do mapa. Registros guarda tudo o que foi lançado. Config traz importação, relatórios, usuários e ajustes.'],
+      ['O botão de ajuda', 'O ícone de interrogação no topo abre este manual já no capítulo da tela onde você está.'],
+    ],
+    duvidas:[['Preciso de internet para registrar?','Não. Registre normalmente offline; o envio acontece quando a conexão voltar.']] },
+
+  { id:'home', tela:'home', illus:'relatorio', titulo:'A tela de Início',
+    resumo:'O que cada número quer dizer.',
+    passos:[
+      ['Acompanhamento na vigência', 'A porcentagem e o "X de Y" contam quantas pessoas da base já foram acompanhadas neste semestre. Y é o tamanho do mapa importado; X são as pessoas com registro dentro da vigência.'],
+      ['Beneficiários e Famílias', 'Total de pessoas do mapa da vigência e quantos códigos familiares distintos elas formam.'],
+      ['Meta da vigência', 'Mostra o ritmo: quantos dias faltam para o fim do semestre e quantos atendimentos por dia seriam necessários para fechar a meta.'],
+      ['Alertas', 'Cartões de atenção — vencidos, famílias incompletas, vacinação pendente. Toque para abrir a lista correspondente.'],
+      ['Registrar acompanhamento', 'O botão roxo abre a busca para escolher quem será atendido agora.'],
+    ],
+    duvidas:[['O total está diferente do meu mapa','O total conta só quem veio no MAPA 1 desta vigência. Se divergir, reimporte o MAPA 1 escolhendo Substituir.']] },
+
+  { id:'vigencia', tela:'config', illus:'vigencia', titulo:'Vigência e base do mapa',
+    resumo:'O período que vale e quem entra na conta.',
+    passos:[
+      ['O que é a vigência', 'É o semestre: 1ª de janeiro a junho, 2ª de julho a dezembro. Vira sozinha — ninguém precisa mexer na configuração.'],
+      ['Período personalizado', 'Em Config → Vigência do programa dá para escolher "Personalizada" e definir as datas na mão. Use só se a sua vigência fugir do semestre.'],
+      ['A base é o MAPA 1', 'Quem entra na contagem são os beneficiários do último MAPA 1 importado para esta vigência. Quem não veio no arquivo continua guardado, encontrável na busca, mas fora dos totais.'],
+      ['Virou a vigência', 'Ao começar um semestre novo, a base anterior deixa de contar e o app pede o MAPA 1 da vigência nova. É proposital: sem o mapa novo não há como saber quem acompanhar.'],
+    ],
+    duvidas:[['Apaguei os dados do aparelho e os números voltaram','Os registros ficam também na nuvem. Apagar o aparelho não apaga a nuvem — o app baixa tudo de volta na sincronização seguinte.']] },
+
+  { id:'importar', tela:'config', illus:'empty', titulo:'Importar MAPA 1 e MAPA 2',
+    resumo:'Como trazer a base da vigência.',
+    passos:[
+      ['Onde fica', 'Config → Importar dados. Aceita os arquivos do e-Gestor em .xls e .xlsx.'],
+      ['MAPA 1', 'É a base da vigência: define as famílias e quem deve ser acompanhado.'],
+      ['MAPA 2', 'É o mapa individualizado, com quem já foi acompanhado oficialmente. Importar depois do MAPA 1 marca essas pessoas como acompanhadas.'],
+      ['Substituir ou Mesclar', 'SUBSTITUIR: o arquivo passa a ser a base — só ele conta. MESCLAR: soma ao que já conta. Ao começar uma vigência, use Substituir.'],
+      ['Acompanhamentos', 'Ao substituir, o app pergunta à parte se os acompanhamentos também devem ser apagados, e oferece salvar um backup antes. Se você só está atualizando a base, responda Manter.'],
+    ],
+    duvidas:[['Importei e o total ficou maior que o arquivo','Provavelmente foi Mesclar. Reimporte escolhendo Substituir.']] },
+
+  { id:'buscar', tela:'search', illus:'search', titulo:'Buscar e Registros',
+    resumo:'Achar uma pessoa e ver o que já foi lançado.',
+    passos:[
+      ['Buscar', 'Digite nome, NIS ou CPF. A lista mostra quem já foi acompanhado nesta vigência com etiqueta verde e quem está pendente sem etiqueta.'],
+      ['Filtros', 'Dá para filtrar por estabelecimento, bairro, gestantes, vacinação pendente e quem ainda não foi acompanhado.'],
+      ['Registros', 'A aba ao lado lista os acompanhamentos lançados, do mais recente para o mais antigo, com filtros por período e situação.'],
+      ['Abrir uma pessoa', 'Toque no nome para ver o histórico, emitir comprovante ou registrar um novo acompanhamento.'],
+    ],
+    duvidas:[['Não acho alguém que existe no mapa','Confira se a busca está pelo NIS completo. Pessoas de vigências anteriores continuam achaveis, mesmo fora da contagem.']] },
+
+  { id:'familias', tela:'families', illus:'familia', titulo:'Famílias e mutirão',
+    resumo:'Atender a família inteira de uma vez.',
+    passos:[
+      ['A lista', 'Mostra as famílias do mapa com quantos membros já foram acompanhados nesta vigência.'],
+      ['Filtro único', 'O campo abaixo da busca reúne os filtros; ao escolher um, os submenus aparecem.'],
+      ['Modo mutirão', 'Ao terminar o registro de alguém, o app oferece o próximo membro da mesma família que ainda está pendente — evita ter que procurar um a um.'],
+    ],
+    duvidas:[['A família aparece com menos gente do que tem','A contagem considera só os membros presentes no mapa da vigência atual.']] },
+
+  { id:'registrar', tela:'acomp', illus:'registro', titulo:'Registrar um acompanhamento',
+    resumo:'O formulário em duas etapas.',
+    passos:[
+      ['Etapa 1 — Registro', 'Confirme a data e responda se o beneficiário foi acompanhado. Se marcar Não, escolha o motivo oficial e salve: não há etapa 2.'],
+      ['Etapa 2 — Medições e saúde', 'Peso e altura calculam o IMC sozinhos. Depois vêm vacinação, gestante (com DUM e pré-natal) e observações.'],
+      ['Um registro por pessoa por semestre', 'Se já existir registro da pessoa naquele semestre, o app avisa e pergunta se quer substituir — não duplica.'],
+      ['Rascunho automático', 'O que você digita é guardado enquanto preenche. Se o app fechar, ao reabrir a mesma pessoa o formulário volta como estava.'],
+    ],
+    duvidas:[['Errei um registro salvo','Abra a pessoa, toque no acompanhamento e use Editar ou Excluir. A exclusão pode ser desfeita logo em seguida.']] },
+
+  { id:'condic', tela:'acomp', illus:'condic', titulo:'Condicionalidades e motivos',
+    resumo:'As quatro tabelas oficiais do Ministério da Saúde.',
+    passos:[
+      ['Não acompanhamento', 'Quando a pessoa não foi acompanhada. Vale para todos e tem 6 motivos oficiais — ausente, mudou de município, endereço incorreto, falecimento, não faz parte da família, ou foi avisada pessoalmente e não compareceu.'],
+      ['Descumprimento é outra coisa', 'Aqui a pessoa FOI acompanhada, mas uma condicionalidade específica não foi cumprida. São três tabelas separadas.'],
+      ['Informações nutricionais', 'Só para crianças menores de 7 anos. O motivo aparece quando peso ou altura ficam em branco. São 10 opções, entre elas falta de balança ou antropômetro e falta de profissional capacitado.'],
+      ['Vacinação', 'Só para crianças menores de 7 anos. O motivo aparece ao marcar vacinação "Não". São 9 opções, incluindo criança que precisa de vacina especial (CRIE) e falta de insumos.'],
+      ['Pré-natal', 'Só para gestantes. O motivo aparece ao marcar pré-natal "Não". São 8 opções, incluindo falta de oferta do serviço.'],
+      ['Por que isso importa', 'O e-Gestor exige o motivo. Sem ele o descumprimento fica sem justificativa e pode gerar efeito indevido para a família.'],
+    ],
+    duvidas:[
+      ['Não apareceu o campo de motivo','Nutrição e vacinação só valem para menores de 7 anos, e pré-natal só para gestante. Confira a data de nascimento da pessoa.'],
+      ['Posso marcar acompanhado e ainda assim um descumprimento?','Sim — é exatamente para isso que servem essas três tabelas.'],
+    ] },
+
+  { id:'buscaativa', tela:'acomp', illus:'search', titulo:'Busca ativa e comprovante',
+    resumo:'Documentar a procura por quem não aparece.',
+    passos:[
+      ['Quando usar', 'Depois de tentativas de contato sem sucesso, a busca ativa documenta o esforço feito.'],
+      ['Gerar o comprovante', 'Na ficha da pessoa, o botão de busca ativa pergunta se algum representante da família foi encontrado ou notificado e então emite o comprovante.'],
+      ['O que sai no papel', 'Dados da pessoa, os registros de não acompanhamento já lançados como evidência, e linhas em branco para assinatura.'],
+    ],
+    duvidas:[['O comprovante sai sem a data de nascimento','Significa que ela não veio no mapa nem foi preenchida. Edite a pessoa e informe a data.']] },
+
+  { id:'agenda', tela:'agenda', illus:'vigencia', titulo:'Agenda de prioridades',
+    resumo:'Por quem começar hoje.',
+    passos:[
+      ['Como é montada', 'Separa quem nunca foi acompanhado, gestantes pendentes e quem está vencido, do mais antigo para o mais recente.'],
+      ['Prazo', 'O topo mostra quantos dias faltam para fechar a vigência e quantas pessoas ainda estão pendentes.'],
+    ],
+    duvidas:[['A agenda está vazia','Ou está tudo em dia, ou o MAPA 1 da vigência ainda não foi importado.']] },
+
+  { id:'relatorios', tela:'config', illus:'relatorio', titulo:'Relatórios e mapa e-Gestor',
+    resumo:'O que emitir e para quê.',
+    passos:[
+      ['Onde fica', 'Config → Relatórios. Todos abrem prontos para imprimir ou salvar em PDF.'],
+      ['Consolidado da vigência', 'Números por estabelecimento, acompanhados e não acompanhados com os motivos.'],
+      ['Mapa e-Gestor', 'Planilha no formato de digitação do e-Gestor AB, já com os motivos de não acompanhamento e de descumprimento.'],
+      ['Beneficiários sem estabelecimento', 'Entram no relatório vinculados ao CENTRO DE SAÚDE DE LÁBREA.'],
+    ],
+    duvidas:[['O relatório saiu desalinhado','As colunas têm largura fixa; se ficou estranho, verifique se a impressão está em paisagem.']] },
+
+  { id:'sync', tela:'config', illus:'sync', titulo:'Sincronização, offline e backup',
+    resumo:'Como os dados viajam entre os aparelhos.',
+    passos:[
+      ['Automático', 'O app envia e recebe sozinho quando há internet. O indicador no topo mostra o estado.'],
+      ['Modo offline', 'Dá para forçar o modo offline tocando no indicador — útil para economizar dados em campo.'],
+      ['Sincronizar tudo', 'Em Config → Sincronização, envia e baixa na hora, inclusive as configurações administrativas.'],
+      ['Backup', 'Salva um arquivo com beneficiários, famílias, acompanhamentos e configurações. Faça antes de apagar dados ou trocar de aparelho.'],
+      ['Apagar dados locais', 'Limpa só este aparelho. A nuvem não é afetada e o app baixa tudo de volta na sincronização seguinte.'],
+    ],
+    duvidas:[['Registrei e o outro aparelho não vê','Confira se os dois estão online e use Sincronizar tudo. Registros ainda não enviados aparecem como pendentes em Config.']] },
+
+  { id:'usuarios', tela:'config', illus:'familia', titulo:'Usuários e permissões',
+    resumo:'Quem pode o quê.',
+    passos:[
+      ['Perfis', 'Administrador configura tudo; operador registra acompanhamentos; visualizador apenas consulta.'],
+      ['Cadastro', 'Config → Usuários, disponível para administradores. As permissões valem em todos os aparelhos após a sincronização.'],
+      ['Quem registrou', 'Cada acompanhamento guarda o nome de quem o lançou, e a Início mostra os operadores ativos.'],
+    ],
+    duvidas:[['Um botão não aparece para mim','Provavelmente é uma ação restrita ao seu perfil. Fale com o administrador.']] },
+
+  { id:'editor', tela:'design', illus:'manual', titulo:'Editor Visual',
+    resumo:'Mudar a aparência do app sem programar.',
+    passos:[
+      ['Onde fica', 'Config → Editor Visual, só para administradores.'],
+      ['O que dá para mudar', 'Cores, fontes, textos fixos, ordem e visibilidade dos blocos de cada tela.'],
+      ['Objetos e imagens', 'Dá para inserir imagem, texto, ícone ou forma e arrastar por cima do conteúdo, na frente ou atrás.'],
+      ['Blocos novos', 'Você monta seções próprias com os componentes do app e escolhe onde elas entram na tela.'],
+      ['Celular e computador', 'O alternador no topo mostra como fica em cada um. Salvar envia o design para os demais aparelhos.'],
+    ],
+    duvidas:[['Mudei algo e quero voltar','Use Restaurar padrão no editor. Nada do editor altera dados de beneficiários.']] },
+
+  { id:'problemas', tela:'config', illus:'done', titulo:'Problemas comuns',
+    resumo:'O que fazer quando algo não bate.',
+    passos:[
+      ['O total não bate com o mapa', 'Reimporte o MAPA 1 escolhendo Substituir: só o arquivo importado conta.'],
+      ['Alguém sem data de nascimento', 'Abra a pessoa e preencha. O mapa nem sempre traz esse dado.'],
+      ['Registro sumiu', 'Verifique se foi excluído por outro aparelho. Exclusões se propagam na sincronização.'],
+      ['App lento com muitos dados', 'Normal em bases grandes na primeira abertura; depois disso as telas usam cache.'],
+    ],
+    duvidas:[['Nada resolveu','Gere um backup e fale com o administrador antes de apagar qualquer coisa.']] },
+];
+
+// Passos do tour guiado, por tela. Cada passo aponta um bloco real via data-blk
+// — os mesmos marcadores que o Editor Visual usa. Bloco ausente (oculto ou
+// reordenado pelo editor) é pulado, nunca trava o tour.
+const TOUR = {
+  home: [
+    ['hero', 'Aqui fica o resumo da vigência: quantas pessoas do mapa já foram acompanhadas neste semestre.'],
+    ['cta', 'Este botão abre a busca para registrar um acompanhamento agora.'],
+    ['meta', 'A meta mostra o ritmo necessário para fechar a vigência no prazo.'],
+    ['agenda', 'Atalho para a agenda: por quem começar hoje.'],
+  ],
+  search: [
+    ['busca', 'Procure por nome, NIS ou CPF.'],
+    ['filtros', 'Filtre por estabelecimento, bairro, gestantes ou quem ainda está pendente.'],
+    ['resultados', 'Etiqueta verde é quem já foi acompanhado nesta vigência.'],
+  ],
+  acomp: [
+    ['abas', 'Alterne entre buscar pessoas e ver o que já foi registrado.'],
+    ['filtros', 'Filtre os registros por período e situação.'],
+    ['lista', 'Toque num registro para ver detalhes, editar ou emitir comprovante.'],
+  ],
+  families: [
+    ['busca', 'Procure a família pelo código ou pelo nome de um membro.'],
+    ['filtros', 'Um filtro só: escolha e os submenus aparecem.'],
+    ['lista', 'O contador mostra quantos membros já foram acompanhados na vigência.'],
+  ],
+  agenda: [
+    ['hero', 'Quantos dias faltam e quantas pessoas seguem pendentes.'],
+    ['banner', 'A lista vem agrupada por prioridade: nunca acompanhados primeiro.'],
+  ],
+};
+
+// ── Manual: tela e navegação ──────────────────────────
+let _manualCap = null;
+function manualCapPorTela(pagina){ return (MANUAL.find(c => c.tela === pagina) || MANUAL[0]).id; }
+function abrirAjuda(){ nav('manual', null, manualCapPorTela($('#mc')?.dataset?.page || 'home')); }
+function manualVer(id){ _manualCap = id; nav('manual'); }
+function manualVoltar(){ _manualCap = null; nav('manual'); }
+
+async function renderManual() {
+  const cap = MANUAL.find(c => c.id === _manualCap);
+  if (!cap) {
+    return `<div class="s4">
+      <div data-blk="titulo"><h2>Manual do aplicativo</h2>
+        <p class="muted">Toque num assunto. Tudo funciona offline.</p></div>
+      <div data-blk="indice" class="man-grid">
+        ${MANUAL.map((c,i) => `<button class="man-card" onclick="manualVer('${c.id}')">
+          <span class="man-num">${i+1}</span>
+          <span class="man-tit">${esc(c.titulo)}</span>
+          <span class="man-res">${esc(c.resumo)}</span>
+        </button>`).join('')}
+      </div>
+      <div data-blk="tour" class="card card-sub nh" style="padding:14px">
+        <div class="mb-section-title">${fi('zap',12)} Tour guiado</div>
+        <p class="small muted" style="margin:0 0 10px">Mostra os elementos direto na tela, um a um. Ele aparece sozinho na primeira visita de cada tela.</p>
+        <button class="btn btn-g btn-b" onclick="tourReiniciar()">Ver os tours de novo</button>
+      </div>
+    </div>`;
+  }
+  const i = MANUAL.indexOf(cap);
+  const prox = MANUAL[i+1], ant = MANUAL[i-1];
+  return `<div class="s4">
+    <div data-blk="titulo">
+      <button class="btn btn-g btn-s" onclick="manualVoltar()" style="display:inline-flex;align-items:center;gap:5px;margin-bottom:10px">${fi('chevron-left',13)} Todos os assuntos</button>
+      <h2>${esc(cap.titulo)}</h2>
+      <p class="muted">${esc(cap.resumo)}</p>
+    </div>
+    <div data-blk="ilustracao" style="text-align:center">${illus(cap.illus)}</div>
+    <div data-blk="passos" class="man-passos">
+      ${cap.passos.map((pp,n) => `<div class="man-passo">
+        <div class="man-passo-n">${n+1}</div>
+        <div><div class="man-passo-t">${esc(pp[0])}</div>
+             <div class="man-passo-d">${esc(pp[1])}</div></div>
+      </div>`).join('')}
+    </div>
+    ${cap.duvidas?.length ? `<div data-blk="duvidas">
+      <div class="mb-section-title">${fi('help-circle',12)} Dúvidas frequentes</div>
+      ${cap.duvidas.map(d => `<div class="card card-sub nh" style="padding:12px;margin-bottom:8px">
+        <div style="font-weight:700;font-size:13.5px">${esc(d[0])}</div>
+        <div class="small muted" style="margin-top:3px;line-height:1.5">${esc(d[1])}</div>
+      </div>`).join('')}
+    </div>` : ''}
+    <div data-blk="navegacao" style="display:flex;gap:8px">
+      ${ant ? `<button class="btn btn-g" style="flex:1" onclick="manualVer('${ant.id}')">← ${esc(ant.titulo)}</button>` : ''}
+      ${prox ? `<button class="btn btn-p" style="flex:1" onclick="manualVer('${prox.id}')">${esc(prox.titulo)} →</button>` : ''}
+    </div>
+  </div>`;
+}
+
+// ── Tour guiado ───────────────────────────────────────
+let _tourPassos = [], _tourI = 0;
+async function tourTalvez(pagina) {
+  if (!TOUR[pagina]) return;
+  let vistos = {};
+  try { vistos = JSON.parse(await IDB.getMeta('tourVisto') || '{}'); } catch(e){}
+  if (vistos[pagina]) return;
+  vistos[pagina] = 1;
+  await IDB.setMeta('tourVisto', JSON.stringify(vistos));
+  setTimeout(() => tourIniciar(pagina), 700);   // deixa a animação de entrada terminar
+}
+async function tourReiniciar(){ await IDB.setMeta('tourVisto', '{}'); showToast('Os tours vão aparecer de novo em cada tela', 'ok'); }
+
+function tourIniciar(pagina) {
+  const passos = (TOUR[pagina] || []).filter(([blk]) => {
+    const el = document.querySelector(`#mc [data-blk="${blk}"]`);
+    return el && el.offsetParent !== null;      // pula bloco oculto pelo Editor Visual
+  });
+  if (!passos.length) return;
+  _tourPassos = passos; _tourI = 0;
+  if (!document.getElementById('tourOv')) {
+    const ov = document.createElement('div');
+    ov.id = 'tourOv';
+    ov.innerHTML = `<div id="tourHole"></div><div id="tourBox" role="dialog" aria-live="polite"></div>`;
+    document.body.appendChild(ov);
+    ov.addEventListener('click', e => { if (e.target === ov) tourFim(); });
+  }
+  document.getElementById('tourOv').style.display = 'block';
+  tourPasso(0);
+}
+function tourPasso(i) {
+  if (i < 0 || i >= _tourPassos.length) return tourFim();
+  _tourI = i;
+  const [blk, texto] = _tourPassos[i];
+  const el = document.querySelector(`#mc [data-blk="${blk}"]`);
+  if (!el) return tourPasso(i + 1);
+  el.scrollIntoView({ block:'center', behavior:'smooth' });
+  setTimeout(() => {
+    const r = el.getBoundingClientRect();
+    const hole = document.getElementById('tourHole'), box = document.getElementById('tourBox');
+    if (!hole || !box) return;
+    hole.style.cssText = `position:fixed;left:${r.left-6}px;top:${r.top-6}px;width:${r.width+12}px;height:${r.height+12}px`;
+    box.innerHTML = `<div class="tour-n">${i+1} de ${_tourPassos.length}</div>
+      <div class="tour-txt">${esc(texto)}</div>
+      <div class="tour-btns">
+        <button class="btn btn-g btn-s" onclick="tourFim()">Pular</button>
+        ${i > 0 ? `<button class="btn btn-g btn-s" onclick="tourPasso(${i-1})">Voltar</button>` : ''}
+        <button class="btn btn-p btn-s" onclick="tourPasso(${i+1})">${i === _tourPassos.length-1 ? 'Concluir' : 'Próximo'}</button>
+      </div>`;
+    const abaixo = r.bottom + 150 < window.innerHeight;
+    box.style.cssText = `position:fixed;left:12px;right:12px;${abaixo ? `top:${r.bottom+14}px` : `bottom:${window.innerHeight-r.top+14}px`}`;
+  }, 320);
+}
+function tourFim(){ const ov = document.getElementById('tourOv'); if (ov) ov.style.display = 'none'; }
+
 async function renderHome() {
   // Só a base desta vigência entra nas contas — ver getBaseVigencia()
   const _vig = await vigenciaAtual();
@@ -5118,7 +5518,8 @@ function _navSkeleton() {
   </div>`;
 }
 
-async function nav(page, _fromPop) {
+async function nav(page, _fromPop, _capManual) {
+  if (page === 'manual' && _capManual !== undefined) _manualCap = _capManual;
   const mc = $('#mc');
   // Mostrar skeleton imediatamente
   mc.innerHTML = _navSkeleton();
@@ -5133,12 +5534,13 @@ async function nav(page, _fromPop) {
     case 'acomp':    window._acompFiltros = { periodo:'todos', tria:'todos', situacao:[], dataInicio:'', dataFim:'' }; html = await renderRegistros('acomp'); break;
     case 'config':   html = await renderConfig(); break;
     case 'design':   html = await renderDesignEditor(); break;
+    case 'manual':   html = await renderManual(); break;
     default: mc.classList.remove('loading'); return;
   }
   mc.innerHTML = html;
   document.body.classList.toggle('vd-mode', page === 'design');
   if (page === 'design') { _vdRenderPreview(); _vdObservarCanvas(); }
-  else _vdDecorateScreen(page, mc);
+  else { _vdDecorateScreen(page, mc); tourTalvez(page); }
   mc.classList.remove('loading');
   mc.classList.remove('enter'); void mc.offsetWidth; mc.classList.add('enter');
   mc.dataset.page = page;
