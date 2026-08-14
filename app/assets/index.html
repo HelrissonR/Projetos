@@ -25,8 +25,7 @@
 <script src="xlsx.full.min.js" onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';document.head.appendChild(s);"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--bg:#f7f6f8;--panel:#ffffff;--panel-2:#f2eff6;--text:#241b2c;--muted:#736b7b;--border:#e8e4eb;--accent:#7226d9;--accent-hi:#5f1fb8;--accent-soft:#f0e7fb;--accent-text:#ffffff;--accent-2:#35104f;--accent-2-soft:#f0e7fb;--brand-blue:#7226d9;--plum:#35104f;--plum2:#280b3d;--violet:#7226d9;--violet-soft:#f0e7fb;--accent-rgb:114,38,217;--ok:#27704b;--ok-soft:#e6f4ec;--warn:#986019;--warn-soft:#fff1dc;--err:#a92942;--err-soft:#fde9ed;--r:12px;--r-lg:16px;--shadow-sm:none;--shadow-md:none;--shadow-lg:none}
-[data-theme="dark"]{--bg:#0e0f12;--panel:#17191e;--panel-2:#212430;--text:#f0f1f5;--muted:#9aa0ac;--border:#2c2f38;--accent:#f0f1f5;--accent-hi:#ffffff;--accent-soft:#20232b;--accent-text:#0e0f12;--accent-2:#f0f1f5;--accent-2-soft:#20232b;--brand-blue:#9c62e9;--plum:#2a0f40;--plum2:#1f0a30;--violet:#9c62e9;--violet-soft:#241633;--accent-rgb:240,241,245;--ok:#30d158;--ok-soft:#0d3320;--warn:#ff9f0a;--warn-soft:#3d2100;--err:#ff453a;--err-soft:#3d0c00;--shadow-sm:none;--shadow-md:none;--shadow-lg:none}
+:root{--bg:#F9FCFA;--panel:#ffffff;--panel-2:#F0FAF4;--text:#142033;--muted:#536176;--border:#D7DFE5;--accent:#169447;--accent-hi:#087A3A;--accent-soft:#EAF8EF;--accent-text:#ffffff;--accent-2:#0d3b23;--accent-2-soft:#EAF8EF;--brand-blue:#14518A;--plum:#0d3b23;--plum2:#08301c;--violet:#169447;--violet-soft:#EAF8EF;--accent-rgb:22,148,71;--ok:#168A48;--ok-soft:#EAF8EF;--warn:#986019;--warn-soft:#fff1dc;--err:#C83B3B;--err-soft:#fde9ed;--r:12px;--r-lg:16px;--shadow-sm:none;--shadow-md:none;--shadow-lg:none}
 @font-face{font-family:'Inter var';font-style:normal;font-weight:100 900;font-display:swap;src:url('fonts/inter.woff2') format('woff2')}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font-family,'Inter var','Inter',system-ui,-apple-system,"Segoe UI",Roboto,sans-serif);font-size:var(--font-size-base,15px);line-height:1.5;color:var(--text);background:var(--bg);min-height:100vh;font-feature-settings:'cv02','cv03','cv04','cv11';-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
@@ -39,12 +38,10 @@ header.top h1{color:#191d24}
 header.top .btn-icon{color:#191d24}
 header.top .btn-icon:hover{background:rgba(0,0,0,.10);color:#000}
 header.top .ss{background:var(--panel-2);font-weight:600}
-[data-theme="dark"] header.top h1,[data-theme="dark"] header.top .btn-icon{color:var(--text)}
 /* Fundo em gradiente (igual ao login) nas demais telas do app */
 #pageApp.active{background:linear-gradient(180deg,var(--accent-soft) 0%,var(--bg) 32%,var(--bg) 100%);background-attachment:fixed;min-height:100vh}
 /* ── Camada de transição de cor na rolagem ── */
 #scrollTint{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.55;background:linear-gradient(160deg,rgba(var(--accent-rgb),.10) 0%,transparent 45%,rgba(var(--accent-rgb),.08) 100%);filter:hue-rotate(calc(var(--sc,0) * 60deg));transition:filter .3s linear;mix-blend-mode:normal}
-[data-theme="dark"] #scrollTint{opacity:.7}
 body:has(#pageLogin.active) #scrollTint{display:none}
 .app{position:relative;z-index:1}
 .top h1{font-size:15px;font-weight:600;flex:1}
@@ -99,27 +96,22 @@ body:has(#pageLogin.active) nav.bottom{display:none!important}
 
 /* ── Hero zone (base branca + detalhe Bolsa Família) ── */
 .lcard-hero{background:radial-gradient(130% 100% at 50% -20%,var(--accent-soft) 0%,var(--panel) 62%);padding:46px 24px 72px;position:relative;overflow:hidden;text-align:center;border-radius:24px 24px 0 0;border:none}
-[data-theme="dark"] .lcard-hero{background:radial-gradient(130% 100% at 50% -20%,var(--accent-soft) 0%,var(--panel) 62%)}
 .lhero-blob{display:none}/* círculos decorativos desativados; use imagem própria atrás da logo */
 .lhero-blob-1{width:240px;height:240px;background:color-mix(in srgb,var(--accent) 9%,transparent);bottom:-90px;right:-60px}
 .lhero-blob-2{width:160px;height:160px;background:color-mix(in srgb,var(--accent-2) 10%,transparent);top:-55px;left:-40px}
 .lhero-blob-3{width:72px;height:72px;background:color-mix(in srgb,var(--accent) 12%,transparent);top:30px;right:36px}
-[data-theme="dark"] .lhero-blob{opacity:.5}
 
 /* ── Logo no hero ── */
 .lcard-logo-wrap{display:flex;justify-content:center;margin-bottom:16px;position:relative;z-index:2}
 .lcard-logo-ring{width:104px;height:104px;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;background:transparent;border:none;box-shadow:none}
-[data-theme="dark"] .lcard-logo-ring{background:transparent;border:none}
 .lcard-logo-ring img,.lcard-logo-ring svg{width:92px;height:92px;object-fit:contain}
 /* Imagem própria atrás da logo (tela de login) */
 .lcard-hero.has-hero-bg{background-size:cover;background-position:center;background-repeat:no-repeat}
 .lcard-hero.has-hero-bg .lcard-sub{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.55)}
 .lcard-sub{text-align:center;color:var(--muted);font-size:13px;line-height:1.55;padding:0 20px;margin:0;position:relative;z-index:2}
-[data-theme="dark"] .lcard-sub{color:var(--muted)}
 
 /* ── Form card sobrepõe o hero ── */
 .lcard{background:var(--panel);border-radius:24px 24px 20px 20px;overflow:visible;box-shadow:0 -4px 20px rgba(0,0,0,.07),var(--shadow-lg);border:1px solid var(--border);margin-top:-28px;position:relative;z-index:3;padding:28px 22px 20px}
-[data-theme="dark"] .lcard{background:var(--panel)}
 
 /* Ocultar elementos do layout antigo */
 .lcard-top,.lcard-wave,.lcard-deco,.lcard-deco2,.lcard-form{display:none!important}
@@ -361,8 +353,6 @@ body:not(.role-admin) .cfg-admin-only{display:none!important}
 #cfgTabs::-webkit-scrollbar{display:none}
 #cfgTabs .afchip{flex:0 0 auto;padding:8px 14px;font-size:12.5px}
 .cfg-card-body .s3>*+*{margin-top:14px}
-[data-theme="dark"] .tag-i{background:var(--accent-soft);color:var(--accent)}
-[data-theme="dark"] .fb{background:var(--accent-soft);color:var(--accent)}
 .alert-action{cursor:pointer;transition:box-shadow .15s,transform .12s}
 .alert-action:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
 .alert-action:active{transform:scale(.985);transition:transform .08s}
@@ -400,7 +390,6 @@ body:not(.role-admin) .cfg-admin-only{display:none!important}
 .home-banner.type-err  .home-banner-title{color:var(--err)}
 .home-banner-body{font-size:13px;line-height:1.55;white-space:pre-wrap}
 .home-banner-edit{position:absolute;top:8px;right:8px;opacity:.6;z-index:3;background:rgba(255,255,255,.7)!important}
-[data-theme="dark"] .home-banner-edit{background:rgba(0,0,0,.5)!important}
 .home-banner-edit:hover{opacity:1}
 /* Slides */
 .home-banner-slides{position:relative;width:100%;aspect-ratio:3/1;background:var(--panel-2);overflow:hidden}
@@ -453,7 +442,6 @@ body:not(.role-admin) .cfg-admin-only{display:none!important}
 .mb-feed-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);transition:background .12s}
 .mb-feed-item:last-child{border-bottom:none;padding-bottom:0}
 .mb-avatar{width:32px;height:32px;border-radius:50%;background:hsl(var(--av-h,48) 70% 88%);color:hsl(var(--av-h,48) 55% 30%);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-[data-theme="dark"] .mb-avatar{background:hsl(var(--av-h,48) 40% 24%);color:hsl(var(--av-h,48) 75% 75%)}
 .mb-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .mb-quick-btn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;background:var(--panel);border:1px solid var(--border);border-radius:var(--r-lg);cursor:pointer;transition:border-color .15s,box-shadow .15s,transform .1s;text-align:center;box-shadow:var(--shadow-sm)}
 .mb-quick-btn:hover{border-color:var(--accent);background:var(--accent-soft);box-shadow:var(--shadow-md)}
@@ -471,33 +459,36 @@ body:not(.role-admin) .cfg-admin-only{display:none!important}
 .home-hero{display:grid;grid-template-columns:1.15fr .85fr;gap:10px;align-items:stretch}
 .home-hero .mb-today{margin:0}
 .home-cta-col{display:flex;flex-direction:column;gap:5px;justify-content:center}
-.home-cta{width:100%;background:var(--brand-blue);color:#fff;font-weight:800;border:none;border-radius:14px;padding:16px;font-size:16px;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;transition:filter .12s,transform .1s;box-shadow:0 2px 10px rgba(19,81,180,.28)}
+.home-cta{width:100%;background:linear-gradient(90deg,var(--accent),var(--accent-hi));color:#fff;font-weight:800;border:none;border-radius:14px;padding:16px;font-size:16px;display:flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;transition:filter .12s,transform .1s;box-shadow:0 2px 10px rgba(19,81,180,.28)}
 .home-cta:hover{filter:brightness(1.08)}
 .home-cta:active{transform:scale(.98)}
 @media(max-width:640px){.home-hero{grid-template-columns:1fr}}
 /* ── Plum hero (Home) ── */
-.plum-hero{background:linear-gradient(160deg,#3d1258 0%,#2b0c42 100%);color:#fff;border-radius:22px;padding:20px 18px 18px;margin-bottom:14px}
-.plum-hero .ph-kicker{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.62)}
+/* Hero claro, no espírito do cartão do login: superfície branca sobre um véu
+   verde, com o texto em tom escuro. Antes era branco sobre roxo escuro. */
+.plum-hero{background:linear-gradient(160deg,#EAF8EF 0%,#F7FCF9 100%);color:var(--text);border:1px solid var(--border);border-radius:22px;padding:20px 18px 18px;margin-bottom:14px}
+/* --accent puro dá 3.67:1 sobre o hero claro, abaixo de AA para texto de 11px */
+.plum-hero .ph-kicker{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent-hi)}
 .plum-hero .ph-name{font-size:26px;font-weight:800;letter-spacing:-.5px;margin-top:2px}
-.plum-hero .ph-sub{font-size:13px;color:rgba(255,255,255,.7);margin-top:2px}
-.plum-hero .ph-avatar{width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex-shrink:0;overflow:hidden}
+.plum-hero .ph-sub{font-size:13px;color:var(--muted);margin-top:2px}
+.plum-hero .ph-avatar{width:46px;height:46px;border-radius:13px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff;flex-shrink:0;overflow:hidden}
 .plum-hero .ph-avatar.has-foto{background:transparent}
 .plum-hero .ph-avatar img{width:100%;height:100%;object-fit:cover;display:block}
 /* Foto no Config -> Minha conta */
 .me-foto{width:64px;height:64px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:var(--violet-soft);color:var(--violet);font-weight:800;font-size:20px;overflow:hidden}
 .me-foto img{width:100%;height:100%;object-fit:cover;display:block}
-.plum-hero .ph-bell{width:46px;height:46px;border-radius:13px;background:transparent;border:1px solid rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;cursor:pointer}
-.plum-hero .ph-cov{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px;margin-top:16px;display:flex;align-items:center;gap:14px}
+.plum-hero .ph-bell{width:46px;height:46px;border-radius:13px;background:transparent;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--accent);flex-shrink:0;cursor:pointer}
+.plum-hero .ph-cov{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;margin-top:16px;display:flex;align-items:center;gap:14px}
 .plum-hero .ph-cov-num{font-size:38px;font-weight:800;line-height:1;letter-spacing:-1px}
 .plum-hero .ph-donut{width:104px;height:104px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative}
-.plum-hero .ph-donut::after{content:'';position:absolute;inset:16px;border-radius:50%;background:#2b0c42}
-.plum-hero .ph-donut span{position:relative;z-index:1;font-weight:800;font-size:19px;color:#fff}
+.plum-hero .ph-donut::after{content:'';position:absolute;inset:16px;border-radius:50%;background:#fff}
+.plum-hero .ph-donut span{position:relative;z-index:1;font-weight:800;font-size:19px;color:var(--accent)}
 .plum-hero .ph-kpis{display:flex;align-items:flex-start;margin-top:16px}
 .plum-hero .ph-kpi{flex:1;min-width:0}
-.plum-hero .ph-kpi+.ph-kpi{border-left:1px solid rgba(255,255,255,.12);padding-left:12px}
+.plum-hero .ph-kpi+.ph-kpi{border-left:1px solid var(--border);padding-left:12px}
 .plum-hero .ph-kpi-num{font-size:19px;font-weight:800;line-height:1}
-.plum-hero .ph-kpi-lbl{font-size:11px;color:rgba(255,255,255,.65);margin-top:3px}
-.plum-hero .ph-search{margin-top:16px;background:#fff;border-radius:13px;display:flex;align-items:center;gap:10px;padding:13px 15px;color:var(--muted);cursor:pointer}
+.plum-hero .ph-kpi-lbl{font-size:11px;color:var(--muted);margin-top:3px}
+.plum-hero .ph-search{margin-top:16px;background:#fff;border:1px solid var(--border);border-radius:13px;display:flex;align-items:center;gap:10px;padding:13px 15px;color:var(--muted);cursor:pointer}
 .plum-hero .ph-search svg{color:var(--violet)}
 /* ── Plum list rows / strip / chips ── */
 .plum-strip{display:flex;background:var(--accent-soft);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:12px}
@@ -662,9 +653,8 @@ body.navind-pill .nav-icon[aria-current="page"]{background:var(--accent-soft);co
     grid-area:side;position:sticky;top:0;align-self:start;height:100vh;
     left:auto;right:auto;bottom:auto;padding:20px 14px;z-index:5;
     display:flex;flex-direction:column;
-    background:#280b3d;border-right:none;
+    background:var(--panel);border-right:1px solid var(--border);
   }
-  [data-theme="dark"] body:not(.desk-bottom) nav.bottom{background:#1f0a30}
   body:not(.desk-bottom) nav.bottom .inner{
     display:flex;flex-direction:column;grid-template-columns:none;
     gap:4px;padding:8px 4px;border-radius:0;width:100%;
@@ -672,25 +662,25 @@ body.navind-pill .nav-icon[aria-current="page"]{background:var(--accent-soft);co
   }
   body:not(.desk-bottom) nav.bottom .inner::before{
     content:'Bolsa Família';display:block;font-size:15px;font-weight:800;letter-spacing:-.01em;
-    text-transform:none;color:#fff;padding:4px 12px 4px;order:-2;
+    text-transform:none;color:var(--text);padding:4px 12px 4px;order:-2;
   }
   body:not(.desk-bottom) nav.bottom .inner::after{
     content:'Saúde · Condicionalidades';display:block;font-size:11px;font-weight:600;
-    color:rgba(255,255,255,.5);padding:0 12px 14px;margin-top:-2px;order:-1;
+    color:var(--muted);padding:0 12px 14px;margin-top:-2px;order:-1;
   }
   body:not(.desk-bottom) nav.bottom button,
   body:not(.desk-bottom) nav.bottom .nav-icon{
     flex-direction:row;justify-content:flex-start;gap:13px;width:100%;
     padding:12px 14px;font-size:14px;border-radius:12px;font-weight:600;
-    color:rgba(255,255,255,.72);
+    color:var(--muted);
   }
   /* Especificidade acima da regra acima, para o modo flat continuar valendo */
   body.flat:not(.desk-bottom) nav.bottom button,
   body.flat:not(.desk-bottom) nav.bottom .nav-icon{border-radius:0}
   body:not(.desk-bottom) nav.bottom button:hover,
-  body:not(.desk-bottom) nav.bottom .nav-icon:hover{background:rgba(255,255,255,.07);color:#fff}
+  body:not(.desk-bottom) nav.bottom .nav-icon:hover{background:var(--accent-soft);color:var(--accent)}
   body:not(.desk-bottom) nav.bottom button svg,
-  body:not(.desk-bottom) nav.bottom .nav-icon svg{color:rgba(255,255,255,.72)}
+  body:not(.desk-bottom) nav.bottom .nav-icon svg{color:var(--muted)}
   body:not(.desk-bottom) nav.bottom button[aria-current="page"]{background:var(--accent);color:#fff}
   body:not(.desk-bottom) nav.bottom button[aria-current="page"] svg{color:#fff}
   body:not(.desk-bottom) nav.bottom button[aria-current="page"]::before,
@@ -1065,14 +1055,7 @@ body:not(.desk-bottom) .vd-frame .vd-mc{grid-area:main}
 @media(min-width:431px){ .bl-brand,.bl-card,.bl-footer{max-width:390px} }
 /* Modo escuro: o mockup é claro. Mantém o tratamento institucional, só
    escurecendo o fundo para não ofuscar quem está no escuro. */
-[data-theme="dark"] .blogin{background:radial-gradient(circle at 50% 10%,#12211a 0%,#0f1a15 60%,#0e0f12 100%)}
-[data-theme="dark"] .blogin{--bl-surface:#17211c;--bl-text:#eaf3ee;--bl-text-2:#a9b8b0;--bl-muted:#8b9a92;
   --bl-border:#2c3a33;--bl-line:#2c3a33;--bl-green-light:#12301f;--bl-soft:#12301f}
-[data-theme="dark"] .bl-card{background:rgba(23,33,28,.96);box-shadow:0 8px 30px rgba(0,0,0,.4)}
-[data-theme="dark"] .bl-prod{color:#cfe0d6}
-[data-theme="dark"] .bl-avatar{background:#12301f}
-[data-theme="dark"] .bl-aviso{background:linear-gradient(90deg,#12301f,#14261d)}
-[data-theme="dark"] .bl-btn2{background:transparent}
 /* No editor, o preview de celular tem 412px mas a janela é larga: as media
    queries acima enxergam a janela, então o modo estreito é repetido aqui. */
 .vd-frame[data-dev="mobile"] .blogin{padding-left:12px;padding-right:12px}
@@ -1107,17 +1090,17 @@ body:not(.desk-bottom) .vd-frame .vd-mc{grid-area:main}
 /* ── Relatório (PDF / impressão) — refino preto & branco ── */
 #printArea{display:none}
 /* ── Documentos impressos: identidade Plum ── */
-.rpt-head{display:flex;align-items:center;gap:16px;background:linear-gradient(160deg,#3d1258 0%,#2b0c42 100%);color:#fff;padding:18px 20px;margin-bottom:0}
+.rpt-head{display:flex;align-items:center;gap:16px;background:linear-gradient(160deg,#0d3b23 0%,#08301c 100%);color:#fff;padding:18px 20px;margin-bottom:0}
 .rpt-logo{width:52px;height:52px;object-fit:contain;flex-shrink:0;background:#fff;padding:5px}
 .rpt-mark{width:52px;height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.14);color:#fff;font-size:17px;font-weight:800;letter-spacing:-.02em}
-.rpt-kicker{font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#c79cf3}
+.rpt-kicker{font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#9fd9b6}
 .rpt-inst{font-size:16px;font-weight:800;letter-spacing:-.02em;line-height:1.15;color:#fff;margin-top:3px}
 .rpt-title{font-size:10.5px;font-weight:600;color:rgba(255,255,255,.78);margin-top:3px}
-.rpt-meta{font-size:9px;color:#4a4453;background:#f0e7fb;padding:7px 20px;margin-bottom:16px;line-height:1.5}
-.rpt-kpis{display:flex;flex-wrap:wrap;border-top:2px solid #7226d9;background:#faf9fb;margin-bottom:16px}
+.rpt-meta{font-size:9px;color:#3f4a44;background:#EAF8EF;padding:7px 20px;margin-bottom:16px;line-height:1.5}
+.rpt-kpis{display:flex;flex-wrap:wrap;border-top:2px solid #169447;background:#f9fbfa;margin-bottom:16px}
 .rpt-kpi{flex:1;min-width:88px;padding:12px 16px;border-right:1px solid #e8e4eb}
 .rpt-kpi:last-child{border-right:0}
-.rpt-kpi .k-num{font-size:23px;font-weight:800;letter-spacing:-.03em;line-height:1;color:#7226d9;font-variant-numeric:tabular-nums}
+.rpt-kpi .k-num{font-size:23px;font-weight:800;letter-spacing:-.03em;line-height:1;color:#169447;font-variant-numeric:tabular-nums}
 .rpt-kpi .k-lbl{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:#736b7b;margin-top:6px}
 .ui-confirm-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:0;transition:opacity .18s;padding:24px}
 .ui-confirm-ov.show{opacity:1}
@@ -1128,7 +1111,7 @@ body:not(.desk-bottom) .vd-frame .vd-mc{grid-area:main}
 .ui-confirm-btns{display:flex;gap:10px}
 .ui-confirm-btns .btn{flex:1}
 .ui-confirm .btn-danger{background:var(--err,#c62828);color:#fff;border-color:transparent}
-#printArea .rpt-selo{display:inline-block;background:#7226d9;color:#fff;padding:4px 10px;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.12em}
+#printArea .rpt-selo{display:inline-block;background:#169447;color:#fff;padding:4px 10px;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.12em}
 #printArea .rpt-selo-nota{font-size:8.5px;color:#736b7b;margin:5px 0 12px}
 #printArea table.mapa2{table-layout:fixed;width:100%}
 #printArea table.mapa2 th,#printArea table.mapa2 td{font-size:8.4px;padding:4px 5px;word-wrap:break-word;overflow-wrap:anywhere;hyphens:auto;vertical-align:middle;line-height:1.3}
@@ -1139,7 +1122,7 @@ body:not(.desk-bottom) .vd-frame .vd-mc{grid-area:main}
 #printArea table.mapa2 td.nome{font-weight:600}
 /* Fichas (comprovantes): rotulo a esquerda, largura fixa, sem desalinhamento */
 #printArea table.ficha,#printArea table.acoes{table-layout:fixed;width:100%}
-#printArea table.ficha th{text-align:left;vertical-align:middle;background:#f0e7fb;color:#35104f}
+#printArea table.ficha th{text-align:left;vertical-align:middle;background:#EAF8EF;color:#0d3b23}
 #printArea table.ficha td{vertical-align:middle;word-wrap:break-word;overflow-wrap:anywhere}
 #printArea table.acoes th.c,#printArea table.acoes td.c{text-align:center}
 #printArea table.acoes td{word-wrap:break-word;overflow-wrap:anywhere}
@@ -1148,16 +1131,16 @@ body:not(.desk-bottom) .vd-frame .vd-mc{grid-area:main}
 #printArea .rpt-sign .sign-line{width:230px;border-top:1px solid #241b2c;margin:0 auto 5px}
 #printArea .rpt-sign .sign-name{font-size:10.5px;font-weight:700;color:#241b2c}
 #printArea .rpt-sign .sign-role{font-size:8px;color:#736b7b;text-transform:uppercase;letter-spacing:.09em;margin-top:2px}
-#printArea .rpt-eas-sub{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#35104f;margin:16px 0 5px;padding-left:9px;border-left:3px solid #7226d9}
+#printArea .rpt-eas-sub{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#0d3b23;margin:16px 0 5px;padding-left:9px;border-left:3px solid #169447}
 @media print{
   @page{size:A4;margin:14mm}
   body>*{display:none!important}
   #printArea{display:block!important;color:#241b2c;font-family:'Inter var','Inter',system-ui,-apple-system,Arial,sans-serif;font-size:11.5px;font-variant-numeric:tabular-nums;letter-spacing:-.005em;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   #printArea h1{font-size:17px;margin:0}
-  #printArea h2{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.10em;color:#35104f;margin:18px 0 8px;padding-left:9px;border-left:3px solid #7226d9;border-bottom:0}
+  #printArea h2{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.10em;color:#0d3b23;margin:18px 0 8px;padding-left:9px;border-left:3px solid #169447;border-bottom:0}
   #printArea table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:10.5px;font-variant-numeric:tabular-nums}
   #printArea thead{display:table-header-group}
-  #printArea th{background:#f0e7fb;font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-size:8.5px;color:#35104f;text-align:left;padding:7px 8px;border-bottom:1.5px solid #7226d9}
+  #printArea th{background:#EAF8EF;font-weight:800;text-transform:uppercase;letter-spacing:.06em;font-size:8.5px;color:#0d3b23;text-align:left;padding:7px 8px;border-bottom:1.5px solid #169447}
   #printArea td{padding:5px 8px;border-bottom:1px solid #e8e4eb;vertical-align:top}
   #printArea tbody tr:nth-child(even) td{background:#faf9fb}
   #printArea .pg{page-break-after:always}
@@ -1286,9 +1269,6 @@ header.top{padding:12px 16px}
   <div class="ss off" id="ssEl" role="button" tabindex="0" aria-label="Ativar ou desativar o modo offline" onclick="toggleManualOffline()" title="Toque para ativar/desativar o modo offline" style="cursor:pointer"><span class="dot"></span><span id="ssT">Offline</span></div>
   <button class="btn-icon" onclick="abrirAjuda()" title="Ajuda desta tela" aria-label="Ajuda">
     <svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-  </button>
-  <button class="btn-icon" id="themeBtn" onclick="toggleTheme()" title="Alternar tema">
-    <svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
   </button>
   <button class="btn-icon" onclick="doLogout()" title="Sair" aria-label="Sair">
     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -4154,11 +4134,11 @@ async function renderHome() {
 
       <div class="ph-cov" role="button" tabindex="0" aria-label="Ver detalhes da cobertura" onclick="nav('map')" style="cursor:pointer">
         <div style="flex:1;min-width:0">
-          <div class="flex aic" style="gap:7px;color:rgba(255,255,255,.8);font-size:13px;font-weight:600">${fi('heart',15)} <span data-txt="home.coberturaLabel">Acompanhamento na vigência</span></div>
+          <div class="flex aic" style="gap:7px;color:var(--muted);font-size:13px;font-weight:600">${fi('heart',15)} <span data-txt="home.coberturaLabel">Acompanhamento na vigência</span></div>
           <div class="ph-cov-num" style="margin-top:6px">${vigPct}%</div>
-          <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:4px">${vigDone.toLocaleString('pt-BR')} de ${nb.toLocaleString('pt-BR')} <span data-txt="home.coberturaSufixo">pessoas acompanhadas</span></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">${vigDone.toLocaleString('pt-BR')} de ${nb.toLocaleString('pt-BR')} <span data-txt="home.coberturaSufixo">pessoas acompanhadas</span></div>
         </div>
-        <div class="ph-donut" style="background:conic-gradient(#a56cf0 0 ${vigPct}%,rgba(255,255,255,.16) ${vigPct}% 100%)"><span>${vigPct}%</span></div>
+        <div class="ph-donut" style="background:conic-gradient(var(--accent) 0 ${vigPct}%,var(--border) ${vigPct}% 100%)"><span>${vigPct}%</span></div>
       </div>
 
       <div class="ph-kpis">
@@ -4761,10 +4741,10 @@ async function renderAgenda() {
       <div class="ph-cov" style="display:block">
         <div style="display:flex;align-items:baseline;gap:9px">
           <span style="font-size:30px;font-weight:800;line-height:1">${diasRest}</span>
-          <span style="font-size:13px;color:rgba(255,255,255,.82);font-weight:600">dias p/ fechar o semestre</span>
+          <span style="font-size:13px;color:var(--muted);font-weight:600">dias p/ fechar o semestre</span>
         </div>
-        <div style="font-size:12px;color:rgba(255,255,255,.72);margin-top:5px">${semLbl} &middot; ${pend.length.toLocaleString('pt-BR')} pendentes de ${nb.toLocaleString('pt-BR')}</div>
-        <div style="height:8px;border-radius:5px;background:rgba(255,255,255,.16);overflow:hidden;margin-top:10px"><div style="height:100%;background:#a56cf0;border-radius:5px;width:${pctFeito}%"></div></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:5px">${semLbl} &middot; ${pend.length.toLocaleString('pt-BR')} pendentes de ${nb.toLocaleString('pt-BR')}</div>
+        <div style="height:8px;border-radius:5px;background:var(--border);overflow:hidden;margin-top:10px"><div style="height:100%;background:var(--accent);border-radius:5px;width:${pctFeito}%"></div></div>
       </div>
     </div>
 
@@ -4963,7 +4943,7 @@ async function renderConfig() {
   const na = await IDB.count('acompanhamentos');
   const inst = await IDB.getMeta('instituicao') || 'Prefeitura Municipal';
   const logo = await IDB.getMeta('logoApp');
-  const cor = await IDB.getMeta('corPrimaria') || '#7226d9';
+  const cor = await IDB.getMeta('corPrimaria') || '#169447';
   const vi = await IDB.getMeta('vigenciaInicio') || '2026-01-01';
   const vf = await IDB.getMeta('vigenciaFim') || '2026-12-31';
   const vigAtual = await vigenciaAtual();
@@ -5026,7 +5006,6 @@ async function renderConfig() {
         <div class="field" style="margin-bottom:0"><label>Nome da instituição</label><input type="text" value="${esc(inst)}" ${isAdmin?'onchange="saveMeta(\'instituicao\',this.value)"':'disabled'}></div>
         <div class="g2">
           <div class="field" style="margin-bottom:0"><label>Cor primária</label><div class="color-input"><input type="color" value="${cor}" ${isAdmin?'onchange="saveMeta(\'corPrimaria\',this.value);document.documentElement.style.setProperty(\'--accent\',this.value)"':'disabled'}><input type="text" value="${cor}" style="font-size:13px" ${isAdmin?'onchange="saveMeta(\'corPrimaria\',this.value);document.documentElement.style.setProperty(\'--accent\',this.value)"':'disabled'}></div></div>
-          <div class="field" style="margin-bottom:0"><label>Tema</label><select ${isAdmin?'onchange="saveMeta(\'tema\',this.value);applyTheme(this.value)"':'disabled'}><option value="light" ${tema==='light'?'selected':''}>Claro</option><option value="dark" ${tema==='dark'?'selected':''}>Escuro</option></select></div>
         </div>
 
         ${isAdmin ? `<div class="form-sep" style="margin-top:4px">${fi('grid',12)} Blocos da tela de login (logos / texto)</div>
@@ -5197,13 +5176,6 @@ async function renderConfig() {
       <div class="cfg-card-body"><div class="s3">
         <div class="small muted" style="margin-top:0">Preferências deste aparelho — valem para você e não afetam outros usuários.</div>
         <div class="g2">
-          <div class="field" style="margin-bottom:0">
-            <label>Tema</label>
-            <select onchange="applyTheme(this.value);saveMeta('tema',this.value)">
-              <option value="light" ${(await IDB.getMeta('tema')||'light')==='light'?'selected':''}>Claro</option>
-              <option value="dark"  ${(await IDB.getMeta('tema')||'')==='dark'?'selected':''}>Escuro</option>
-            </select>
-          </div>
           <div class="field" style="margin-bottom:0">
             <label>Tamanho do texto</label>
             <select onchange="saveDesign('designFontSize',this.value)">
@@ -9039,6 +9011,17 @@ async function applyCustomDesign() {
   root.style.setProperty('--font-size-base', fontSize + 'px');
 
   // ── Cores extras ──────────────────────────────────────
+  // A cor primária era gravada mas nunca aplicada na abertura — só no instante
+  // em que alguém mexia no seletor. Agora vale desde o carregamento.
+  const corPrim = await IDB.getMeta('corPrimaria');
+  if (corPrim && /^#[0-9a-f]{6}$/i.test(corPrim)) {
+    root.style.setProperty('--accent', corPrim);
+    root.style.setProperty('--violet', corPrim);
+  } else {
+    root.style.removeProperty('--accent');
+    root.style.removeProperty('--violet');
+  }
+
   const corOk   = await IDB.getMeta('corOk');
   const corWarn = await IDB.getMeta('corWarn');
   const corErr  = await IDB.getMeta('corErr');
@@ -10428,7 +10411,7 @@ function _vdCampo(prop, valor, setExpr, clearExpr) {
     textAlign:'Alinhamento', minHeight:'Altura mínima', width:'Largura', height:'Altura' }[prop] || prop;
   const limpar = valor != null ? `<button class="vd-clear" onclick="${esc(clearExpr)}">limpar</button>` : '';
   if (d.type === 'color') {
-    const hex = /^#[0-9a-f]{6}$/i.test(valor||'') ? valor : '#7226d9';
+    const hex = /^#[0-9a-f]{6}$/i.test(valor||'') ? valor : '#169447';
     return `<div class="vd-field"><label>${rot} ${limpar}</label><div class="vd-row">
       <input type="color" value="${hex}" oninput="${SET('this.value')}">
       <select onchange="${SET('this.value')}" style="flex:1">
@@ -10596,10 +10579,10 @@ function _vdPropsHtml() {
     return abas + `<div class="vd-hint">Cores base do aplicativo (tema <b>${dark?'escuro':'claro'}</b>). Valem em todas as telas.</div>` +
       VD_TOKENS_EDIT.map(([t,l]) => {
         const v = VD_STATE.tokens[modo][t];
-        const hex = /^#[0-9a-f]{6}$/i.test(v||'') ? v : (getComputedStyle(document.documentElement).getPropertyValue(t).trim() || '#7226d9');
+        const hex = /^#[0-9a-f]{6}$/i.test(v||'') ? v : (getComputedStyle(document.documentElement).getPropertyValue(t).trim() || '#169447');
         return `<div class="vd-field"><label>${esc(l)} <code style="font-size:10px;color:var(--muted)">${t}</code>
           ${v ? `<button class="vd-clear" onclick="vdSetToken('${t}',null)">limpar</button>` : ''}</label>
-          <div class="vd-row"><input type="color" value="${hex.startsWith('#')?hex:'#7226d9'}" oninput="vdSetToken('${t}',this.value)">
+          <div class="vd-row"><input type="color" value="${hex.startsWith('#')?hex:'#169447'}" oninput="vdSetToken('${t}',this.value)">
           <span class="vd-val" style="min-width:70px">${v ? esc(v) : 'padrão'}</span></div></div>`;
       }).join('');
   }
@@ -10786,18 +10769,13 @@ async function resetDesign() {
   nav('config');
 }
 
-async function applyTheme(t) {
-  if(t==='dark') document.documentElement.setAttribute('data-theme','dark');
-  else document.documentElement.removeAttribute('data-theme');
-  // Troca ícone moon ↔ sun
-  const icon = $('#themeIcon');
-  if(icon) icon.outerHTML = t==='dark'
-    ? `<svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS.sun}</svg>`
-    : `<svg id="themeIcon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS.moon}</svg>`;
-  // Tokens do editor podem ter variante por tema
+// Tema escuro desativado: o app é claro por decisão de identidade. A função
+// continua existindo porque é chamada de vários pontos, mas força o claro —
+// inclusive em quem tem 'tema:dark' salvo e sincronizado de antes.
+async function applyTheme() {
+  document.documentElement.removeAttribute('data-theme');
   if (typeof _vdApply === 'function') await _vdApply();
 }
-function toggleTheme(){const c=document.documentElement.hasAttribute('data-theme')?'light':'dark';applyTheme(c);IDB.setMeta('tema',c);}
 
 async function saveMeta(k,v){await IDB.setMeta(k,v);if(k==='instituicao')$('#appTitle').textContent=v;showToast('✓ Salvo','ok');}
 async function saveSobre(k,v){await IDB.setMeta(k,v);}
@@ -11251,8 +11229,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
 
   // Theme + design personalizado
-  const tema = await IDB.getMeta('tema');
-  if(tema==='dark') applyTheme('dark');
+  applyTheme();   // tema escuro desativado: força o claro
   await applyCustomDesign();
 
   // Session
@@ -11302,7 +11279,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     const man = {
       name: inst, short_name: 'Bolsa Família',
       start_url: location.href, scope: location.href.replace(/[^/]*$/, ''),
-      display: 'standalone', background_color: '#ffffff', theme_color: '#7226d9',
+      display: 'standalone', background_color: '#ffffff', theme_color: '#169447',
       icons: [{ src: icon, sizes: '512x512', type: iconType, purpose: 'any' }]
     };
     const l = document.createElement('link');
