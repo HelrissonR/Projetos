@@ -272,9 +272,10 @@ body:has(#pageLogin.active) nav.bottom{display:none!important}
 /* Botão: estado carregando (brilho removido — design simplificado) */
 .lcard-btn{position:relative;overflow:hidden}
 .lcard-btn.loading{pointer-events:none;opacity:.85}
+.bl-btn .lspin{border-color:rgba(255,255,255,.35);border-top-color:#fff}
 .lspin{width:16px;height:16px;border:2.5px solid rgba(0,0,0,.2);border-top-color:rgba(0,0,0,.75);border-radius:50%;display:inline-block;animation:lSpin .7s linear infinite;flex-shrink:0}
 /* Erro: card treme */
-.lcard.shake{animation:lShake .5s cubic-bezier(.36,.07,.19,.97)}
+.lcard.shake,.bl-card.shake{animation:lShake .5s cubic-bezier(.36,.07,.19,.97)}
 /* Acessibilidade: sem animação quando o usuário pedir */
 @media (prefers-reduced-motion:reduce){
   .lcard,.lcard>*,.lcard-sub,.lcard-hero,.lcard-logo-ring,.lhero-blob-1,.lhero-blob-2,.lhero-blob-3,.lcard-btn::after{animation:none!important;opacity:1!important}
@@ -791,12 +792,13 @@ input,select,textarea{border-radius:11px}
 /* ══ FLAT — sem cantos arredondados e sem bordas visíveis ══
    Escopo em body.flat (ligado por padrão) para que o Editor Visual possa
    desligar o modo ou sobrepor propriedades sem guerra de !important.
-   Exceção: o hero plum (.plum-hero) mantém raio e detalhes. */
-body.flat *:not(.plum-hero):not(.plum-hero *){border-radius:0}
+   Exceções: o hero plum (.plum-hero) e o login institucional (.blogin), que
+   dependem dos próprios raios e bordas. */
+body.flat *:not(.plum-hero):not(.plum-hero *):not(.blogin):not(.blogin *){border-radius:0}
 body.flat :is(.card,.card-sub,.cfg-card,.plum-row,.plum-strip,.benef-facts,.cbf,.af-panel,
 .btn,.btn-g,.btn-p,.btn-s,.afchip,.pchip,.mb-stat,.fam-prog,.cfg-accordion,
-input,select,textarea,.search-wrap,.af-bar,.home-cta,.plc-input,.plc-submit,
-.empty-state,.home-banner,.sync-pend,.alert-action,.ur,#sheet,.illus){border:none}
+input,select,textarea,.search-wrap,.af-bar,.home-cta,
+.empty-state,.home-banner,.sync-pend,.alert-action,.ur,#sheet,.illus):not(.blogin *){border:none}
 /* Alvos que o seletor universal não alcança: IDs (especificidade maior) e
    pseudo-elementos (não casam com `*`). */
 body.flat #sheet{border-top-left-radius:0;border-top-right-radius:0}
@@ -811,8 +813,10 @@ body.flat .vd-ov-layer,body.flat .vd-ov-layer *{border-radius:revert}
 body.flat .cfg-card-head{border-bottom:1px solid var(--border)}
 body.flat .ac-more-body{border-top:1px solid var(--border)}
 /* Controles de formulário: fundo levemente distinto no lugar da borda */
-input,select,textarea,.plogin .plc-input{background:var(--panel-2)}
-input:focus,select:focus,textarea:focus,.plogin .plc-input:focus{outline:2px solid var(--violet);outline-offset:-2px;box-shadow:none}
+input,select,textarea{background:var(--panel-2)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--violet);outline-offset:-2px;box-shadow:none}
+/* O login institucional tem foco próprio (anel verde), definido no bloco dele */
+.blogin .bl-input:focus{outline:none;outline-offset:0}
 .cbf{background:var(--panel-2)}
 .cbf:has(input:checked){background:var(--violet-soft);box-shadow:inset 0 0 0 2px var(--violet)}
 /* Diálogo de escolha */
@@ -960,63 +964,121 @@ body:not(.desk-bottom) .vd-frame .vd-mc{grid-area:main}
 .afchip{background:var(--panel-2)}
 .afchip.active{background:var(--violet);color:#fff}
 
-/* ══ LOGIN PLUM ═══════════════════════════════════════════ */
-#pageLogin.active{padding:0;display:block;background:var(--bg);min-height:100dvh}
-#pageLogin.active.has-bg{background:var(--bg)}
-.plogin{display:grid;grid-template-columns:1.05fr .95fr;min-height:100dvh;max-width:1280px;margin:0 auto}
-.plogin-hero{position:relative;display:flex;flex-direction:column;padding:56px 52px;color:#fff;background:linear-gradient(160deg,#3d1258 0%,#2b0c42 100%);overflow:hidden}
-.plogin-hero::after{content:'';position:absolute;width:420px;height:420px;right:-120px;top:-120px;border-radius:50%;background:radial-gradient(circle,rgba(156,98,233,.4),transparent 70%)}
-.plh-kicker{position:relative;z-index:1;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6)}
-.plh-title{position:relative;z-index:1;font-size:34px;font-weight:800;letter-spacing:-.03em;line-height:1.18;margin-top:14px;max-width:20ch;text-wrap:balance}
-.plh-sub{position:relative;z-index:1;font-size:15px;color:rgba(255,255,255,.72);margin-top:14px;max-width:34ch;line-height:1.55}
-.plh-illus{position:relative;z-index:1;margin:auto 0;display:flex;justify-content:center}
-.plh-foot{position:relative;z-index:1;display:flex;flex-direction:column;gap:3px;font-size:11px;color:rgba(255,255,255,.5)}
-.plogin-card{display:flex;flex-direction:column;justify-content:center;padding:56px 52px;background:var(--panel)}
-.plc-inner{width:100%;max-width:400px;margin:0 auto}
-.plc-brand{display:block;margin-bottom:28px}
-.plc-brand strong{font-size:15px;font-weight:800;color:var(--text);letter-spacing:-.02em;display:block;line-height:1.2}
-.plc-brand small{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
-.plc-h{font-size:26px;font-weight:800;letter-spacing:-.03em;color:var(--text)}
-.plc-sub{font-size:14px;color:var(--muted);margin-top:5px}
-.plc-form{margin-top:26px;display:flex;flex-direction:column;gap:14px}
-.plc-field{position:relative}
-.plc-field>.plc-ico{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--muted);display:flex;pointer-events:none}
-.plogin .plc-input{width:100%;height:52px;border:1px solid var(--border);border-radius:13px;background:var(--panel-2);padding:0 48px 0 46px;font-size:15px;color:var(--text);font-family:inherit;transition:border-color .15s,box-shadow .15s}
-.plogin .plc-input::placeholder{color:var(--muted)}
-.plogin .plc-input:focus{outline:none;border-color:var(--violet);box-shadow:0 0 0 3px var(--violet-soft)}
-.plc-eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:38px;height:38px;border:none;background:transparent;color:var(--muted);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-.plc-eye:hover{background:var(--panel-2);color:var(--violet)}
-.plc-forgot{align-self:flex-end;font-size:13px;color:var(--violet);font-weight:600;text-decoration:none;margin-top:-4px}
-.plc-submit{height:52px;margin-top:6px;border:none;border-radius:13px;background:var(--violet);color:#fff;font-size:15px;font-weight:700;letter-spacing:-.01em;cursor:pointer;transition:filter .12s,transform .08s}
-.plc-submit:hover{filter:brightness(1.07)}.plc-submit:active{transform:scale(.99)}
-.plc-help{margin-top:22px;display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted)}
-.plc-dev{margin-top:10px;font-size:11px;color:var(--muted);opacity:.75}
-.plc-dev b{color:var(--violet);font-weight:700}
-@media(max-width:860px){
-  .plogin{grid-template-columns:1fr}
-  .plogin-hero{padding:26px 24px 24px;min-height:auto}
-  .plogin{min-height:auto}
-  .plh-kicker{font-size:11px}
-  .plh-illus{display:none}
-  .plh-title{font-size:26px;margin-top:10px}.plh-sub{display:none}.plh-foot{display:none}
-  .plogin-card{padding:30px 26px 40px}
-  .plc-brand{margin-bottom:22px}
+/* ══ LOGIN INSTITUCIONAL ══════════════════════════════════
+   Identidade verde do Ministério da Saúde, por enquanto SÓ nesta tela: os
+   tokens ficam escopados em .blogin, não em :root, para o resto do app seguir
+   no roxo até a migração da identidade. Mover estes tokens para :root é o que
+   faz a virada depois. */
+#pageLogin.active{padding:0;display:block;min-height:100dvh}
+.blogin{
+  --bl-green:#169447; --bl-green-dark:#087A3A; --bl-green-light:#EAF8EF;
+  --bl-green-link:#168A48; --bl-soft:#F0FAF4;
+  --bl-text:#142033; --bl-text-2:#536176; --bl-muted:#7B8798;
+  --bl-surface:#fff; --bl-border:#CBD5DF; --bl-line:#DCE3E8;
+  --bl-err:#C83B3B; --bl-err-border:#D84B4B;
+  position:relative;min-height:100dvh;display:flex;flex-direction:column;align-items:center;
+  padding:calc(env(safe-area-inset-top) + 32px) 16px calc(env(safe-area-inset-bottom) + 20px);
+  background:radial-gradient(circle at 50% 10%,#fff 0%,#f8fcf9 55%,#f1faf5 100%);
+  color:var(--bl-text);overflow-x:hidden;
 }
-/* A media query acima enxerga a VIEWPORT. No editor a janela é larga, mas o
-   preview cabe num quadro de 412px — sem isto o login apareceria em duas
-   colunas espremidas, que não é o que o celular mostra. */
-.vd-frame[data-dev="mobile"] .plogin{grid-template-columns:1fr;min-height:auto}
-.vd-frame[data-dev="mobile"] .plogin-hero{padding:26px 24px 24px;min-height:auto}
-.vd-frame[data-dev="mobile"] .plh-kicker{font-size:11px}
-.vd-frame[data-dev="mobile"] .plh-illus{display:none}
-.vd-frame[data-dev="mobile"] .plh-title{font-size:26px;margin-top:10px}
-.vd-frame[data-dev="mobile"] .plh-sub{display:none}
-.vd-frame[data-dev="mobile"] .plh-foot{display:none}
-.vd-frame[data-dev="mobile"] .plogin-card{padding:30px 26px 40px}
-.vd-frame[data-dev="mobile"] .plc-brand{margin-bottom:22px}
-/* Painel da marca oculto pelo editor: o cartão assume a tela toda, senão
-   sobraria metade vazia à direita. */
-.plogin:has(> .plogin-hero.vd-hid){grid-template-columns:1fr}
+/* Ornamentos: discretos de propósito, não podem competir com o formulário */
+.bl-orn{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.bl-orn svg{position:absolute;color:var(--bl-green)}
+.bl-brand,.bl-card,.bl-footer{position:relative;z-index:1;width:100%}
+/* ── Marca ── */
+.bl-brand{max-width:358px;text-align:center}
+.bl-logo{display:block;margin:0 auto;width:236px;max-width:100%;height:auto}
+.bl-logo-ph{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 18px;
+  border:1px dashed var(--bl-border);border-radius:16px;background:rgba(255,255,255,.7)}
+.bl-logo-ph b{font-size:19px;font-weight:800;letter-spacing:-.02em;color:var(--brand-blue-inst,#14518A);line-height:1.1}
+.bl-logo-ph i{font-size:19px;font-weight:800;font-style:normal;color:var(--bl-green)}
+.bl-prod{font-size:18px;line-height:1.25;font-weight:600;color:#26364B;margin-top:12px}
+/* ── Cartão ── */
+.bl-card{max-width:358px;margin-top:28px;padding:24px 20px 22px;background:rgba(255,255,255,.96);
+  border-radius:24px;box-shadow:0 8px 30px rgba(20,50,40,.08)}
+.bl-avatar{width:56px;height:56px;border-radius:50%;background:#E5F6EA;color:var(--bl-green);
+  margin:0 auto;display:flex;align-items:center;justify-content:center}
+.bl-h1{font-size:25px;font-weight:700;line-height:1.2;text-align:center;margin-top:12px;color:var(--bl-text)}
+.bl-desc{font-size:14px;line-height:1.5;text-align:center;color:var(--bl-text-2);max-width:280px;margin:8px auto 0}
+.bl-form{margin-top:28px;display:block}
+.bl-label{display:block;font-size:14px;font-weight:600;color:var(--bl-text);margin-bottom:8px}
+.bl-field{position:relative;margin-bottom:16px}
+.bl-field>.bl-ico{position:absolute;left:16px;top:27px;transform:translateY(-50%);color:var(--bl-green);
+  display:flex;pointer-events:none}
+.blogin .bl-input{width:100%;height:54px;border:1px solid var(--bl-border);border-radius:12px;
+  background:var(--bl-surface);padding:0 16px 0 46px;font-size:15px;color:var(--bl-text);font-family:inherit;
+  transition:border-color 150ms ease,box-shadow 150ms ease,background-color 150ms ease}
+.blogin .bl-input::placeholder{color:var(--bl-muted)}
+.blogin .bl-input:focus{outline:none;border-color:var(--bl-green);box-shadow:0 0 0 3px rgba(22,148,71,.10)}
+.blogin .bl-input.err{border-color:var(--bl-err-border)}
+.bl-field:has(.bl-eye) .bl-input{padding-right:52px}
+.bl-eye{position:absolute;right:8px;top:27px;transform:translateY(-50%);width:38px;height:38px;
+  border:none;background:transparent;color:var(--bl-text-2);border-radius:10px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:background-color 150ms ease}
+.bl-eye:hover{background:var(--bl-green-light)}
+.bl-msg{font-size:12px;color:var(--bl-err);margin-top:6px}
+.bl-msg:empty{display:none}
+.bl-forgot{display:block;margin:10px 0 22px;text-align:right;font-size:13px;font-weight:600;
+  color:var(--bl-green-link);background:none;border:none;padding:0;cursor:pointer;width:100%}
+.bl-forgot:hover{text-decoration:underline}
+.bl-btn{width:100%;height:54px;border:none;border-radius:12px;font-size:16px;font-weight:600;
+  color:#fff;background:linear-gradient(90deg,#169447,#118542);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:box-shadow 150ms ease,transform 100ms ease,filter 150ms ease}
+.bl-btn:hover{filter:brightness(1.05)}
+.bl-btn:active{transform:scale(.99)}
+.bl-btn:focus-visible{outline:none;box-shadow:0 0 0 3px rgba(22,148,71,.28)}
+.bl-btn[disabled],.bl-btn.loading{opacity:.7;cursor:default}
+.bl-or{display:flex;align-items:center;gap:12px;margin:20px 0}
+.bl-or::before,.bl-or::after{content:'';height:1px;background:var(--bl-line);flex:1}
+.bl-or span{font-size:13px;color:#667386}
+.bl-btn2{width:100%;height:54px;border:1.5px solid var(--bl-green);border-radius:12px;background:#fff;
+  color:var(--bl-green-link);font-size:15px;font-weight:600;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  transition:background-color 150ms ease,transform 100ms ease}
+.bl-btn2:hover:not([disabled]){background:var(--bl-soft)}
+.bl-btn2:active:not([disabled]){transform:scale(.99)}
+.bl-btn2[disabled]{opacity:.55;cursor:not-allowed}
+.bl-soon{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--bl-muted)}
+.bl-aviso{margin-top:20px;padding:15px;border-radius:12px;display:flex;gap:11px;align-items:flex-start;
+  background:linear-gradient(90deg,#F0FAF4,#F7FCF9)}
+.bl-aviso svg{color:var(--bl-green);flex-shrink:0;margin-top:1px}
+.bl-aviso b{display:block;font-size:13px;font-weight:700;color:var(--bl-green-link)}
+.bl-aviso span{display:block;font-size:12px;line-height:1.45;color:var(--bl-text-2);margin-top:2px}
+/* ── Rodapé institucional ── */
+.bl-footer{max-width:358px;margin-top:24px;display:flex;align-items:center;justify-content:center;gap:14px}
+.bl-selo{height:36px;display:flex;align-items:center;justify-content:center;padding:0 10px;
+  border:1px dashed var(--bl-border);border-radius:8px;font-size:9.5px;font-weight:700;
+  letter-spacing:.04em;color:var(--bl-muted);text-align:center;line-height:1.15;background:rgba(255,255,255,.6)}
+.bl-dev{position:relative;z-index:1;margin-top:12px;font-size:10.5px;color:var(--bl-muted);text-align:center}
+/* ── Faixas estreitas: 320-359px ── */
+@media(max-width:359px){
+  .blogin{padding-left:12px;padding-right:12px}
+  .bl-logo{width:200px}
+  .bl-card{padding:20px 16px 18px}
+  .blogin .bl-input,.bl-btn,.bl-btn2{height:52px}
+  .bl-field>.bl-ico,.bl-eye{top:26px}
+  .bl-h1{font-size:23px}
+  .bl-footer{gap:8px}
+}
+/* Acima de 431px o cartão não estica: a versão mobile fica centrada */
+@media(min-width:431px){ .bl-brand,.bl-card,.bl-footer{max-width:390px} }
+/* Modo escuro: o mockup é claro. Mantém o tratamento institucional, só
+   escurecendo o fundo para não ofuscar quem está no escuro. */
+[data-theme="dark"] .blogin{background:radial-gradient(circle at 50% 10%,#12211a 0%,#0f1a15 60%,#0e0f12 100%)}
+[data-theme="dark"] .blogin{--bl-surface:#17211c;--bl-text:#eaf3ee;--bl-text-2:#a9b8b0;--bl-muted:#8b9a92;
+  --bl-border:#2c3a33;--bl-line:#2c3a33;--bl-green-light:#12301f;--bl-soft:#12301f}
+[data-theme="dark"] .bl-card{background:rgba(23,33,28,.96);box-shadow:0 8px 30px rgba(0,0,0,.4)}
+[data-theme="dark"] .bl-prod{color:#cfe0d6}
+[data-theme="dark"] .bl-avatar{background:#12301f}
+[data-theme="dark"] .bl-aviso{background:linear-gradient(90deg,#12301f,#14261d)}
+[data-theme="dark"] .bl-btn2{background:transparent}
+/* No editor, o preview de celular tem 412px mas a janela é larga: as media
+   queries acima enxergam a janela, então o modo estreito é repetido aqui. */
+.vd-frame[data-dev="mobile"] .blogin{padding-left:12px;padding-right:12px}
+.vd-frame[data-dev="mobile"] .bl-brand,
+.vd-frame[data-dev="mobile"] .bl-card,
+.vd-frame[data-dev="mobile"] .bl-footer{max-width:358px}
 
 /* ── Manual e tour guiado ── */
 .man-grid{display:grid;gap:8px}
@@ -1121,72 +1183,95 @@ header.top{padding:12px 16px}
 <div id="sheet"><div id="sheetH"><div id="sheetT"></div><button class="btn-icon" onclick="closeSheet()" title="Fechar"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div id="sheetB"></div></div>
 
 <div id="pageLogin" class="page active">
-<div class="plogin">
+<div class="blogin">
 
-  <!-- ═══ HERO PLUM ═══ -->
-  <aside class="plogin-hero" data-blk="hero">
-    <div class="plh-kicker" data-txt="login.kicker">Bolsa Família · Saúde</div>
-    <div class="plh-title" data-txt="login.heroTitulo">Acompanhamento de Condicionalidades</div>
-    <div class="plh-sub" data-txt="login.heroSub">Gestão e busca ativa dos beneficiários do Bolsa Família nas condicionalidades de saúde — online e offline.</div>
-    <div class="plh-illus">
-      <svg viewBox="0 0 240 200" width="260" height="216" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ilustração de acompanhamento de saúde">
-        <ellipse cx="120" cy="176" rx="86" ry="12" fill="rgba(255,255,255,.06)"/>
-        <rect x="58" y="46" width="124" height="104" rx="16" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.5)" stroke-width="2"/>
-        <rect x="58" y="46" width="124" height="30" rx="16" fill="rgba(255,255,255,.12)"/>
-        <circle cx="74" cy="61" r="4" fill="#c79cf3"/><circle cx="88" cy="61" r="4" fill="rgba(255,255,255,.5)"/>
-        <path d="M74 118l16-20 16 14 20-30 18 22" stroke="#c79cf3" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-        <circle cx="90" cy="98" r="4" fill="#fff"/><circle cx="106" cy="112" r="4" fill="#fff"/><circle cx="126" cy="82" r="4" fill="#fff"/>
-        <path d="M150 150c0-18 14-27 14-27s14 9 14 27a14 14 0 0 1-28 0z" fill="#9c62e9"/>
-        <path d="M164 116v10m-5-5h10" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
-      </svg>
+  <!-- Ornamentos: 4-10% de opacidade, apenas ambientação -->
+  <div class="bl-orn" aria-hidden="true">
+    <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="top:6%;left:-26px;opacity:.06"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/></svg>
+    <svg width="86" height="86" viewBox="0 0 24 24" fill="currentColor" style="top:11%;right:-14px;opacity:.05"><path d="M10 2h4v6h6v4h-6v6h-4v-6H4V8h6z"/></svg>
+    <svg width="150" height="150" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width=".8" style="bottom:12%;left:-40px;opacity:.05"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l8.8 8.8 8.8-8.8a5.5 5.5 0 0 0 0-7.8z"/><path d="M2 12h4l2-4 3 8 2-4h5"/></svg>
+    <svg width="60" height="60" viewBox="0 0 24 24" fill="currentColor" style="bottom:26%;right:8px;opacity:.05"><circle cx="12" cy="12" r="12"/></svg>
+  </div>
+
+  <!-- ═══ MARCA ═══ -->
+  <header class="bl-brand" data-blk="hero">
+    <!-- TODO: substituir pelo arquivo oficial da marca "Bolsa Família Saúde".
+         Enquanto não houver, usa o logo que o administrador subir em Config
+         (logoApp) e, na falta dele, um placeholder neutro. -->
+    <div id="loginLogo">
+      <div class="bl-logo-ph">
+        <b data-txt="login.marca">BOLSA FAMÍLIA</b><i data-txt="login.marcaSub">SAÚDE</i>
+      </div>
     </div>
-    <div class="plh-foot">
-      <span>Desenvolvido por R. Helrisson Marinho do Nascimento</span>
-      <span>Ilustração original · Bolsa Família Saúde</span>
-    </div>
-  </aside>
+    <p class="bl-prod" data-txt="login.heroTitulo">Sistema de Acompanhamento<br>de Beneficiários</p>
+  </header>
 
   <!-- ═══ CARTÃO DE ACESSO ═══ -->
-  <main class="plogin-card">
+  <main class="bl-card">
     <div class="plc-inner">
-      <div class="plc-brand" data-blk="marca">
-        <strong data-txt="login.marca">Bolsa Família</strong><small data-txt="login.marcaSub">Saúde · Condicionalidades</small>
+      <div class="bl-avatar" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       </div>
 
-      <h1 class="plc-h" data-blk="titulo" data-txt="login.titulo">Acesse sua conta</h1>
-      <p class="plc-sub" data-txt="login.subtitulo">Entre com seu usuário ou e-mail para continuar.</p>
+      <h1 class="bl-h1" data-blk="titulo" data-txt="login.titulo">Bem-vindo(a)!</h1>
+      <p class="bl-desc" data-txt="login.subtitulo">Acesse o sistema para continuar o acompanhamento das condicionalidades de saúde.</p>
 
-      <form class="plc-form" data-blk="formulario" onsubmit="_doLoginSafe();return false" novalidate>
-        <label for="loginUser" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Usuário ou e-mail</label>
-        <div class="plc-field">
-          <span class="plc-ico"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
-          <input type="text" id="loginUser" class="plc-input" placeholder="Usuário ou e-mail" autocomplete="username" aria-label="Usuário ou e-mail">
+      <form class="bl-form" data-blk="formulario" onsubmit="_doLoginSafe();return false" novalidate>
+        <label class="bl-label" for="loginUser">Usuário</label>
+        <div class="bl-field">
+          <span class="bl-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+          <input type="text" id="loginUser" class="bl-input" placeholder="Digite seu usuário"
+                 autocomplete="username" aria-describedby="errUser" oninput="_blLimpaErro('loginUser','errUser')">
+          <div class="bl-msg" id="errUser" role="alert"></div>
         </div>
 
-        <label for="loginPass" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Senha</label>
-        <div class="plc-field">
-          <span class="plc-ico"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-          <input type="password" id="loginPass" class="plc-input" placeholder="Sua senha" autocomplete="current-password" aria-label="Senha">
-          <button type="button" class="plc-eye" id="lPassReveal" onclick="_togglePassReveal()" title="Mostrar/ocultar senha" aria-label="Mostrar senha">
-            <svg id="lPassRevealIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <label class="bl-label" for="loginPass">Senha</label>
+        <div class="bl-field">
+          <span class="bl-ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+          <input type="password" id="loginPass" class="bl-input" placeholder="Digite sua senha"
+                 autocomplete="current-password" aria-describedby="errPass" oninput="_blLimpaErro('loginPass','errPass')">
+          <button type="button" class="bl-eye" id="lPassReveal" onclick="_togglePassReveal()" aria-label="Mostrar senha">
+            <svg id="lPassRevealIcon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
+          <div class="bl-msg" id="errPass" role="alert"></div>
         </div>
 
-        <a class="plc-forgot" href="#" onclick="return false">Esqueceu sua senha?</a>
+        <button type="button" class="bl-forgot" onclick="_blEsqueciSenha()">Esqueci minha senha</button>
 
         <div id="loginErr" class="nl-err" role="alert"></div>
         <div id="loginBlocksArea"></div>
 
-        <button type="submit" class="plc-submit" data-txt="login.botao">Entrar</button>
+        <button type="submit" class="bl-btn" data-txt="login.botao">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          Entrar no Sistema
+        </button>
       </form>
 
-      <div class="plc-help" data-blk="ajuda">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-        Precisa de ajuda? Fale com o administrador.
+      <div class="bl-or"><span>ou</span></div>
+
+      <!-- Integração e-Gestor AB ainda não existe: o botão é fiel ao layout,
+           mas fica inativo. Nada de autenticação simulada. -->
+      <button type="button" class="bl-btn2" disabled aria-disabled="true" onclick="loginEGestorAB()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><circle cx="9" cy="11" r="2.2"/><path d="M5.5 16.5c.6-1.6 2-2.4 3.5-2.4s2.9.8 3.5 2.4"/><path d="M15.5 9.5H19M15.5 13H19"/></svg>
+        Entrar com e-Gestor AB <span class="bl-soon">em breve</span>
+      </button>
+
+      <div class="bl-aviso" data-blk="ajuda">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        <div><b data-txt="login.avisoTitulo">Acesso restrito</b>
+             <span data-txt="login.avisoTexto">Sistema exclusivo para profissionais autorizados da saúde.</span></div>
       </div>
-      <div class="plc-dev">Desenvolvido por <b>R. Helrisson M. do Nascimento</b></div>
     </div>
   </main>
+
+  <!-- TODO: substituir pelos assets institucionais oficiais (SUS, Ministério
+       da Saúde, Governo Federal). Marcas oficiais não são redesenhadas aqui. -->
+  <footer class="bl-footer" aria-label="Identificação institucional">
+    <span class="bl-selo">SUS</span>
+    <span class="bl-selo">MINISTÉRIO<br>DA SAÚDE</span>
+    <span class="bl-selo">GOVERNO<br>FEDERAL</span>
+  </footer>
+  <div class="bl-dev">Desenvolvido por R. Helrisson M. do Nascimento</div>
 
 </div>
 </div>
@@ -8591,7 +8676,9 @@ function _togglePassReveal() {
 
 // Estado de carregamento do botão Entrar (spinner)
 function _setLoginLoading(on) {
-  const btn = document.querySelector('.lcard-btn');
+  // O seletor apontava para .lcard-btn, de um login anterior que não existe
+  // mais — por isso o estado "Entrando…" havia parado de aparecer.
+  const btn = document.querySelector('.bl-btn');
   if (!btn) return;
   if (on) {
     if (btn.classList.contains('loading')) return;
@@ -8605,9 +8692,40 @@ function _setLoginLoading(on) {
 }
 
 // Wrapper seguro: captura erros mesmo se doLogin não existir ainda
+// Erro por campo: só aparece depois que a pessoa tentou entrar, e some assim
+// que ela volta a digitar.
+function _blErroCampo(inputId, msgId, texto) {
+  const i = document.getElementById(inputId), m = document.getElementById(msgId);
+  if (i) i.classList.toggle('err', !!texto);
+  if (m) m.textContent = texto || '';
+}
+function _blLimpaErro(inputId, msgId) { _blErroCampo(inputId, msgId, ''); }
+function _blValidaLogin() {
+  const u = (document.getElementById('loginUser')?.value || '').trim();
+  const p = document.getElementById('loginPass')?.value || '';
+  _blErroCampo('loginUser', 'errUser', u ? '' : 'Informe seu usuário.');
+  _blErroCampo('loginPass', 'errPass', p ? '' : 'Informe sua senha.');
+  const primeiro = !u ? 'loginUser' : (!p ? 'loginPass' : null);
+  if (primeiro) document.getElementById(primeiro)?.focus();
+  return !!(u && p);
+}
+
+// Recuperação de senha ainda não é self-service: quem redefine é o administrador.
+function _blEsqueciSenha() {
+  uiConfirm('A redefinição de senha é feita pelo administrador do sistema.\n\nProcure o responsável pelo Bolsa Família Saúde no seu município.',
+            { title:'Esqueci minha senha', okText:'Entendi', cancelText:'' });
+}
+
+// Integração com o e-Gestor AB ainda não existe. O botão está desabilitado e
+// esta função é só o ponto de entrada para quando a integração for feita.
+async function loginEGestorAB() {
+  // TODO: integrar com o SSO do e-Gestor AB quando o acesso for liberado.
+}
+
 function _doLoginSafe() {
   const errEl = document.getElementById('loginErr');
   if (errEl) { errEl.classList.remove('show'); errEl.innerHTML = ''; }
+  if (!_blValidaLogin()) return;
   _setLoginLoading(true);
   try {
     doLogin().catch(e => {
@@ -8626,8 +8744,8 @@ function _showLoginErr(msg, canReset) {
   if (!el) return;
   el.innerHTML = msg;
   el.classList.add('show');
-  // Treme o card para chamar atenção ao erro
-  const card = document.querySelector('.lcard');
+  // Treme o card para chamar atenção ao erro (mesmo caso do seletor acima)
+  const card = document.querySelector('.bl-card');
   if (card) { card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake'); }
   try { showToast(msg, 'err'); } catch(e) {}
 }
@@ -8999,12 +9117,15 @@ async function applyCustomDesign() {
   if (navBg && navEl) navEl.style.background = navBg;
   else if (navEl) navEl.style.background = '';
 
-  // ── Logo principal (anel circular no topo do login) ──────
-  // Prioridade: logo do sistema > ícone do app (custom) > ícone oficial embutido
-  const logo = await IDB.getMeta('logoApp') || await IDB.getMeta('appIcon') || APP_ICON;
+  // ── Marca no topo do login ───────────────────────────────
+  // TODO: substituir pelo arquivo oficial da marca "Bolsa Família Saúde"
+  // quando ele existir no projeto — aí ele vira o padrão daqui.
+  // Enquanto isso: logo enviado pelo administrador > ícone do app > o
+  // placeholder que está no HTML, que mantém a proporção do mockup.
+  const logo = await IDB.getMeta('logoApp') || await IDB.getMeta('appIcon') || '';
   const loginLogo = document.getElementById('loginLogo');
-  if (loginLogo) {
-    loginLogo.innerHTML = `<img src="${logo}" style="width:88px;height:88px;object-fit:contain;border-radius:20px">`;
+  if (loginLogo && logo) {
+    loginLogo.innerHTML = `<img src="${logo}" alt="Bolsa Família Saúde" class="bl-logo" style="width:132px">`;
   }
 
   // ── Imagem atrás da logo (hero da tela de login) ──────
@@ -9122,7 +9243,7 @@ const VD_LABELS = {
   acomp:{abas:'Abas',banner:'Banner',titulo:'Título',busca:'Busca',filtros:'Filtros',lista:'Lista de registros'},
   search:{abas:'Abas',banner:'Banner',titulo:'Título',busca:'Busca',recentes:'Buscas recentes',resultados:'Resultados'},
   agenda:{hero:'Destaque',banner:'Banner'},
-  login:{hero:'Painel da marca',marca:'Marca',titulo:'Título',formulario:'Formulário',ajuda:'Ajuda'},
+  login:{hero:'Marca e título',titulo:'Boas-vindas',formulario:'Formulário',ajuda:'Aviso de acesso'},
 };
 const VD_KEYS = ['vdTokens','vdStyles','vdText','vdLayout','vdFlat','vdOverlays','vdAssets','vdBlocos'];
 // Itens de um bloco personalizado. Cada tipo emite as CLASSES REAIS do app,
@@ -9577,7 +9698,7 @@ function _vdDecorateScreen(page, root) {
 // O login é markup estático fora do #mc, não uma função de tela. Guardamos o
 // original aqui, no parse — antes de qualquer substituição de texto — para o
 // preview do editor nascer limpo, como as demais telas.
-const VD_LOGIN_HTML = document.querySelector('#pageLogin .plogin')?.outerHTML || '';
+const VD_LOGIN_HTML = document.querySelector('#pageLogin .blogin')?.outerHTML || '';
 // Chrome do app (cabeçalho + barra lateral) para o preview de computador. Sem os
 // ids: o preview não pode duplicar #ssEl, #themeBtn e afins no documento.
 const VD_CHROME_HTML = (() => {
