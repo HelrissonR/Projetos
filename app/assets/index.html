@@ -1530,17 +1530,80 @@ function vigenciaLabel(vig){
   return vig.manual ? `${br(vig.ini)} a ${br(vig.fim)}` : semestreLabel(vig.ref);
 }
 
-// Motivos oficiais de Não Acompanhamento — Sistema PBF na Saúde (Fonte: SAPS/Ministério da Saúde)
+// ═══════════════════════════════════════════════════════
+// MOTIVOS OFICIAIS — Ministério da Saúde / SAPS / DEPPROS
+// "Tabela de Motivos de Não Acompanhamento das Condicionalidades" (dez/2023).
+// São QUATRO tabelas e elas medem coisas diferentes:
+//   · Não acompanhamento  — a pessoa não foi acompanhada (vale para todos)
+//   · Descumprimento      — a pessoa FOI acompanhada, mas uma condicionalidade
+//                           específica não foi cumprida
+// Texto transcrito na íntegra do anexo. Se sair tabela nova, é aqui que muda.
+// ═══════════════════════════════════════════════════════
+
+// Itens que se repetem em mais de uma tabela de descumprimento
+const _MOT = {
+  saude:      'Condições de saúde que impedem a ida à UBS',
+  desloc:     'Fatos que impedem o deslocamento/acesso à UBS (enchente, falta de transporte, violência no território, etc.)',
+  horario:    'Horário de atendimento na UBS inviável para o(a) responsável/beneficiário(a)',
+  social:     'Responsável/Beneficiário(a) não cumpriu as condicionalidades por questões sociais, culturais, étnicas ou religiosas',
+  recusa:     'Houve recusa em realizar o acompanhamento das condicionalidades dentro da rotina de Atenção Básica de Saúde',
+  risco:      'Indícios de situação de risco social tal como negligência, abuso sexual, violência intrafamiliar ou outras',
+  naoPrograma:'Responsável/Beneficiário(a) afirma que não é mais do programa',
+};
+
+// 1) Não acompanhamento — para TODOS os beneficiários
 const MOTIVOS_NA = [
   'Beneficiário(a) ausente',
   'Beneficiário(a) não faz parte da família/não reside no endereço',
   'Beneficiário(a) mudou de município',
   'Falecimento do(a) beneficiário(a)',
   'Endereço incorreto/inexistente',
-  'Informado(a) de que deveria comparecer à UBS, mas não o fez',
+  'Responsável/Beneficiário(a) foi informado(a) pessoalmente de que deveria comparecer à UBS para realizar o acompanhamento das condicionalidades de saúde, mas não o fez',
 ];
-const motivoNAOptions = sel => MOTIVOS_NA.map(m =>
+
+// 2) Descumprimento das Informações Nutricionais — só crianças (< 7 anos)
+const MOTIVOS_NUTRI = [
+  _MOT.saude, _MOT.desloc, _MOT.horario, _MOT.social,
+  'Condições de saúde que dificultam a coleta dos dados nutricionais (edema, amputação, acamado(a), cadeirante, etc.)',
+  'Falta de equipamentos antropométricos (balança, antropômetro, etc.)',
+  'Falta de profissionais capacitados para realizar a coleta dos dados nutricionais',
+  _MOT.recusa, _MOT.risco, _MOT.naoPrograma,
+];
+
+// 3) Descumprimento da Vacinação — só crianças (< 7 anos)
+const MOTIVOS_VACINA = [
+  _MOT.saude, _MOT.desloc, _MOT.horario, _MOT.social,
+  _MOT.recusa, _MOT.risco, _MOT.naoPrograma,
+  'Criança com condição específica de saúde que necessita de vacina especial (CRIE)',
+  'Falta de oferta de vacina ou de insumos necessários para vacinação (seringas, luvas, algodão, etc.)',
+];
+
+// 4) Descumprimento de Pré-natal — só gestantes
+const MOTIVOS_PRENATAL = [
+  _MOT.saude, _MOT.desloc, _MOT.horario, _MOT.social,
+  _MOT.recusa, _MOT.risco, _MOT.naoPrograma,
+  'Falta de oferta de serviço de pré-natal',
+];
+
+const _motivoOpts = (lista, sel) => lista.map(m =>
   `<option value="${esc(m)}"${m===sel?' selected':''}>${esc(m)}</option>`).join('');
+const motivoNAOptions = sel => _motivoOpts(MOTIVOS_NA, sel);
+
+// As tabelas de nutrição e vacinação valem só para crianças menores de 7 anos.
+// Usa a data de nascimento; sem ela, cai na idade que veio no mapa.
+function ehCrianca(b) {
+  if (!b) return false;
+  const d = b.dob ? new Date(String(b.dob).slice(0,10) + 'T12:00:00') : null;
+  if (d && !isNaN(d)) {
+    const hoje = new Date();
+    let anos = hoje.getFullYear() - d.getFullYear();
+    const m = hoje.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && hoje.getDate() < d.getDate())) anos--;
+    return anos < 7;
+  }
+  const i = parseInt(b.idade, 10);
+  return !isNaN(i) && i < 7;
+}
 
 // TRIA ativa? (configuração de admin, sincronizada) — padrão: ativa
 async function triaAtiva(){ return false; } // Módulo TRIA removido do app
@@ -2241,6 +2304,9 @@ const Sync = {
           vacina_ok: a.vacina_ok, gestante: a.gestante || false,
           acompanhado: a.acompanhado !== false, motivo_na: a.motivo_na || null,
           dum: a.dum || null, prenatal: a.prenatal || null,
+          motivo_nutricional: a.motivo_nutricional || null,
+          motivo_vacinacao:   a.motivo_vacinacao   || null,
+          motivo_prenatal:    a.motivo_prenatal    || null,
           tria_a: a.tria_a ?? null, tria_b: a.tria_b ?? null,
           tria_risco: a.tria_risco || null,
           cadastro_avulso: a.cadastro_avulso || false,
@@ -6226,9 +6292,12 @@ async function showBenef(nis) {
         ${a.tria_risco?`<span class="pchip" style="background:var(--violet-soft);color:var(--violet)">TRIA: ${_triaLabel(a.tria_risco).replace(/<[^>]*>/g,'').trim()}</span>`:''}
         ${a.tecnico?`<span class="pchip" style="background:var(--panel-2);color:var(--muted)">${fi('users',11)} ${esc(a.tecnico)}</span>`:''}
       </div>
-      ${(a.peso||a.estabelecimento||a.observacoes||(a.gestante&&a.dum)||(can('acomp.edit')||can('acomp.delete')))?`<details class="ac-more"><summary>${fi('chevron-down',13)} Ver detalhes</summary><div class="ac-more-body">
+      ${(a.peso||a.estabelecimento||a.observacoes||a.motivo_nutricional||a.motivo_vacinacao||a.motivo_prenatal||(a.gestante&&a.dum)||(can('acomp.edit')||can('acomp.delete')))?`<details class="ac-more"><summary>${fi('chevron-down',13)} Ver detalhes</summary><div class="ac-more-body">
         ${a.estabelecimento?`<div class="small muted">${fi('map-pin',11)} ${esc(a.estabelecimento)}</div>`:''}
         ${a.acompanhado===false&&a.motivo_na?`<div class="small" style="color:var(--warn);font-weight:600">Motivo: ${esc(a.motivo_na)}</div>`:''}
+        ${a.motivo_nutricional?`<div class="small" style="color:var(--warn)">Descump. nutricional: ${esc(a.motivo_nutricional)}</div>`:''}
+        ${a.motivo_vacinacao?`<div class="small" style="color:var(--warn)">Descump. vacinação: ${esc(a.motivo_vacinacao)}</div>`:''}
+        ${a.motivo_prenatal?`<div class="small" style="color:var(--warn)">Descump. pré-natal: ${esc(a.motivo_prenatal)}</div>`:''}
         ${a.peso?`<div class="small">Peso: ${a.peso}kg | Altura: ${a.altura}cm | IMC: ${a.imc}</div>`:''}
         ${a.gestante&&a.dum?`<div class="small">DUM: ${new Date(a.dum).toLocaleDateString()}</div>`:''}
         ${a.observacoes?`<div class="small muted" style="font-style:italic">"${esc(a.observacoes)}"</div>`:''}
@@ -6406,6 +6475,7 @@ async function showAcompForm(nis) {
 
   const codFamLabel = CURB.cod_fam && !CURB.cod_fam.startsWith('FAM_IND_') ? CURB.cod_fam.replace(/^FAM_/,'') : '';
   const triaOn = await triaAtiva();
+  const _ehCri = ehCrianca(CURB);   // tabelas de nutrição e vacinação: só < 7 anos
   _antropoIdade = CURB.idade ?? (CURB.dob ? Math.floor((Date.now() - new Date(CURB.dob)) / 31557600000) : null);
 
   // Modo mutirão: progresso da família na vigência atual
@@ -6459,29 +6529,42 @@ async function showAcompForm(nis) {
     <div id="aStep2" style="display:none">
     <div class="form-sep" style="margin-top:0">${fi('activity',12)} Medições</div>
     <div class="g2">
-      <div class="field"><label>Peso (kg)</label><input type="number" step="0.1" id="aP" placeholder="65.5" oninput="calcIMC('aP','aA','aIMC')"></div>
-      <div class="field"><label>Altura (cm)</label><input type="number" id="aA" placeholder="170" oninput="calcIMC('aP','aA','aIMC')"></div>
+      <div class="field"><label>Peso (kg)</label><input type="number" step="0.1" id="aP" placeholder="65.5" oninput="calcIMC('aP','aA','aIMC');_motivosSync()"></div>
+      <div class="field"><label>Altura (cm)</label><input type="number" id="aA" placeholder="170" oninput="calcIMC('aP','aA','aIMC');_motivosSync()"></div>
     </div>
     <div id="aIMC" style="display:none"></div>
+    ${_ehCri ? `<div class="field" id="mtNutriF" style="display:none;margin-top:10px">
+      <label>Motivo do descumprimento das informações nutricionais</label>
+      <select id="mtNutri"><option value="">— selecione —</option>${_motivoOpts(MOTIVOS_NUTRI, '')}</select>
+      <div class="small muted" style="margin-top:4px">Obrigatório no e-Gestor quando peso ou altura não são coletados de criança menor de 7 anos.</div>
+    </div>` : ''}
 
     <div class="form-sep" style="margin-top:18px">${fi('heart',12)} Saúde</div>
     <div>
       <label class="small muted" style="display:block;margin-bottom:8px">Vacinação em dia?</label>
       <div class="g2">
-        <div class="cbf"><input type="radio" name="vac" id="vS" value="1"><label for="vS">✓ Sim</label></div>
-        <div class="cbf"><input type="radio" name="vac" id="vN" value="0"><label for="vN">✗ Não</label></div>
+        <div class="cbf"><input type="radio" name="vac" id="vS" value="1" onchange="_motivosSync()"><label for="vS">✓ Sim</label></div>
+        <div class="cbf"><input type="radio" name="vac" id="vN" value="0" onchange="_motivosSync()"><label for="vN">✗ Não</label></div>
       </div>
+      ${_ehCri ? `<div class="field" id="mtVacF" style="display:none;margin-top:10px">
+        <label>Motivo do descumprimento da vacinação</label>
+        <select id="mtVac"><option value="">— selecione —</option>${_motivoOpts(MOTIVOS_VACINA, '')}</select>
+      </div>` : ''}
     </div>
     <div>
-      <div class="cbf"><input type="checkbox" id="aG" onchange="document.getElementById('gF').style.display=this.checked?'block':'none'"><label for="aG">É gestante</label></div>
+      <div class="cbf"><input type="checkbox" id="aG" onchange="document.getElementById('gF').style.display=this.checked?'block':'none';_motivosSync()"><label for="aG">É gestante</label></div>
       <div id="gF" style="display:none;margin-top:12px">
         <div class="field"><label>DUM (Data da Última Menstruação)</label><input type="date" id="aDum"></div>
         <div>
           <label class="small muted" style="display:block;margin-bottom:8px">Realizou pré-natal?</label>
           <div class="g2">
-            <div class="cbf"><input type="radio" name="aPre" id="aPS" value="1"><label for="aPS">✓ Sim</label></div>
-            <div class="cbf"><input type="radio" name="aPre" id="aPN" value="0"><label for="aPN">✗ Não</label></div>
+            <div class="cbf"><input type="radio" name="aPre" id="aPS" value="1" onchange="_motivosSync()"><label for="aPS">✓ Sim</label></div>
+            <div class="cbf"><input type="radio" name="aPre" id="aPN" value="0" onchange="_motivosSync()"><label for="aPN">✗ Não</label></div>
           </div>
+        </div>
+        <div class="field" id="mtPreF" style="display:none;margin-top:10px">
+          <label>Motivo do descumprimento do pré-natal</label>
+          <select id="mtPre"><option value="">— selecione —</option>${_motivoOpts(MOTIVOS_PRENATAL, '')}</select>
         </div>
       </div>
     </div>
@@ -6551,7 +6634,9 @@ async function _acompDraftSave(nis){
     aD:g('aD')?.value||'', ac:rc('aAc'), motivo:g('aMotivo')?.value||'',
     aP:g('aP')?.value||'', aA:g('aA')?.value||'', vac:rc('vac'),
     aG:!!g('aG')?.checked, aDum:g('aDum')?.value||'', pre:rc('aPre'),
-    triaA:rc('aTriaA'), triaB:rc('aTriaB'), aO:g('aO')?.value||'', t:Date.now()
+    triaA:rc('aTriaA'), triaB:rc('aTriaB'), aO:g('aO')?.value||'',
+    mtNutri:g('mtNutri')?.value||'', mtVac:g('mtVac')?.value||'', mtPre:g('mtPre')?.value||'',
+    t:Date.now()
   };
   try { await IDB.setMeta(_acompDraftKey(nis), JSON.stringify(d)); } catch(e){}
 }
@@ -6574,6 +6659,10 @@ async function _acompDraftRestore(nis){
     if (g('aDum')) g('aDum').value = d.aDum||'';
     setR('aPre', d.pre); setR('aTriaA', d.triaA); setR('aTriaB', d.triaB);
     if (g('aO')) g('aO').value = d.aO||'';
+    if (g('mtNutri')) g('mtNutri').value = d.mtNutri||'';
+    if (g('mtVac'))   g('mtVac').value   = d.mtVac||'';
+    if (g('mtPre'))   g('mtPre').value   = d.mtPre||'';
+    if (typeof _motivosSync==='function') _motivosSync();
     if (typeof _updateTriaResult==='function') _updateTriaResult('aTriaA','aTriaB','aTriaResult');
     return true;
   } catch(e){ return false; }
@@ -6593,6 +6682,9 @@ function _wizGo(dir){
   }
   _wizStep = Math.min(2, Math.max(1, _wizStep + dir));
   _wizRefresh();
+  // Ao entrar nas medições, já mostra o motivo nutricional se peso/altura estão
+  // em branco: sem isso ele só apareceria depois de o usuário mexer num campo.
+  if (_wizStep === 2 && typeof _motivosSync === 'function') _motivosSync();
 }
 function _wizRefresh(){
   if (!document.getElementById('aStep1')) return; // form não está aberto
@@ -6696,6 +6788,16 @@ function _toggleAcompNA(prefix) {
   if (prefix === 'a' && document.getElementById('wizBar')) _wizRefresh();
 }
 
+// Mostra cada motivo de descumprimento só quando ele faz sentido: vacinação e
+// nutrição valem para crianças menores de 7 anos; pré-natal, para gestantes.
+function _motivosSync() {
+  const mostra = (id, cond) => { const el = document.getElementById(id); if (el) el.style.display = cond ? 'block' : 'none'; };
+  const semPeso = !document.getElementById('aP')?.value || !document.getElementById('aA')?.value;
+  mostra('mtNutriF', semPeso);
+  mostra('mtVacF', document.getElementById('vN')?.checked);
+  mostra('mtPreF', document.getElementById('aG')?.checked && document.getElementById('aPN')?.checked);
+}
+
 async function saveAcomp() {
   if(!CURB)return;
   const data=$('#aD').value;
@@ -6710,6 +6812,12 @@ async function saveAcomp() {
   const vS=$('#vS')?.checked, vN=$('#vN')?.checked;
   const gestante=$('#aG').checked;
   const prenatalS=$('#aPS')?.checked, prenatalN=$('#aPN')?.checked;
+  // Motivos de descumprimento: só valem para quem foi acompanhado, e cada um
+  // só quando a condicionalidade correspondente ficou por cumprir.
+  const _cri = ehCrianca(CURB);
+  const motivo_nutricional = (_cri && (!peso || !altura)) ? ($('#mtNutri')?.value || null) : null;
+  const motivo_vacinacao   = (_cri && vN)                 ? ($('#mtVac')?.value   || null) : null;
+  const motivo_prenatal    = (gestante && prenatalN)      ? ($('#mtPre')?.value   || null) : null;
 
   const triaA = document.querySelector('input[name="aTriaA"]:checked')?.value;
   const triaB = document.querySelector('input[name="aTriaB"]:checked')?.value;
@@ -6739,6 +6847,9 @@ async function saveAcomp() {
     gestante: acompanhado ? gestante : false,
     dum: acompanhado && gestante ? ($('#aDum').value || null) : null,
     prenatal: acompanhado && gestante ? (prenatalS ? 'sim' : (prenatalN ? 'nao' : null)) : null,
+    motivo_nutricional: acompanhado ? motivo_nutricional : null,
+    motivo_vacinacao:   acompanhado ? motivo_vacinacao   : null,
+    motivo_prenatal:    acompanhado ? motivo_prenatal    : null,
     tria_a: acompanhado ? tria_a : null,
     tria_b: acompanhado ? tria_b : null,
     tria_risco: acompanhado ? tria_risco : null,
@@ -7285,12 +7396,13 @@ async function exportXLSX() {
       a.peso||'', a.altura||'', a.imc||'',
       a.vacina_ok===true?'Sim':a.vacina_ok===false?'Não':'',
       a.gestante?'Sim':'', a.dum||'', a.prenatal||'',
+      a.motivo_nutricional||'', a.motivo_vacinacao||'', a.motivo_prenatal||'',
       a.observacoes||'', a.cadastro_avulso?'Sim':''
     ];
   });
   const wsAcomp = XLSX.utils.aoa_to_sheet([acompHeaders, ...acompRows]);
   wsAcomp['!cols'] = [
-    {wch:36},{wch:13},{wch:36},{wch:12},{wch:22},{wch:30},{wch:12},{wch:40},
+    {wch:36},{wch:13},{wch:36},{wch:12},{wch:22},{wch:30},{wch:12},{wch:40},{wch:40},{wch:40},{wch:40},
     {wch:8},{wch:10},{wch:7},{wch:10},{wch:9},{wch:12},{wch:10},{wch:30},{wch:7}
   ];
   XLSX.utils.book_append_sheet(wb, wsAcomp, 'Acompanhamentos');
@@ -7402,7 +7514,8 @@ async function exportEgestor() {
     [`Vigência: ${vigenciaLabel(_vigM)} (${fmtBR(vi)} a ${fmtBR(vf)}) · Gerado em ${fmtBR(hoje)}`],
     [],
     ['NIS','Nome do Beneficiário','Data de Nascimento','CNS','EAS','Situação na Vigência','Motivo de Não Acompanhamento',
-     'Data do Acompanhamento','Peso (kg)','Altura (cm)','Vacinação em dia','Gestante','DUM','Pré-natal em dia'],
+     'Data do Acompanhamento','Peso (kg)','Altura (cm)','Vacinação em dia','Gestante','DUM','Pré-natal em dia',
+     'Motivo Descump. Nutricional','Motivo Descump. Vacinação','Motivo Descump. Pré-natal'],
   ];
   const rows = benefs.map(b => {
     const a = acompSem.get(b.nis);
@@ -7420,12 +7533,15 @@ async function exportEgestor() {
       a ? (a.vacina_ok===true?'Sim':a.vacina_ok===false?'Não':'') : '',
       a ? (a.gestante?'Sim':'Não') : '',
       a?.gestante ? fmtBR(a.dum) : '',
-      a?.gestante ? (a.prenatal==='sim'?'Sim':a.prenatal==='nao'?'Não':'') : ''
+      a?.gestante ? (a.prenatal==='sim'?'Sim':a.prenatal==='nao'?'Não':'') : '',
+      a?.motivo_nutricional || '',
+      a?.motivo_vacinacao || '',
+      a?.motivo_prenatal || ''
     ];
   });
   const ws = XLSX.utils.aoa_to_sheet([...hdr, ...rows]);
-  ws['!cols'] = [{wch:13},{wch:40},{wch:14},{wch:17},{wch:30},{wch:16},{wch:40},{wch:16},{wch:9},{wch:11},{wch:14},{wch:9},{wch:12},{wch:14}];
-  ws['!merges'] = [0,1,2].map(r => ({s:{r,c:0}, e:{r,c:13}}));
+  ws['!cols'] = [{wch:13},{wch:40},{wch:14},{wch:17},{wch:30},{wch:16},{wch:40},{wch:16},{wch:9},{wch:11},{wch:14},{wch:9},{wch:12},{wch:14},{wch:40},{wch:40},{wch:40}];
+  ws['!merges'] = [0,1,2].map(r => ({s:{r,c:0}, e:{r,c:16}}));
   XLSX.utils.book_append_sheet(wb, ws, 'Mapa e-Gestor');
 
   // Resumo por EAS (facilita conferência da meta de acompanhamento por unidade)
