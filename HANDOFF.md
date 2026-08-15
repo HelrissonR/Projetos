@@ -261,6 +261,7 @@ A **cor primária** configurável (`corPrimaria`) é aplicada em
 | "Cor primária" era gravada mas **nunca aplicada** na abertura | aplicada em `applyCustomDesign()` |
 | `_setLoginLoading` / `_showLoginErr` miravam `.lcard-btn` / `.lcard`, de um login anterior — loading e destaque de erro estavam mortos | seletores atualizados |
 | `resources.arsc` comprimido pelo `zip -r` | `tools/empacotar.py` |
+| Cor primária salva de antes da identidade verde abriria o app na cor antiga | limpeza única (`corPrimariaMigrada`); e a aplicação passou para **depois** do `_vdApply()`, que apaga tokens inline que não conhece |
 | Relatórios desalinhados (tabela sem largura fixa) | `table-layout:fixed` + `colgroup` |
 | Beneficiários sem EAS sumiam do relatório | vinculados a "CENTRO DE SAÚDE DE LÁBREA" |
 

@@ -1849,6 +1849,18 @@ async function migrarBaseVigencia() {
   invalidateBenefCache();
 }
 
+// A cor primária passou a ser aplicada na abertura (antes ela era gravada e
+// nunca valia). Quem tinha uma cor salva de antes da identidade institucional
+// abriria o app naquela cor — por isso ela é limpa uma vez, e o app volta ao
+// verde. Escolher uma cor DEPOIS disto continua funcionando normalmente.
+// uploadSettings só envia chaves não nulas, então limpar aqui não reintroduz
+// nada na nuvem.
+async function migrarCorPrimaria() {
+  if (await IDB.getMeta('corPrimariaMigrada')) return;
+  try { await IDB.delete('meta', 'corPrimaria'); } catch(e) {}
+  await IDB.setMeta('corPrimariaMigrada', '1');
+}
+
 // Avulso entra na base que vale agora; se ainda não houver mapa desta vigência,
 // ele mesmo estabelece a primeira base, senão não apareceria em lugar nenhum.
 async function _idParaAvulso() {
@@ -9011,17 +9023,6 @@ async function applyCustomDesign() {
   root.style.setProperty('--font-size-base', fontSize + 'px');
 
   // ── Cores extras ──────────────────────────────────────
-  // A cor primária era gravada mas nunca aplicada na abertura — só no instante
-  // em que alguém mexia no seletor. Agora vale desde o carregamento.
-  const corPrim = await IDB.getMeta('corPrimaria');
-  if (corPrim && /^#[0-9a-f]{6}$/i.test(corPrim)) {
-    root.style.setProperty('--accent', corPrim);
-    root.style.setProperty('--violet', corPrim);
-  } else {
-    root.style.removeProperty('--accent');
-    root.style.removeProperty('--violet');
-  }
-
   const corOk   = await IDB.getMeta('corOk');
   const corWarn = await IDB.getMeta('corWarn');
   const corErr  = await IDB.getMeta('corErr');
@@ -9173,6 +9174,17 @@ async function applyCustomDesign() {
 
   // Editor Visual por último: vence as escritas legadas acima
   await _vdApply();
+
+  // A cor primária vem DEPOIS do _vdApply de propósito: ele remove os tokens
+  // inline que não estão no design salvo, e apagaria esta escrita se ela viesse
+  // antes. Se o Editor Visual definir --accent explicitamente, ele continua
+  // mandando — quem escolheu a cor por lá foi mais específico.
+  const corPrim = await IDB.getMeta('corPrimaria');
+  const _accentNoEditor = !!(window._VD_CACHE?.tokens?.light?.['--accent'] || window._VD_CACHE?.tokens?.dark?.['--accent']);
+  if (corPrim && /^#[0-9a-f]{6}$/i.test(corPrim) && !_accentNoEditor) {
+    root.style.setProperty('--accent', corPrim);
+    root.style.setProperty('--violet', corPrim);
+  }
   _vdApplyText(document.body);   // cobre a tela de login (markup estático)
   // O login é decorado à mão porque não passa por nav()/_vdDecorateScreen
   const pl = document.getElementById('pageLogin');
@@ -11206,6 +11218,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Limpeza única na inicialização: remove famílias órfãs herdadas de importações
   // anteriores (corrige a divergência famílias > beneficiários).
   try { await migrarBaseVigencia(); } catch(e){ console.warn('migra base vigência:', e); }
+  try { await migrarCorPrimaria(); } catch(e){ console.warn('migra cor primária:', e); }
   try { await reconcileFamilias(); } catch(e){ console.warn('reconcile init:', e); }
 
   // Supabase
