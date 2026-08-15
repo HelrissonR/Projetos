@@ -1,5 +1,8 @@
 # Ferramentas de build/assinatura
 
+> Visão geral do projeto, regras de domínio e armadilhas conhecidas:
+> **[`../HANDOFF.md`](../HANDOFF.md)**. Leia antes de mexer no app.
+
 O app Bolsa Família é um WebView cujo código roda inteiramente em
 `app/assets/index.html` (empacotado dentro do APK em `assets/index.html`).
 
