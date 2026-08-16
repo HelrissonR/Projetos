@@ -7,6 +7,7 @@ usa a largura da tela). Usa o mesmo backend Supabase do aplicativo.
 
 Arquivos:
 - `index.html` — o app completo (HTML + CSS + JS).
+- `service-worker.js` — cache dos arquivos locais para abertura offline após o primeiro acesso.
 - O `xlsx` é carregado via CDN (jsdelivr) — sem arquivo local nesta pasta.
 - `app-icon.png` — ícone do app (login/PWA).
 - `vercel.json` — configuração de hospedagem estática.
