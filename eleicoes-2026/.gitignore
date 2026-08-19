@@ -1,0 +1,4 @@
+# Artefatos do ETL (baixados do TSE) — não versionar
+etl/_raw/
+etl/*.zip
+node_modules/

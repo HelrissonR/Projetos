@@ -1,0 +1,10 @@
+{
+  "cleanUrls": true,
+  "functions": {
+    "api/*.js": { "maxDuration": 15 }
+  },
+  "regions": ["gru1"],
+  "headers": [
+    { "source": "/api/(.*)", "headers": [ { "key": "Cache-Control", "value": "public, s-maxage=1800, stale-while-revalidate=3600" } ] }
+  ]
+}
