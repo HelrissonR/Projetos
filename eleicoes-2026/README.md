@@ -28,8 +28,12 @@ eleicoes-2026/
 ├── index.html              # marcação do dashboard
 ├── styles.css              # tema claro/escuro, layout responsivo
 ├── app.js                  # render, filtros, busca, drawer de detalhe
+├── api/
+│   ├── candidatos.js       # serverless: candidaturas + fotos reais (TSE)
+│   └── pesquisas.js        # serverless: pesquisas registradas (TSE)
+├── vercel.json             # região gru1 (Brasil) + cache das APIs
 ├── data/
-│   └── candidatos.json     # CAMADA DE DADOS MOCKADA (trocar por fonte real)
+│   └── candidatos.json     # dados de DEMONSTRAÇÃO (fallback)
 └── README.md
 ```
 
@@ -42,32 +46,43 @@ eleicoes-2026/
 - **Drawer de detalhe** com indicadores, alcance em redes e principais assuntos na imprensa (com sentimento).
 - **Tema claro/escuro** (persistido) e **layout responsivo** (desktop, tablet, mobile).
 
-## Trocando por dados reais do TSE
+## Dados reais (TSE) + acesso público
 
-Toda a leitura de dados passa por **uma única função** em `app.js`:
+O sistema busca **dados reais** e cai para demonstração se ainda não houver dados
+publicados — o site nunca fica quebrado. Um selo no topo indica **"Dados ao vivo (TSE)"**
+ou **"Modo demonstração"**.
 
-```js
-async function fetchDados() {
-  const res = await fetch("data/candidatos.json");
-  return res.json();
-}
+### Como os dados reais chegam
+
+```
+Navegador (público)  →  /api/candidatos, /api/pesquisas  (funções serverless Vercel, região gru1)
+                                        ↓
+                          API pública do TSE — DivulgaCandContas
 ```
 
-Basta fazê-la retornar o mesmo formato (`{ meta, candidatos: [...] }`) a partir de:
+- **Fotos + candidaturas**: `api/candidatos.js` consulta a API pública do TSE
+  (nome de urna, partido, coligação, número, situação de registro) e monta a
+  **foto oficial** de cada candidato. Configurável por `?uf=SP&cargo=3`.
+- **Pesquisas eleitorais**: `api/pesquisas.js` lê o **registro oficial de pesquisas**
+  do TSE (instituto, nº de registro, data, contratante e resultados). Usamos apenas
+  o registro público — não republicamos conteúdo proprietário de institutos privados.
+- **Por que serverless na região `gru1`?** O TSE bloqueia acessos de fora do Brasil.
+  As funções rodam em São Paulo (`vercel.json` → `"regions": ["gru1"]`), então
+  alcançam o TSE mesmo com visitantes de qualquer lugar.
+- **Fallback**: se a eleição/UF de 2026 ainda não estiver publicada (o TSE libera
+  progressivamente após o registro), a função responde `{ live:false }` e o
+  front-end usa `data/candidatos.json` (demonstração, claramente sinalizada).
 
-- **TSE — Dados Abertos / DivulgaCand**: os dados de candidaturas são publicados por
-  pleito em arquivos (CSV/ZIP) no portal de Dados Abertos do TSE. Um passo de ETL
-  (script ou backend) baixa e normaliza esses arquivos para o formato acima. Campos
-  como `nome`, `cargo`, `partido`, `uf`, `coligacao` e `situacao` (deferido/análise)
-  mapeiam diretamente para o registro oficial.
-- **Notícias / assuntos**: alimente `candidatos[].noticias[]` com um agregador
-  (feeds RSS dos portais, ou uma API de notícias). O campo `sentimento`
-  (`positivo`/`neutro`/`negativo`) pode vir de uma análise automática.
-- **Viabilidade / série / redes**: substitua por seus indicadores (pesquisas
-  agregadas, métricas de engajamento etc.).
+### Acesso público
 
-Enquanto essas integrações não existem, o `data/candidatos.json` mantém o sistema
-totalmente funcional para demonstração e desenvolvimento de UI.
+Projeto pronto para deploy no **Vercel** (as funções `api/*` são detectadas
+automaticamente). Após o deploy, a URL é acessível por **qualquer pessoa**, sem login.
+
+> **Limitação honesta:** este ambiente de desenvolvimento (fora do Brasil) não
+> consegue validar as respostas do TSE — o bloqueio geográfico só é contornado na
+> região `gru1` do deploy. Confirme os dados ao vivo na URL publicada. Os campos de
+> viabilidade/série/redes/notícias por candidato são enriquecimentos opcionais:
+> preencha-os via seu próprio ETL quando desejar.
 
 ## Notas de responsabilidade
 

@@ -5,6 +5,10 @@
     "fonte": "Dados ILUSTRATIVOS. Substituir por dados abertos do TSE (portal de Dados Abertos / DivulgaCand) e feeds de notícias reais.",
     "aviso": "Candidatos e números abaixo são fictícios e servem apenas para demonstração do sistema. Nenhuma informação representa pessoas reais."
   },
+  "pesquisas": [
+    { "instituto": "Instituto Exemplo", "registro": "BR-00000/2026", "data": "2026-08-15", "contratante": "Veículo Demonstração", "cargo": "Presidente", "uf": "BR", "resultados": [ { "candidato": "Helena Prado", "pct": 32 }, { "candidato": "Rafael Monteiro", "pct": 30 }, { "candidato": "Beatriz Nunes", "pct": 11 }, { "candidato": "Brancos/Nulos", "pct": 15 }, { "candidato": "Indecisos", "pct": 12 } ] },
+    { "instituto": "Pesquisa Modelo", "registro": "SP-00001/2026", "data": "2026-08-12", "contratante": "Portal Demonstração", "cargo": "Governador", "uf": "SP", "resultados": [ { "candidato": "Carla Vasconcelos", "pct": 41 }, { "candidato": "Otávio Braga", "pct": 29 }, { "candidato": "Brancos/Nulos", "pct": 18 }, { "candidato": "Indecisos", "pct": 12 } ] }
+  ],
   "candidatos": [
     {
       "id": "pres-01",
