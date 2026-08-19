@@ -45,12 +45,12 @@ async function main() {
   for (const arq of arquivos) {
     const texto = await lerCsvLatin1(join(RAW_DIR, arq));
     const parte = transformCsv(texto);
-    console.log(`[etl] ${arq}: ${parte.length} candidatos (cargos majoritários).`);
+    console.log(`[etl] ${arq}: ${parte.length} candidatos.`);
     candidatos = candidatos.concat(parte);
   }
 
   if (!candidatos.length) {
-    console.log("[etl] CSVs lidos, mas 0 candidatos majoritários. Mantendo dados atuais.");
+    console.log("[etl] CSVs lidos, mas 0 candidatos. Mantendo dados atuais.");
     return;
   }
 

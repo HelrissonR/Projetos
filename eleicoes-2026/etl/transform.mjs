@@ -3,11 +3,14 @@
 // (separado por ';', campos entre aspas, codificação latin1 já decodificada para
 // string) e devolve a lista de candidatos normalizada.
 
-// Códigos de cargo do TSE que o painel monitora (cargos majoritários).
+// Códigos de cargo do TSE que o painel monitora.
 export const CARGOS_TSE = {
   "1": "Presidente",
   "3": "Governador",
   "5": "Senador",
+  "6": "Deputado Federal",
+  "7": "Deputado Estadual",
+  "8": "Deputado Distrital",
 };
 
 // Parser de CSV simples que respeita aspas e o separador ';' do TSE.
