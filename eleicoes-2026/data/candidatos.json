@@ -1,0 +1,167 @@
+{
+  "meta": {
+    "titulo": "Monitor de Candidaturas — Eleições 2026",
+    "atualizadoEm": "2026-08-19",
+    "fonte": "Dados ILUSTRATIVOS. Substituir por dados abertos do TSE (portal de Dados Abertos / DivulgaCand) e feeds de notícias reais.",
+    "aviso": "Candidatos e números abaixo são fictícios e servem apenas para demonstração do sistema. Nenhuma informação representa pessoas reais."
+  },
+  "candidatos": [
+    {
+      "id": "pres-01",
+      "nome": "Helena Prado",
+      "iniciais": "HP",
+      "cor": "#6C5CE7",
+      "cargo": "Presidente",
+      "partido": "PVR",
+      "coligacao": "Frente Renovação",
+      "uf": "BR",
+      "situacao": "Deferido",
+      "viabilidade": 41,
+      "tendencia": "alta",
+      "serie": [28, 30, 29, 33, 35, 34, 38, 41],
+      "temas": ["Economia", "Educação", "Segurança"],
+      "redes": { "instagram": 2400000, "x": 1300000, "tiktok": 980000 },
+      "noticias": [
+        { "titulo": "Candidata apresenta plano de reindustrialização", "fonte": "Portal Nacional", "sentimento": "positivo", "data": "2026-08-18" },
+        { "titulo": "Debate sobre reforma tributária ganha destaque", "fonte": "Agência Brasil de Notícias", "sentimento": "neutro", "data": "2026-08-17" },
+        { "titulo": "Críticas da oposição ao plano fiscal", "fonte": "Diário Econômico", "sentimento": "negativo", "data": "2026-08-16" }
+      ]
+    },
+    {
+      "id": "pres-02",
+      "nome": "Rafael Monteiro",
+      "iniciais": "RM",
+      "cor": "#0984E3",
+      "cargo": "Presidente",
+      "partido": "MDS",
+      "coligacao": "União pelo Brasil",
+      "uf": "BR",
+      "situacao": "Deferido",
+      "viabilidade": 38,
+      "tendencia": "estavel",
+      "serie": [37, 39, 38, 40, 38, 37, 39, 38],
+      "temas": ["Segurança", "Agro", "Infraestrutura"],
+      "redes": { "instagram": 3100000, "x": 2200000, "tiktok": 1500000 },
+      "noticias": [
+        { "titulo": "Proposta de expansão da malha ferroviária", "fonte": "Portal Nacional", "sentimento": "positivo", "data": "2026-08-18" },
+        { "titulo": "Encontro com lideranças do agronegócio", "fonte": "Campo & Cidade", "sentimento": "neutro", "data": "2026-08-15" }
+      ]
+    },
+    {
+      "id": "pres-03",
+      "nome": "Beatriz Nunes",
+      "iniciais": "BN",
+      "cor": "#E84393",
+      "cargo": "Presidente",
+      "partido": "PES",
+      "coligacao": "Aliança Sustentável",
+      "uf": "BR",
+      "situacao": "Análise",
+      "viabilidade": 12,
+      "tendencia": "alta",
+      "serie": [6, 7, 8, 9, 10, 11, 11, 12],
+      "temas": ["Meio Ambiente", "Educação", "Saúde"],
+      "redes": { "instagram": 890000, "x": 640000, "tiktok": 720000 },
+      "noticias": [
+        { "titulo": "Plano de transição energética é apresentado", "fonte": "Verde Agora", "sentimento": "positivo", "data": "2026-08-17" },
+        { "titulo": "Campanha foca em pauta jovem nas redes", "fonte": "Tech News BR", "sentimento": "neutro", "data": "2026-08-14" }
+      ]
+    },
+    {
+      "id": "gov-sp-01",
+      "nome": "Carla Vasconcelos",
+      "iniciais": "CV",
+      "cor": "#00B894",
+      "cargo": "Governador",
+      "partido": "PVR",
+      "coligacao": "Frente Renovação",
+      "uf": "SP",
+      "situacao": "Deferido",
+      "viabilidade": 47,
+      "tendencia": "alta",
+      "serie": [40, 41, 43, 44, 45, 46, 46, 47],
+      "temas": ["Mobilidade", "Saúde", "Habitação"],
+      "redes": { "instagram": 1200000, "x": 540000, "tiktok": 610000 },
+      "noticias": [
+        { "titulo": "Proposta de ampliação do metrô da capital", "fonte": "SP Notícias", "sentimento": "positivo", "data": "2026-08-18" },
+        { "titulo": "Debate sobre filas na saúde pública", "fonte": "Diário Paulista", "sentimento": "negativo", "data": "2026-08-16" }
+      ]
+    },
+    {
+      "id": "gov-sp-02",
+      "nome": "Otávio Braga",
+      "iniciais": "OB",
+      "cor": "#E17055",
+      "cargo": "Governador",
+      "partido": "MDS",
+      "coligacao": "União pelo Brasil",
+      "uf": "SP",
+      "situacao": "Deferido",
+      "viabilidade": 33,
+      "tendencia": "baixa",
+      "serie": [39, 38, 37, 36, 35, 34, 34, 33],
+      "temas": ["Segurança", "Economia", "Educação"],
+      "redes": { "instagram": 760000, "x": 410000, "tiktok": 300000 },
+      "noticias": [
+        { "titulo": "Plano de segurança para regiões metropolitanas", "fonte": "SP Notícias", "sentimento": "neutro", "data": "2026-08-15" }
+      ]
+    },
+    {
+      "id": "gov-rj-01",
+      "nome": "Marina Teixeira",
+      "iniciais": "MT",
+      "cor": "#FDCB6E",
+      "cargo": "Governador",
+      "partido": "PES",
+      "coligacao": "Aliança Sustentável",
+      "uf": "RJ",
+      "situacao": "Deferido",
+      "viabilidade": 44,
+      "tendencia": "alta",
+      "serie": [35, 37, 38, 40, 41, 42, 43, 44],
+      "temas": ["Turismo", "Segurança", "Meio Ambiente"],
+      "redes": { "instagram": 980000, "x": 470000, "tiktok": 820000 },
+      "noticias": [
+        { "titulo": "Programa de despoluição da baía é destaque", "fonte": "Rio Já", "sentimento": "positivo", "data": "2026-08-18" }
+      ]
+    },
+    {
+      "id": "sen-mg-01",
+      "nome": "Diego Fontes",
+      "iniciais": "DF",
+      "cor": "#74B9FF",
+      "cargo": "Senador",
+      "partido": "PVR",
+      "coligacao": "Frente Renovação",
+      "uf": "MG",
+      "situacao": "Deferido",
+      "viabilidade": 52,
+      "tendencia": "estavel",
+      "serie": [50, 51, 52, 51, 52, 53, 52, 52],
+      "temas": ["Economia", "Infraestrutura", "Educação"],
+      "redes": { "instagram": 430000, "x": 220000, "tiktok": 150000 },
+      "noticias": [
+        { "titulo": "Defesa de incentivo à indústria mineira", "fonte": "Minas Hoje", "sentimento": "positivo", "data": "2026-08-17" }
+      ]
+    },
+    {
+      "id": "sen-ba-01",
+      "nome": "Luana Cordeiro",
+      "iniciais": "LC",
+      "cor": "#A29BFE",
+      "cargo": "Senador",
+      "partido": "PES",
+      "coligacao": "Aliança Sustentável",
+      "uf": "BA",
+      "situacao": "Análise",
+      "viabilidade": 29,
+      "tendencia": "alta",
+      "serie": [20, 22, 23, 25, 26, 27, 28, 29],
+      "temas": ["Cultura", "Saúde", "Habitação"],
+      "redes": { "instagram": 610000, "x": 180000, "tiktok": 540000 },
+      "noticias": [
+        { "titulo": "Pauta cultural mobiliza apoio no interior", "fonte": "Bahia Agora", "sentimento": "positivo", "data": "2026-08-16" }
+      ]
+    }
+  ]
+}
