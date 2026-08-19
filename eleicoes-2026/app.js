@@ -83,8 +83,10 @@ async function init() {
       state.todos = vivos.map(normalizeCand);
       state.live = true;
     } else {
-      state.todos = demo.candidatos;
-      state.live = false;
+      // O ETL do TSE (Dados Abertos) pode ter populado data/candidatos.json com
+      // dados reais e meta.live=true. Nesse caso, também é "ao vivo".
+      state.todos = (demo.meta && demo.meta.live) ? demo.candidatos.map(normalizeCand) : demo.candidatos;
+      state.live = !!(demo.meta && demo.meta.live);
     }
     state.pesquisas = pesqVivas.length ? pesqVivas : (demo.pesquisas || []);
     aplicarStatus(demo.meta);

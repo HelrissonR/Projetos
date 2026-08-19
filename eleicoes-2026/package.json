@@ -1,0 +1,13 @@
+{
+  "name": "monitor-eleicoes-2026",
+  "version": "1.0.0",
+  "description": "Dashboard de monitoramento das candidaturas das Eleições 2026 (Brasil).",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "python3 -m http.server 8000",
+    "etl:download": "mkdir -p etl/_raw && curl -fSL --retry 3 -A \"Mozilla/5.0 (Monitor Eleicoes 2026 ETL)\" -o etl/consulta_cand_2026.zip https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2026.zip && unzip -o etl/consulta_cand_2026.zip -d etl/_raw",
+    "etl": "node etl/build-data.mjs",
+    "test": "node etl/transform.test.mjs"
+  }
+}

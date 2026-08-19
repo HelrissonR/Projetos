@@ -1,0 +1,65 @@
+name: ETL TSE — Candidaturas 2026
+
+# Atualiza eleicoes-2026/data/candidatos.json a partir dos Dados Abertos do TSE.
+#
+# IMPORTANTE: o CDN do TSE (cdn.tse.jus.br) usa proteção anti-bot (Akamai) que
+# pode responder 403 a IPs de datacenter — inclusive runners hospedados no
+# GitHub. Se o download falhar, o job NÃO quebra o repositório: ele registra o
+# aviso e mantém os dados atuais (o site segue em modo demonstração).
+#
+# Para garantir dados reais, rode este workflow em um runner que o TSE não
+# bloqueie (self-hosted no Brasil) ou execute o ETL localmente:
+#   cd eleicoes-2026 && npm run etl:download && npm run etl
+
+on:
+  schedule:
+    - cron: "0 9 * * *"   # diariamente 06:00 BRT (09:00 UTC)
+  workflow_dispatch:       # permite rodar sob demanda
+
+permissions:
+  contents: write
+
+jobs:
+  etl:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Baixar e descompactar consulta_cand_2026 (tolerante a bloqueio)
+        id: download
+        working-directory: eleicoes-2026
+        continue-on-error: true
+        run: |
+          set -e
+          mkdir -p etl/_raw
+          URL="https://cdn.tse.jus.br/estatistica/sead/odsele/consulta_cand/consulta_cand_2026.zip"
+          echo "Baixando $URL"
+          if curl -fSL --retry 3 --max-time 180 \
+               -A "Mozilla/5.0 (Monitor Eleicoes 2026 ETL)" \
+               -o etl/consulta_cand_2026.zip "$URL"; then
+            unzip -o etl/consulta_cand_2026.zip -d etl/_raw
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Download bloqueado/indisponível (provável 403 anti-bot ou 2026 ainda não publicado)."
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Transformar em data/candidatos.json
+        working-directory: eleicoes-2026
+        run: node etl/build-data.mjs
+
+      - name: Commitar mudanças (se houver)
+        run: |
+          if [ -n "$(git status --porcelain eleicoes-2026/data/candidatos.json)" ]; then
+            git config user.name "tse-etl-bot"
+            git config user.email "actions@github.com"
+            git add eleicoes-2026/data/candidatos.json
+            git commit -m "chore(etl): atualiza candidaturas a partir dos Dados Abertos do TSE"
+            git push
+          else
+            echo "Sem mudanças nos dados."
+          fi

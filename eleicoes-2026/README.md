@@ -89,19 +89,46 @@ a partir da região `gru1` (Brasil)**. Ou seja, o TSE não bloqueia apenas por
 geografia: ele bloqueia acesso automatizado (bot) a essa API. Por isso, hoje o site
 funciona em **modo demonstração**.
 
-Para obter dados 100% reais de produção, os caminhos viáveis são:
+O caminho de produção implementado é o **ETL dos Dados Abertos do TSE**.
 
-1. **Arquivos de Dados Abertos do TSE** (`dadosabertos.tse.jus.br`) — pacotes
-   CSV/ZIP de candidaturas por pleito. Baixar num passo de ETL (agendado), converter
-   para o formato `{ meta, candidatos, pesquisas }` e servir de `data/` ou de um
-   banco. É a fonte oficial mais estável e sem bloqueio de bot.
-2. **Fotos oficiais**: distribuídas junto aos pacotes de Dados Abertos e/ou via
-   DivulgaCand — inclua a URL/arquivo no campo `foto` de cada candidato.
-3. Manter as funções `api/*` como camada de leitura, trocando o endpoint bloqueado
-   pela leitura dos arquivos de Dados Abertos (ou por um cache próprio).
+## ETL agendado (Dados Abertos do TSE)
 
-Enquanto o ETL de Dados Abertos não é ligado, o site permanece público e funcional
-em modo demonstração, com selo visível e sem atribuir dados falsos a pessoas reais.
+Em vez do endpoint bloqueado, o ETL usa o pacote oficial
+`consulta_cand_2026.zip` (CDN do TSE), converte os CSVs e grava
+`data/candidatos.json` com `meta.live=true`. O front-end então exibe o selo
+**"Dados ao vivo (TSE)"** automaticamente.
+
+```
+eleicoes-2026/etl/
+├── transform.mjs        # CSV do TSE -> candidatos (puro, testável)
+├── build-data.mjs       # lê etl/_raw/*.csv -> data/candidatos.json
+└── transform.test.mjs   # testes do parser/mapeamento
+```
+
+**Rodar localmente:**
+
+```bash
+cd eleicoes-2026
+npm run etl:download   # baixa e descompacta o pacote do TSE em etl/_raw/
+npm run etl            # transforma e grava data/candidatos.json
+npm test               # valida a transformação
+```
+
+**Agendamento:** `.github/workflows/etl-tse.yml` roda todo dia às 06:00 BRT
+(e sob demanda via *Run workflow*), baixa, transforma e **commita** o JSON
+atualizado.
+
+> ⚠️ **Bloqueio anti-bot do TSE.** Verificou-se que `cdn.tse.jus.br` (Akamai)
+> responde **403 a IPs de datacenter** — incluindo runners hospedados do GitHub e
+> funções do Vercel. Por isso o job é tolerante a falha: se o download for
+> bloqueado (ou 2026 ainda não estiver publicado), ele **mantém os dados atuais** e
+> o site segue em modo demonstração. Para dados reais garantidos, rode o ETL de um
+> ambiente que o TSE não bloqueie — um **runner self-hosted no Brasil** ou a sua
+> **máquina local** (`npm run etl:download && npm run etl`) — e faça commit do
+> `data/candidatos.json` gerado.
+
+As funções `api/*` continuam disponíveis como leitura alternativa, mas a fonte
+de produção recomendada é o JSON gerado pelo ETL (sem dependência de runtime do TSE).
 
 ## Notas de responsabilidade
 
