@@ -75,14 +75,33 @@ Navegador (público)  →  /api/candidatos, /api/pesquisas  (funções serverles
 
 ### Acesso público
 
-Projeto pronto para deploy no **Vercel** (as funções `api/*` são detectadas
-automaticamente). Após o deploy, a URL é acessível por **qualquer pessoa**, sem login.
+Publicado no **Vercel**, acessível por **qualquer pessoa, sem login**:
 
-> **Limitação honesta:** este ambiente de desenvolvimento (fora do Brasil) não
-> consegue validar as respostas do TSE — o bloqueio geográfico só é contornado na
-> região `gru1` do deploy. Confirme os dados ao vivo na URL publicada. Os campos de
-> viabilidade/série/redes/notícias por candidato são enriquecimentos opcionais:
-> preencha-os via seu próprio ETL quando desejar.
+**https://monitor-eleicoes-2026-helrisson-ltda.vercel.app**
+
+(A "Vercel Authentication" foi desativada neste projeto para permitir acesso público.)
+
+### ⚠️ Limitação real da fonte TSE (importante)
+
+Ao publicar, verificou-se que o endpoint `divulgacandcontas.tse.jus.br` responde
+**HTTP 403 (Akamai "Access Denied")** para requisições programáticas — **inclusive
+a partir da região `gru1` (Brasil)**. Ou seja, o TSE não bloqueia apenas por
+geografia: ele bloqueia acesso automatizado (bot) a essa API. Por isso, hoje o site
+funciona em **modo demonstração**.
+
+Para obter dados 100% reais de produção, os caminhos viáveis são:
+
+1. **Arquivos de Dados Abertos do TSE** (`dadosabertos.tse.jus.br`) — pacotes
+   CSV/ZIP de candidaturas por pleito. Baixar num passo de ETL (agendado), converter
+   para o formato `{ meta, candidatos, pesquisas }` e servir de `data/` ou de um
+   banco. É a fonte oficial mais estável e sem bloqueio de bot.
+2. **Fotos oficiais**: distribuídas junto aos pacotes de Dados Abertos e/ou via
+   DivulgaCand — inclua a URL/arquivo no campo `foto` de cada candidato.
+3. Manter as funções `api/*` como camada de leitura, trocando o endpoint bloqueado
+   pela leitura dos arquivos de Dados Abertos (ou por um cache próprio).
+
+Enquanto o ETL de Dados Abertos não é ligado, o site permanece público e funcional
+em modo demonstração, com selo visível e sem atribuir dados falsos a pessoas reais.
 
 ## Notas de responsabilidade
 
