@@ -25,6 +25,10 @@ export interface Settings {
   whatsapp_number: string // só dígitos com DDI, ex: 5511999999999
   catalog_enabled: boolean
   catalog_message: string // saudação/observação exibida no catálogo
+  catalog_show_stock: boolean
+  hidden_menu_items: string[]
+  interface_density: 'comfortable' | 'compact'
+  show_sync_indicator: boolean
 }
 
 export interface Category {

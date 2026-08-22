@@ -20,8 +20,18 @@ create table if not exists public.settings (
   whatsapp_number text not null default '',
   catalog_enabled boolean not null default true,
   catalog_message text not null default '',
+  catalog_show_stock boolean not null default true,
+  hidden_menu_items jsonb not null default '[]',
+  interface_density text not null default 'comfortable',
+  show_sync_indicator boolean not null default true,
   updated_at timestamptz not null default now()
 );
+
+-- Migração segura para instalações que já possuem a tabela settings.
+alter table public.settings add column if not exists catalog_show_stock boolean not null default true;
+alter table public.settings add column if not exists hidden_menu_items jsonb not null default '[]';
+alter table public.settings add column if not exists interface_density text not null default 'comfortable';
+alter table public.settings add column if not exists show_sync_indicator boolean not null default true;
 
 -- Categorias ----------------------------------------------------------------
 create table if not exists public.categories (

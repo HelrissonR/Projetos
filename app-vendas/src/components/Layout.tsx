@@ -32,8 +32,13 @@ export default function Layout() {
   const { settings } = useSettings()
   const { user, authEnabled, signOut } = useAuth()
   const [open, setOpen] = useState(false)
+  const [showMore, setShowMore] = useState(false)
   const [pending, setPending] = useState(0)
   const location = useLocation()
+  const visibleNav = nav.filter((item) => item.to === '/configuracoes' || !settings.hidden_menu_items.includes(item.to))
+  const primaryNav = visibleNav.slice(0, 4)
+  const secondaryNav = visibleNav.slice(4)
+  const navSpacing = settings.interface_density === 'compact' ? 'py-1.5 md:min-h-9' : 'py-2'
 
   // Atualiza o contador de pedidos pendentes ao navegar
   useEffect(() => {
@@ -47,7 +52,7 @@ export default function Layout() {
     <div className="flex min-h-screen">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 w-64 transform border-r border-slate-200 bg-white transition-transform dark:border-slate-800 dark:bg-slate-900 md:static md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-30 flex w-[min(18rem,88vw)] flex-col transform border-r border-slate-200 bg-white transition-transform dark:border-slate-800 dark:bg-slate-900 md:static md:w-64 md:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -61,15 +66,16 @@ export default function Layout() {
           )}
           <span className="truncate font-semibold">{settings.company_name}</span>
         </div>
-        <nav className="flex flex-col gap-1 p-3">
-          {nav.map((n) => (
+        <nav className="flex-1 overflow-y-auto p-3">
+          <div className="flex flex-col gap-1">
+          {primaryNav.map((n) => (
             <NavLink
               key={n.to}
               to={n.to}
               end={n.end}
               onClick={() => setOpen(false)}
               className={({ isActive }) =>
-                `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
+                `flex min-h-11 items-center gap-3 rounded-lg px-3 ${navSpacing} text-sm font-medium transition ${
                   isActive
                     ? 'bg-brand text-white'
                     : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
@@ -83,8 +89,61 @@ export default function Layout() {
               )}
             </NavLink>
           ))}
+          </div>
+          <div className="mt-2 hidden flex-col gap-1 md:flex">
+            {secondaryNav.map((n) => (
+              <NavLink
+                key={n.to}
+                to={n.to}
+                onClick={() => setOpen(false)}
+                className={({ isActive }) =>
+                  `flex min-h-11 items-center gap-3 rounded-lg px-3 ${navSpacing} text-sm font-medium transition ${
+                    isActive
+                      ? 'bg-brand text-white'
+                      : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                  }`
+                }
+              >
+                <n.Icon />
+                <span className="flex-1">{n.label}</span>
+              </NavLink>
+            ))}
+          </div>
+          <div className="mt-2 md:hidden">
+            <button
+              type="button"
+              onClick={() => setShowMore((value) => !value)}
+              className="flex min-h-11 w-full items-center justify-between rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+              aria-expanded={showMore}
+            >
+              Mais opções
+              <span className={`text-base transition-transform ${showMore ? 'rotate-180' : ''}`}>⌄</span>
+            </button>
+            {showMore && (
+              <div className="mt-1 flex flex-col gap-1">
+                {secondaryNav.map((n) => (
+                  <NavLink
+                    key={n.to}
+                    to={n.to}
+                    onClick={() => setOpen(false)}
+                    className={({ isActive }) =>
+                      `flex min-h-11 items-center gap-3 rounded-lg px-3 ${navSpacing} text-sm font-medium transition ${
+                        isActive
+                          ? 'bg-brand text-white'
+                          : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+                      }`
+                    }
+                  >
+                    <n.Icon />
+                    <span className="flex-1">{n.label}</span>
+                  </NavLink>
+                ))}
+              </div>
+            )}
+          </div>
         </nav>
-        <a
+        <div className="border-t border-slate-100 p-3 dark:border-slate-800">
+          <a
           href={
             import.meta.env.VITE_HASH_ROUTER === '1'
               ? `${location.pathname}#/catalogo`
@@ -92,15 +151,16 @@ export default function Layout() {
           }
           target="_blank"
           rel="noreferrer"
-          className="mx-3 mt-2 flex items-center gap-3 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="flex min-h-11 items-center gap-3 rounded-lg border border-slate-300 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
         >
           <IconStore /> Ver catálogo
-        </a>
+          </a>
         {!isSupabaseConfigured && (
-          <div className="mx-3 mt-2 rounded-lg bg-amber-100 p-3 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
+          <div className="mt-2 rounded-lg bg-amber-100 p-3 text-xs text-amber-800 dark:bg-amber-900/40 dark:text-amber-200">
             Modo demonstração — dados salvos no navegador. Configure o Supabase para persistir.
           </div>
-        )}
+          )}
+        </div>
         {authEnabled && user && (
           <div className="mt-auto border-t border-slate-200 p-3 dark:border-slate-800">
             <div className="mb-2 truncate px-1 text-xs text-slate-500" title={user.email ?? ''}>
@@ -126,9 +186,11 @@ export default function Layout() {
           <span className="truncate font-semibold">{settings.company_name}</span>
         </header>
         <main className="min-w-0 flex-1 p-4 md:p-8">
-          <div className="mb-3">
-            <SyncIndicator />
-          </div>
+          {settings.show_sync_indicator && (
+            <div className="mb-3">
+              <SyncIndicator />
+            </div>
+          )}
           {/* key por rota re-dispara a animação de entrada da página */}
           <div key={location.pathname} className="anim-page">
             <Outlet />

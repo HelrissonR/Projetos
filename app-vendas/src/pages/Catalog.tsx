@@ -186,7 +186,7 @@ export default function Catalog() {
       {/* Hero / cabeçalho da loja */}
       <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-black">
         <div className="mx-auto max-w-5xl px-4 py-7">
-          <div className="flex items-center gap-4">
+          <div className="catalog-hero flex items-center gap-4">
             {settings.logo_url ? (
               <img
                 src={settings.logo_url}
@@ -222,7 +222,7 @@ export default function Catalog() {
 
         {/* Filtro por categoria (chips roláveis) */}
         {usedCategories.length > 0 && (
-          <div className="mx-auto max-w-5xl overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="catalog-chips mx-auto max-w-5xl overflow-x-auto px-4 pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="flex gap-2">
               {[{ id: 'all', name: 'Todos' }, ...usedCategories].map((c) => (
                 <button
@@ -245,7 +245,7 @@ export default function Catalog() {
       <main className="mx-auto max-w-5xl px-4 py-6">
         {/* Barra de ordenação */}
         {!loading && filtered.length > 0 && (
-          <div className="mb-4 flex items-center justify-between gap-3">
+          <div className="catalog-toolbar mb-4 flex items-center justify-between gap-3">
             <span className="text-sm text-slate-500">{filtered.length} produto(s)</span>
             <select
               className="input w-auto py-1.5 text-sm"
@@ -279,13 +279,13 @@ export default function Catalog() {
             Nenhum produto encontrado.
           </div>
         ) : (
-          <div className="stagger grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          <div key={`${search}-${activeCat}-${sort}`} className="stagger grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {filtered.map((p) => {
               const q = qtyOf(p.id)
               return (
                 <div
                   key={p.id}
-                  className="card group flex flex-col overflow-hidden p-0 transition-shadow hover:shadow-lg"
+                  className="catalog-card card group flex flex-col overflow-hidden p-0 transition-shadow hover:shadow-lg"
                 >
                   <button
                     onClick={() => setDetail(p)}
@@ -397,7 +397,9 @@ export default function Catalog() {
                     {detail.description}
                   </p>
                 )}
-                <p className="mt-3 text-xs text-slate-400">{detail.stock} disponível(is)</p>
+                {settings.catalog_show_stock && (
+                  <p className="mt-3 text-xs text-slate-400">{detail.stock} disponível(is)</p>
+                )}
                 <div className="mt-5">
                   {qtyOf(detail.id) === 0 ? (
                     <button className="btn-primary w-full" onClick={() => setQty(detail, 1)}>

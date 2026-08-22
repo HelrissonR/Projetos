@@ -28,6 +28,10 @@ export const DEFAULT_SETTINGS: Settings = {
   whatsapp_number: '',
   catalog_enabled: true,
   catalog_message: 'Escolha seus produtos e finalize o pedido pelo WhatsApp!',
+  catalog_show_stock: true,
+  hidden_menu_items: [],
+  interface_density: 'comfortable',
+  show_sync_indicator: true,
 }
 
 interface Ctx {

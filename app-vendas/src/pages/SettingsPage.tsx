@@ -20,6 +20,14 @@ const BRAND_PRESETS: { label: string; rgb: string }[] = [
 ]
 
 const CURRENCIES = ['BRL', 'USD', 'EUR', 'GBP', 'ARS']
+const MENU_ITEMS = [
+  { to: '/', label: 'Dashboard' },
+  { to: '/pdv', label: 'Vendas / PDV' },
+  { to: '/pedidos', label: 'Pedidos' },
+  { to: '/produtos', label: 'Produtos' },
+  { to: '/clientes', label: 'Clientes' },
+  { to: '/vendas', label: 'Histórico' },
+]
 
 function catalogUrl() {
   const hash = import.meta.env.VITE_HASH_ROUTER === '1'
@@ -169,6 +177,58 @@ export default function SettingsPage() {
               tela de login, no catálogo e vira o favicon (ícone da aba) automaticamente.
             </p>
           </div>
+        </section>
+
+        {/* Navegação e experiência do painel */}
+        <section className="card space-y-4">
+          <div>
+            <h2 className="font-semibold">Menu e experiência</h2>
+            <p className="mt-1 text-xs text-slate-500">Escolha os atalhos que aparecem no painel. Configurações permanece sempre disponível.</p>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {MENU_ITEMS.map((item) => {
+              const visible = !form.hidden_menu_items.includes(item.to)
+              return (
+                <label key={item.to} className="flex min-h-11 items-center justify-between gap-3 rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-800">
+                  <span>{item.label}</span>
+                  <input
+                    type="checkbox"
+                    checked={visible}
+                    onChange={(e) =>
+                      set(
+                        'hidden_menu_items',
+                        e.target.checked
+                          ? form.hidden_menu_items.filter((to) => to !== item.to)
+                          : [...form.hidden_menu_items, item.to],
+                      )
+                    }
+                  />
+                </label>
+              )
+            })}
+          </div>
+          <div>
+            <label className="label">Densidade do menu</label>
+            <div className="flex flex-wrap gap-2">
+              {(['comfortable', 'compact'] as const).map((density) => (
+                <button
+                  key={density}
+                  type="button"
+                  onClick={() => set('interface_density', density)}
+                  className={form.interface_density === density ? 'btn-primary' : 'btn-ghost border border-slate-300 dark:border-slate-700'}
+                >
+                  {density === 'comfortable' ? 'Confortável' : 'Compacto'}
+                </button>
+              ))}
+            </div>
+          </div>
+          <label className="flex min-h-11 items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm dark:bg-slate-900">
+            <span>
+              <span className="block font-medium">Indicador de sincronização</span>
+              <span className="text-xs text-slate-500">Mostra o estado dos dados acima de cada tela.</span>
+            </span>
+            <input type="checkbox" checked={form.show_sync_indicator} onChange={(e) => set('show_sync_indicator', e.target.checked)} />
+          </label>
         </section>
 
         {/* Aparência */}
@@ -334,6 +394,13 @@ export default function SettingsPage() {
               onChange={(e) => set('catalog_message', e.target.value)}
             />
           </div>
+          <label className="flex min-h-11 items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm dark:bg-slate-900">
+            <span>
+              <span className="block font-medium">Mostrar estoque no catálogo</span>
+              <span className="text-xs text-slate-500">Exibe a quantidade disponível na tela de detalhes do produto.</span>
+            </span>
+            <input type="checkbox" checked={form.catalog_show_stock} onChange={(e) => set('catalog_show_stock', e.target.checked)} />
+          </label>
           <div className="flex flex-wrap gap-2">
             <button type="button" className="btn-primary" onClick={shareCatalog}>
               Compartilhar catálogo
