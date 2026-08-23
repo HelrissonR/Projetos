@@ -6,7 +6,7 @@
   const save = (value) => localStorage.setItem(key, JSON.stringify(value));
 
   function menuButtons() {
-    return [...document.querySelectorAll('aside button')].filter((button) =>
+    return [...document.querySelectorAll('button')].filter((button) =>
       labels.some((label) => button.textContent.replace(/\s+/g, ' ').includes(label))
     );
   }
@@ -64,7 +64,7 @@
   }
 
   function bindSettingsNavigation() {
-    const settingsButton = [...document.querySelectorAll('aside button')]
+    const settingsButton = [...document.querySelectorAll('button')]
       .find((button) => button.textContent.includes('Configurações'));
     if (!settingsButton || settingsButton.dataset.recoveryBound) return;
     settingsButton.dataset.recoveryBound = 'true';
