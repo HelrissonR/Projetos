@@ -1,0 +1,12 @@
+{
+  "name": "Aura Gestão de Vendas",
+  "short_name": "Aura Gestão",
+  "description": "Vendas, produtos, estoque e catálogo para cosméticos e perfumaria.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fcf9f6",
+  "theme_color": "#b25b70",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
